@@ -114,7 +114,7 @@ async fn main() -> Result<()> {
     settings["rtmpUrl"] = json!(RTMP);
     settings["streamKey"] = json!("testsleutel");
     settings["recordDir"] = json!(out.join("opnames"));
-    settings["introSeconds"] = json!(2);
+    settings["introSeconds"] = json!(1);
     settings["themeSeconds"] = json!(2);
     if real_youtube {
         settings["youtubeClientId"] = main_settings["youtubeClientId"].clone();
@@ -293,18 +293,31 @@ async fn main() -> Result<()> {
 }
 
 /// The camera positions the director should call, following its scene table
-/// (overzicht 1, orgel 2, preekstoel 3, doopvont 4), without repeats.
+/// (overzicht 1, orgel 2, preekstoel 3, doopvont 4), without repeats: a psalm is announced
+/// with the camera on the predikant, then the organ plays it in.
 fn expected_presets(slides: &[Value]) -> Vec<u32> {
     let mut out: Vec<u32> = Vec::new();
-    for s in slides {
-        let p = match s["kind"].as_str().unwrap_or("") {
-            "welkom" | "einde" => 1,
-            "psalm" | "slotzang" | "collecte" => 2,
-            "gebed" => 4,
-            _ => 3,
-        };
+    let mut push = |p: u32| {
         if out.last() != Some(&p) {
             out.push(p);
+        }
+    };
+    for (i, s) in slides.iter().enumerate() {
+        let sung = matches!(s["kind"].as_str(), Some("psalm" | "slotzang" | "nazang"));
+        let has_text = s["lines"].as_array().is_some_and(|l| !l.is_empty());
+        let prev = i.checked_sub(1).map(|j| &slides[j]);
+        let first_verse = prev.is_none_or(|p| p["item"] != s["item"] || p["lines"].as_array().is_none_or(|l| l.is_empty()));
+        match s["kind"].as_str().unwrap_or("") {
+            _ if sung && !has_text => push(3),
+            _ if sung && first_verse => {
+                push(3);
+                push(2);
+            }
+            _ if sung => push(2),
+            "welkom" | "einde" => push(1),
+            "collecte" => push(2),
+            "gebed" => push(4),
+            _ => push(3),
         }
     }
     out

@@ -40,6 +40,7 @@
     // Text the operator put on the boards directly goes over everything else.
     if (last) renderSlide(canvas, last.overrideBoard || (boards ? boards[last.index] : null), last.black, layout());
   }
+  window.sbRole = "bord";
   listen(function (st) {
     last = st;
     draw();

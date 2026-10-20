@@ -119,6 +119,8 @@ pub struct Status {
     pub recording: String,
     /// Shown as a big red warning in the operator page; empty when the sound is fine.
     pub audio_warning: String,
+    /// When the current mode started (Unix seconds), for the LIVE clock.
+    pub since: i64,
 }
 
 /// When the sound input last sent a measurement and when it last heard something.
@@ -177,6 +179,7 @@ impl Engine {
                 audio_db: -100.0,
                 recording: String::new(),
                 audio_warning: String::new(),
+                since: 0,
             }),
             overlay: Mutex::new(None),
             preview: Mutex::new(Vec::new()),
@@ -282,6 +285,7 @@ impl Engine {
         *self.running.lock().unwrap() = Some(Running { pipeline, overlay });
         let mut st = self.status.lock().unwrap();
         st.mode = mode;
+        st.since = chrono::Utc::now().timestamp();
         st.recording = recording;
         drop(st);
         self.push_overlay();

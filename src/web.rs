@@ -34,6 +34,8 @@ async fn font(Path(file): Path<String>) -> Response {
 
 #[derive(Clone)]
 struct App {
+    /// How many boards (TV pages) are connected right now.
+    boards: Arc<std::sync::atomic::AtomicUsize>,
     show: Arc<Show>,
     director: Arc<Director>,
     listener: Arc<crate::listen::Listener>,
@@ -67,7 +69,10 @@ pub fn router(show: Arc<Show>, director: Arc<Director>, listener: Arc<crate::lis
         .route("/api/listen", get(listen_status))
         .route("/api/listen/accept", post(listen_accept))
         .route("/api/board-override", post(board_override))
-        .with_state(App { show, director, listener, screen_url, port })
+        .route("/vendor/{file}", get(|Path(file): Path<String>| asset(format!("vendor/{file}"))))
+        .route("/preview.mjpg", get(preview_mjpeg))
+        .route("/api/thumb", get(thumb))
+        .with_state(App { boards: Arc::default(), show, director, listener, screen_url, port })
 }
 
 /// The read-only side for the internet (via a Cloudflare tunnel): the watch page, the board,
@@ -86,7 +91,8 @@ pub fn public_router(show: Arc<Show>, director: Arc<Director>, listener: Arc<cra
         .route("/api/youtube", get(youtube_status))
         .route("/api/listen", get(listen_status))
         .route("/preview.jpg", get(preview))
-        .with_state(App { show, director, listener, screen_url, port })
+        .route("/preview.mjpg", get(preview_mjpeg))
+        .with_state(App { boards: Arc::default(), show, director, listener, screen_url, port })
 }
 
 async fn asset(path: impl AsRef<str>) -> Response {
@@ -176,15 +182,75 @@ async fn go(State(app): State<App>, Json(req): Json<GoRequest>) -> StatusCode {
     StatusCode::NO_CONTENT
 }
 
+#[derive(Deserialize, Default)]
+struct EventsQuery {
+    /// "bord" for a TV page, so the operator sees how many boards are connected.
+    #[serde(default)]
+    rol: String,
+}
+
+/// Counts a connected board for as long as its connection lives.
+struct BoardGuard(Arc<std::sync::atomic::AtomicUsize>);
+
+impl Drop for BoardGuard {
+    fn drop(&mut self) {
+        self.0.fetch_sub(1, std::sync::atomic::Ordering::Relaxed);
+    }
+}
+
 /// Every screen and operator page listens here and gets the full state on each change.
-async fn events(State(app): State<App>) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
-    let stream = WatchStream::new(app.show.subscribe())
-        .map(|view| Ok(Event::default().data(serde_json::to_string(&view).unwrap_or_default())));
+async fn events(State(app): State<App>, Query(q): Query<EventsQuery>) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
+    let guard = (q.rol == "bord").then(|| {
+        app.boards.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        BoardGuard(app.boards.clone())
+    });
+    let stream = WatchStream::new(app.show.subscribe()).map(move |view| {
+        let _keep = &guard;
+        Ok(Event::default().data(serde_json::to_string(&view).unwrap_or_default()))
+    });
     Sse::new(stream).keep_alive(axum::response::sse::KeepAlive::new().interval(Duration::from_secs(15)))
 }
 
+/// The stream as it leaves the computer, as moving pictures (MJPEG) for an <img>.
+async fn preview_mjpeg(State(app): State<App>) -> Response {
+    let stream = futures::stream::unfold((app, Vec::new()), |(app, last)| async move {
+        loop {
+            tokio::time::sleep(Duration::from_millis(120)).await;
+            let jpeg = app.director.engine.preview_jpeg();
+            if !jpeg.is_empty() && jpeg != last {
+                let mut part = format!("--frame\r\nContent-Type: image/jpeg\r\nContent-Length: {}\r\n\r\n", jpeg.len()).into_bytes();
+                part.extend_from_slice(&jpeg);
+                part.extend_from_slice(b"\r\n");
+                return Some((Ok::<_, Infallible>(axum::body::Bytes::from(part)), (app, jpeg)));
+            }
+        }
+    });
+    (
+        [(header::CONTENT_TYPE, "multipart/x-mixed-replace; boundary=frame"), (header::CACHE_CONTROL, "no-cache")],
+        axum::body::Body::from_stream(stream),
+    )
+        .into_response()
+}
+
+#[derive(Deserialize)]
+struct ThumbQuery {
+    index: usize,
+}
+
+/// What the stream shows for one slide, as a small picture.
+async fn thumb(State(app): State<App>, Query(q): Query<ThumbQuery>) -> Response {
+    let view = app.show.view();
+    let director = app.director.clone();
+    match tokio::task::spawn_blocking(move || director.thumbnail(&view, q.index)).await.ok().flatten() {
+        Some(png) => ([(header::CONTENT_TYPE, "image/png"), (header::CACHE_CONTROL, "no-cache")], png).into_response(),
+        None => StatusCode::NOT_FOUND.into_response(),
+    }
+}
+
 async fn stream_status(State(app): State<App>) -> impl IntoResponse {
-    Json(app.director.engine.status())
+    let mut v = serde_json::to_value(app.director.engine.status()).unwrap_or_default();
+    v["boards"] = app.boards.load(std::sync::atomic::Ordering::Relaxed).into();
+    Json(v)
 }
 
 #[derive(Deserialize)]

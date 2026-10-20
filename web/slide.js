@@ -115,7 +115,7 @@ function listen(onState) {
     fetch("/api/state").then(function (r) { return r.json(); }).then(onState);
     return;
   }
-  var es = new EventSource("/events");
+  var es = new EventSource("/events" + (window.sbRole ? "?rol=" + window.sbRole : ""));
   es.onopen = function () { window.sbConnected = true; };
   es.onmessage = function (e) { onState(JSON.parse(e.data)); };
   es.onerror = function () {

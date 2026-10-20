@@ -20,6 +20,10 @@ pub struct Director {
     path: PathBuf,
     /// The YouTube broadcast of the current live stream.
     broadcast: Mutex<Option<Broadcast>>,
+    /// Draws the stream scenes; shared with the thumbnails of the operator page.
+    renderer: Mutex<Option<Arc<Mutex<Renderer>>>>,
+    /// Thumbnails already made, by scene.
+    thumbs: Mutex<std::collections::HashMap<String, Vec<u8>>>,
 }
 
 impl Director {
@@ -33,7 +37,39 @@ impl Director {
             settings_changed: tokio::sync::Notify::new(),
             path,
             broadcast: Mutex::new(None),
+            renderer: Mutex::new(None),
+            thumbs: Mutex::new(std::collections::HashMap::new()),
         })
+    }
+
+    /// A small picture of what the stream shows for a slide (the overlay over a grey
+    /// stand-in for the camera), for the clickable strip in the operator page.
+    pub fn thumbnail(&self, view: &View, index: usize) -> Option<Vec<u8>> {
+        let mut v = view.clone();
+        v.index = index;
+        v.override_board = None;
+        let (scene, _, _) = scene_for(&v, Duration::from_secs(3600), &self.settings());
+        let key = format!("{scene:?}");
+        if let Some(png) = self.thumbs.lock().unwrap().get(&key) {
+            return Some(png.clone());
+        }
+        let renderer = self.renderer.lock().unwrap().clone()?;
+        let rgba = renderer.lock().unwrap().render(&scene);
+        let overlay = image::RgbaImage::from_raw(crate::render::WIDTH, crate::render::HEIGHT, rgba)?;
+        let mut img = image::RgbaImage::from_fn(crate::render::WIDTH, crate::render::HEIGHT, |_, y| {
+            let g = 70 + (y * 40 / crate::render::HEIGHT) as u8;
+            image::Rgba([g, g + 4, g + 8, 255])
+        });
+        image::imageops::overlay(&mut img, &overlay, 0, 0);
+        let small = image::imageops::resize(&img, 384, 216, image::imageops::FilterType::Triangle);
+        let mut png = Vec::new();
+        small.write_to(&mut std::io::Cursor::new(&mut png), image::ImageFormat::Png).ok()?;
+        let mut cache = self.thumbs.lock().unwrap();
+        if cache.len() > 300 {
+            cache.clear();
+        }
+        cache.insert(key, png.clone());
+        Some(png)
     }
 
     pub fn broadcast(&self) -> Option<Broadcast> {
@@ -90,6 +126,7 @@ impl Director {
         tokio::spawn(self.clone().autopilot(show.clone()));
         let qr_link = self.settings().qr_link;
         let renderer = Arc::new(Mutex::new(Renderer::with_builtin_images(&qr_link)));
+        *self.renderer.lock().unwrap() = Some(renderer.clone());
         let mut rx = show.subscribe();
         let mut last_scene = None;
         // Camera and preset last sent, so a newly entered camera IP also gets the position.
@@ -222,13 +259,15 @@ fn scene_for(view: &View, shown: Duration, s: &Settings) -> (Scene, Position, Op
             };
             (scene, Position::Overzicht, None)
         }
-        "psalm" | "slotzang" | "nazang" if slide.lines.is_empty() => (bar(&slide.header, &slide.sub), Position::Orgel, None),
+        // The predikant announces the psalm: the camera stays on him, the psalm below him.
+        "psalm" | "slotzang" | "nazang" if slide.lines.is_empty() => (bar(&slide.header, &slide.sub), Position::Preekstoel, None),
         "psalm" | "slotzang" | "nazang" => {
-            // The first verse of a psalm starts with the organ playing it in.
+            // The first verse of a psalm starts with the announcement: the predikant in view
+            // with the psalm below him; then the verse, with the organ in the opening.
             let prev = view.index.checked_sub(1).and_then(|i| view.slides.get(i));
             let first_verse = prev.is_none_or(|p| p.item != slide.item || p.lines.is_empty());
             if first_verse && shown < intro {
-                (bar(&slide.sub, &slide.header), Position::Orgel, Some(intro))
+                (bar(&slide.sub, &slide.header), Position::Preekstoel, Some(intro))
             } else {
                 (panel(&slide.sub, &slide.header, slide.lines.clone(), Body::Lines, "", false), Position::Orgel, None)
             }
