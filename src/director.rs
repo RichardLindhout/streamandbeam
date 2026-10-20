@@ -217,8 +217,8 @@ fn scene_for(view: &View, shown: Duration, s: &Settings) -> (Scene, Position, Op
             };
             (scene, Position::Overzicht, None)
         }
-        "psalm" | "slotzang" if slide.lines.is_empty() => (bar(&slide.header, &slide.sub), Position::Orgel, None),
-        "psalm" | "slotzang" => {
+        "psalm" | "slotzang" | "nazang" if slide.lines.is_empty() => (bar(&slide.header, &slide.sub), Position::Orgel, None),
+        "psalm" | "slotzang" | "nazang" => {
             // The first verse of a psalm starts with the organ playing it in.
             let prev = view.index.checked_sub(1).and_then(|i| view.slides.get(i));
             let first_verse = prev.is_none_or(|p| p.item != slide.item || p.lines.is_empty());

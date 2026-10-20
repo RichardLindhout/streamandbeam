@@ -73,7 +73,8 @@
   listen(function (st) {
     state = st;
     var slide = st.slides ? st.slides[st.index] : null;
-    renderSlide($("board"), slide, st.black);
+    var boards = st.boards || st.slides;
+    renderSlide($("board"), boards ? boards[st.index] : null, st.black);
     var svc = (st.services || []).filter(function (s) { return s.id === st.current; })[0];
     $("service").textContent = svc ? [svc.label, svc.date, svc.time, svc.predikant].filter(Boolean).join(" · ") : "geen dienst gekozen";
     $("now").textContent = slide ? "Nu: " + slide.header + (slide.sub ? " — " + slide.sub : "") : "";
@@ -81,7 +82,7 @@
       return '<li class="' + (slide && slide.item === i ? "now" : "") + '">' + esc(it.label) + (it.ref ? " — " + esc(it.ref) : "") + "</li>";
     }).join("") : "";
   });
-  window.addEventListener("resize", function () { if (state) renderSlide($("board"), state.slides[state.index], state.black); });
+  window.addEventListener("resize", function () { if (state) renderSlide($("board"), (state.boards || state.slides)[state.index], state.black); });
 
   function poll() {
     fetch("/api/stream").then(function (r) { return r.json(); }).then(function (st) {

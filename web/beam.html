@@ -25,7 +25,9 @@
   var lostSince = 0;
 
   function draw() {
-    if (last) renderSlide(canvas, last.slides ? last.slides[last.index] : null, last.black);
+    // The boards have their own version of each slide (see Show::board_slides).
+    var boards = last && (last.boards || last.slides);
+    if (last) renderSlide(canvas, boards ? boards[last.index] : null, last.black);
   }
   listen(function (st) {
     last = st;

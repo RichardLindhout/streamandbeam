@@ -11,7 +11,8 @@ use tokio::sync::{Mutex, watch};
 
 /// One part of a service, in the order the predikant uses. All references are numbers
 /// (Claude maps what is typed or on the website onto them), so nothing is parsed later.
-/// Kinds: welkom, psalm, slotzang, lezing, catechismus, gebed, collecte, preek, mededeling, einde.
+/// Kinds: welkom, psalm, slotzang, nazang (song after the service), lezing, catechismus,
+/// gebed, collecte, preek, mededeling, einde.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Item {
@@ -47,7 +48,7 @@ pub struct CustomSlide {
 impl Item {
     pub fn refresh(&mut self) {
         self.reference = match self.kind.as_str() {
-            "psalm" | "slotzang" if self.psalm > 0 => psalm_ref_string(self.psalm, &self.verses),
+            "psalm" | "slotzang" | "nazang" if self.psalm > 0 => psalm_ref_string(self.psalm, &self.verses),
             "lezing" => self.passage.map(|p| p.to_string()).unwrap_or_default(),
             "catechismus" if !self.questions.is_empty() => {
                 let qs: Vec<String> = self.questions.iter().map(u32::to_string).collect();
@@ -92,6 +93,8 @@ pub struct Slide {
     pub theme: String,
     pub points: Vec<String>,
     pub list: Vec<String>, // liturgy overview on the welcome slide
+    /// Which line of `list` is the part of the service going on now.
+    pub active: Option<usize>,
     pub footer: String,
 }
 
@@ -103,15 +106,24 @@ struct Saved {
     index: usize,
     /// Collecte purposes of the last service, used for the next one.
     collecte: String,
+    /// Show every text on the boards in church. Off (the default) the boards show only
+    /// the liturgy, the theme and the last psalm, as the church wants; the stream always
+    /// gets the full texts.
+    board_full: bool,
 }
 
 #[derive(Debug, Clone, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct View {
     pub services: Vec<Service>,
     pub current: String,
     pub index: usize,
     pub black: bool,
+    /// The slides: what the stream follows and the operator steps through.
     pub slides: Vec<Slide>,
+    /// What the boards in church show for each slide.
+    pub boards: Vec<Slide>,
+    pub board_full: bool,
     #[serde(skip)]
     collecte: String,
 }
@@ -137,6 +149,7 @@ impl Show {
             current: saved.current,
             index: saved.index,
             collecte: saved.collecte,
+            board_full: saved.board_full,
             ..Default::default()
         };
         let (tx, _) = watch::channel(view.clone());
@@ -263,8 +276,18 @@ impl Show {
     }
 
     /// Rebuilds the slides after the services changed.
+    pub async fn set_board_full(&self, full: bool) {
+        let mut st = self.state.lock().await;
+        st.board_full = full;
+        self.changed(&mut st);
+    }
+
     fn changed(&self, st: &mut View) {
         st.slides = st.service().map(build_slides).unwrap_or_default();
+        st.boards = match st.service() {
+            Some(svc) if !st.board_full => board_slides(svc, &st.slides),
+            _ => st.slides.clone(),
+        };
         st.index = st.index.min(st.slides.len().saturating_sub(1));
         self.publish(st);
     }
@@ -275,6 +298,7 @@ impl Show {
             current: st.current.clone(),
             index: st.index,
             collecte: st.collecte.clone(),
+            board_full: st.board_full,
         };
         if let Err(e) = write_json(&self.path, &saved) {
             eprintln!("opslaan mislukt: {e}");
@@ -441,19 +465,15 @@ fn build_slides(svc: &Service) -> Vec<Slide> {
         let problem = |msg: &str| Slide { header: it.label.clone(), sub: msg.to_string(), ..Default::default() };
         match it.kind.as_str() {
             "welkom" => {
-                let list = svc
-                    .items
-                    .iter()
-                    .filter(|o| !o.reference.is_empty())
-                    .map(|o| match o.kind.as_str() {
-                        "lezing" => format!("Lezen: {}", o.reference),
-                        "catechismus" => format!("Catechismus: {}", o.reference),
-                        _ => o.reference.clone(),
-                    })
-                    .collect();
+                let list = liturgy(svc).into_iter().map(|(_, l)| l).collect();
                 add(Slide { header: "Hersteld Hervormde Gemeente Tholen".into(), sub: service_title(svc), list, ..Default::default() });
             }
-            "psalm" | "slotzang" => {
+            "nazang" if it.psalm == 0 => add(Slide {
+                header: it.label.clone(),
+                lines: it.text.lines().map(String::from).collect(),
+                ..Default::default()
+            }),
+            "psalm" | "slotzang" | "nazang" => {
                 if it.kind == "slotzang" {
                     add(Slide { header: "Slotzang".into(), sub: it.reference.clone(), ..Default::default() });
                 }
@@ -526,6 +546,48 @@ fn build_slides(svc: &Service) -> Vec<Slide> {
         }
     }
     slides
+}
+
+/// The liturgy overview: (item index, line) for every item with a reference.
+fn liturgy(svc: &Service) -> Vec<(usize, String)> {
+    svc.items
+        .iter()
+        .enumerate()
+        .filter(|(_, o)| !o.reference.is_empty())
+        .map(|(i, o)| {
+            let line = match o.kind.as_str() {
+                "lezing" => format!("Lezen: {}", o.reference),
+                "catechismus" => format!("Catechismus: {}", o.reference),
+                "nazang" => format!("Na de dienst: {}", o.reference),
+                _ => o.reference.clone(),
+            };
+            (i, line)
+        })
+        .collect()
+}
+
+/// What the boards show, as the church wants it: the liturgy (with the current part
+/// marked), the theme during the sermon, and the last psalm and any song after the
+/// service. Not every text, so people keep using their own Bible and psalter.
+fn board_slides(svc: &Service, slides: &[Slide]) -> Vec<Slide> {
+    let list = liturgy(svc);
+    let lines: Vec<String> = list.iter().map(|(_, l)| l.clone()).collect();
+    slides
+        .iter()
+        .map(|sl| match sl.kind.as_str() {
+            "slotzang" | "nazang" | "einde" => sl.clone(),
+            "preek" => Slide { verses: Vec::new(), ..sl.clone() },
+            _ => Slide {
+                item: sl.item,
+                kind: "welkom".into(),
+                header: if sl.kind == "welkom" { sl.header.clone() } else { "Liturgie".into() },
+                sub: service_title(svc),
+                list: lines.clone(),
+                active: if sl.kind == "welkom" { None } else { list.iter().position(|(i, _)| *i == sl.item) },
+                ..Default::default()
+            },
+        })
+        .collect()
 }
 
 /// Splits a reading into slides of roughly max_chars characters.

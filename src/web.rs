@@ -66,6 +66,7 @@ pub fn router(show: Arc<Show>, director: Arc<Director>, listener: Arc<crate::lis
         .route("/youtube/callback", get(youtube_callback))
         .route("/api/listen", get(listen_status))
         .route("/api/listen/accept", post(listen_accept))
+        .route("/api/board-mode", post(board_mode))
         .with_state(App { show, director, listener, screen_url, port })
 }
 
@@ -275,5 +276,16 @@ async fn listen_accept(State(app): State<App>) -> StatusCode {
         app.show.go(Some(s.slide), 0, "").await;
         app.listener.clear_suggestion();
     }
+    StatusCode::NO_CONTENT
+}
+
+#[derive(Deserialize)]
+struct BoardMode {
+    full: bool,
+}
+
+/// Boards in church: only liturgy, theme and last psalm (default), or every text.
+async fn board_mode(State(app): State<App>, Json(m): Json<BoardMode>) -> StatusCode {
+    app.show.set_board_full(m.full).await;
     StatusCode::NO_CONTENT
 }

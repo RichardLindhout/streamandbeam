@@ -17,7 +17,7 @@ function slideHTML(s) {
     case "welkom":
     case "einde":
       return `<div class="head"><h1>${typo(s.header)}</h1><p>${typo(s.sub)}</p></div>
-        <ul>${(s.list || []).concat(s.lines || []).map((l) => `<li>${typo(l)}</li>`).join("")}</ul>
+        <ul>${(s.list || []).concat(s.lines || []).map((l, i) => `<li class="${i === s.active ? "now" : ""}">${typo(l)}</li>`).join("")}</ul>
         <p class="footer">${typo(s.footer)}</p>`;
     case "catechismus":
       return bar + `<div class="body"><div class="fit">${(s.lines || []).map((l) => `<p>${typo(l)}</p>`).join("")}</div></div>`;

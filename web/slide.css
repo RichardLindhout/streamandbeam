@@ -99,6 +99,10 @@
 
 .canvas.mededeling .body, .canvas.collecte .body { text-align: center; }
 
+/* The part of the service going on now, in the liturgy overview. */
+.welkom li.now { color: var(--accent); font-weight: 600; }
+.welkom li.now::before { content: "▸ "; }
+
 /* Catechism: question and answer */
 .catechismus .fit p { margin: 0 0 .6em; }
 .catechismus .fit p:first-child { color: var(--accent); font-style: italic; }

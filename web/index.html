@@ -144,6 +144,9 @@
 
   <section>
     <h2>Schermen in de kerk</h2>
+    <label class="hint" style="display:flex;gap:6px;align-items:center;margin:-4px 0 8px">
+      <input type="checkbox" id="boardFull" style="width:auto"> Borden: alle teksten tonen (standaard alleen liturgie, thema en slotzang)
+    </label>
     <div class="screens">
       <figure><figcaption>Nu</figcaption><div class="frame"><div class="canvas" id="now"></div></div></figure>
       <figure><figcaption>Hierna</figcaption><div class="frame"><div class="canvas" id="next"></div></div></figure>
@@ -241,8 +244,10 @@ function draw() {
     || `<span style="opacity:.8">Nog geen diensten — haal ze van de website of maak er een.</span>`;
   drawService();
   const slides = state.slides || [];
-  renderSlide($("now"), slides[state.index], state.black);
-  renderSlide($("next"), slides[state.index + 1], false);
+  const boards = state.boards || slides;
+  renderSlide($("now"), boards[state.index], state.black);
+  renderSlide($("next"), boards[state.index + 1], false);
+  $("boardFull").checked = !!state.boardFull;
   document.querySelector(".zwart").classList.toggle("on", state.black);
   $("slides").innerHTML = slides.map((s, i) =>
     `<button data-index="${i}" class="${i === state.index ? "on" : ""}">${esc(s.header)} <small>${esc(["psalm", "slotzang", "lezing"].includes(s.kind) ? s.sub : "")}</small></button>`).join("");
@@ -442,6 +447,7 @@ $("deleteService").addEventListener("click", () => {
 document.querySelector(".controls").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b?.dataset.go) go({ delta: +b.dataset.go }); });
 document.querySelector(".jumps").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b?.dataset.kind) go({ kind: b.dataset.kind }); });
 $("slides").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) go({ index: +b.dataset.index }); });
+$("boardFull").addEventListener("change", (e) => post("/api/board-mode", { full: e.target.checked }));
 document.addEventListener("keydown", (e) => {
   if (e.target.closest("input, textarea, select")) return;
   const keys = { ArrowRight: { delta: 1 }, " ": { delta: 1 }, PageDown: { delta: 1 }, ArrowLeft: { delta: -1 }, PageUp: { delta: -1 },

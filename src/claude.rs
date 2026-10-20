@@ -63,8 +63,8 @@ pub struct RawItem {
     pub reden: String,
 }
 
-pub const KINDS: [&str; 10] =
-    ["welkom", "psalm", "slotzang", "lezing", "catechismus", "gebed", "collecte", "preek", "mededeling", "einde"];
+pub const KINDS: [&str; 11] =
+    ["welkom", "psalm", "slotzang", "nazang", "lezing", "catechismus", "gebed", "collecte", "preek", "mededeling", "einde"];
 
 pub fn item_schema() -> Value {
     let int = |d: &str| json!({"type": "integer", "description": d});
@@ -98,6 +98,7 @@ pub fn reference_lists() -> String {
 
 pub const RULES: &str = r#"Rules for items:
 - "Ps. 86: 5-6" or "86:5,6" is psalm 86, verses [5, 6] of the 1773 rhyming. soort "psalm"; "slotzang" only when it is called the last/closing psalm.
+- A song sung after the service ("na de dienst", "nazang", "lied na de dienst") is soort "nazang": a psalm with psalm/verzen, or for another song the title in tekst.
 - A reading ("Joh. 5: 16-29", "1 Korinthe 6 vers 15 t/m 20") is soort "lezing" with boek/hoofdstuk/van/tot.
 - "HC 57", "vraag en antwoord 57", "Heidelbergse Catechismus zondag 22" is soort "catechismus" with vragen or zondag.
 - gebed, dankgebed, collecte, preek/prediking, welkom, einde are their own soort.
@@ -114,7 +115,8 @@ impl RawItem {
         let kind = if KINDS.contains(&self.soort.as_str()) { self.soort.clone() } else { "mededeling".into() };
         let mut item = Item { kind: kind.clone(), label: self.opschrift.clone(), text: self.tekst.clone(), ..Default::default() };
         match kind.as_str() {
-            "psalm" | "slotzang" => {
+            "nazang" if self.psalm == 0 => {}
+            "psalm" | "slotzang" | "nazang" => {
                 item.psalm = self.psalm;
                 item.verses = self.verzen.clone();
                 match crate::texts::psalm(self.psalm) {
