@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Broadcast control room: near-black, crisp hairlines, one electric accent,
+   red strictly for LIVE and alarms, amber for "look here". */
+:root {
+  --background: #06080b;
+  --foreground: #eef2f7;
+  --card: #0d1117;
+  --card-foreground: #eef2f7;
+  --popover: #10151c;
+  --popover-foreground: #eef2f7;
+  --primary: #2f8cff;
+  --primary-foreground: #ffffff;
+  --secondary: #161c25;
+  --secondary-foreground: #e6ebf2;
+  --muted: #121820;
+  --muted-foreground: #8792a2;
+  --accent: #1a212c;
+  --accent-foreground: #f2f5f9;
+  --destructive: #ff3b4a;
+  --border: #1d2430;
+  --input: #252d3a;
+  --ring: #2f8cff;
+  --live: #ff2d3f;
+  --ok: #22d27c;
+  --warn: #ffb020;
+  --radius: 0.75rem;
+}
+
+@theme inline {
+  --font-sans: "Inter Variable", "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-live: var(--live);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --animate-blink: blink 1s steps(1) infinite;
+  --animate-pulse-dot: pulse-dot 1.4s ease-in-out infinite;
+  --animate-glow: glow 1.3s ease-in-out infinite;
+  @keyframes blink { 50% { background-color: #8f1520; } }
+  @keyframes pulse-dot { 50% { opacity: 0.35; } }
+  @keyframes glow { 50% { box-shadow: 0 0 0 8px rgb(255 176 32 / 0.22); } }
+}
+
+@layer base {
+  * { @apply border-border outline-ring/50; }
+  html, body, #root { height: 100%; }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv11", "ss01", "tnum";
+    background-image: radial-gradient(1200px 500px at 50% -200px, rgb(47 140 255 / 0.07), transparent 70%);
+    background-attachment: fixed;
+  }
+  button { cursor: pointer; }
+  button:disabled { cursor: default; }
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.6; }
+}
+
+/* slide.css (shared with the TVs) reads --accent; keep its own colours inside a slide. */
+.canvas { --accent: #7fc4cf; --teal: #004b58; --teal-2: #07697a; --warm: #d9cfc4; }
+
+/* A monitor frame for renderSlide: the canvas is absolutely positioned and scaled. */
+.mon { position: relative; overflow: hidden; background: #000; }
+.mon > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+
+.scroll-thin { scrollbar-width: thin; scrollbar-color: #2a3341 transparent; }

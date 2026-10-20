@@ -53,7 +53,9 @@ pub fn router(
     port: u16,
 ) -> Router {
     Router::new()
-        .route("/", get(|| asset("index.html")))
+        // The operator console: a React app built from ui/ into web/app/.
+        .route("/", get(|| asset("app/index.html")))
+        .route("/app/{*file}", get(|Path(file): Path<String>| asset(format!("app/{file}"))))
         .route("/beam", get(|| asset("beam.html")))
         .route("/{file}", get(|Path(file): Path<String>| asset(file)))
         .route("/fonts/{file}", get(font))
@@ -77,7 +79,6 @@ pub fn router(
         .route("/api/listen", get(listen_status))
         .route("/api/listen/accept", post(listen_accept))
         .route("/api/board-override", post(board_override))
-        .route("/vendor/{file}", get(|Path(file): Path<String>| asset(format!("vendor/{file}"))))
         .route("/preview.mjpg", get(preview_mjpeg))
         .route("/api/thumb", get(thumb))
         .route("/api/youtube-check", get(youtube_check))
@@ -99,7 +100,7 @@ pub fn public_router(
         .route("/beam", get(|| asset("beam.html")))
         .route("/slide.js", get(|| asset("slide.js")))
         .route("/slide.css", get(|| asset("slide.css")))
-        .route("/app.css", get(|| asset("app.css")))
+        .route("/kijk.css", get(|| asset("kijk.css")))
         .route("/hout.jpg", get(|| asset("hout.jpg")))
         .route("/fonts/{file}", get(font))
         .route("/events", get(events))
