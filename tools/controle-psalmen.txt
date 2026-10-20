@@ -1,0 +1,385 @@
+Controle psalmen 1-150 (berijming 1773, GBS-uitgave); gemaakt door tools/bouw_psalmen_gbs.py
+1431 verzen in 150 psalmen.
+
+Aantal verzen per psalm:
+  Psalm   1: GBS  4  liturgie.nu  4  online-bijbel.nl  4  1774  4  psalmboek.nl  4
+  Psalm   2: GBS  7  liturgie.nu  7  online-bijbel.nl  7  1774  7  psalmboek.nl  7
+  Psalm   3: GBS  4  liturgie.nu  4  online-bijbel.nl  4  1774  4  psalmboek.nl  4
+  Psalm   4: GBS  4  liturgie.nu  4  online-bijbel.nl  4  1774  4  psalmboek.nl  4
+  Psalm   5: GBS 12  liturgie.nu 12  online-bijbel.nl 12  1774 12  psalmboek.nl 12
+  Psalm   6: GBS 10  liturgie.nu 10  online-bijbel.nl 10  1774 10  psalmboek.nl 10
+  Psalm   7: GBS  9  liturgie.nu  9  online-bijbel.nl  9  1774  9  psalmboek.nl  9
+  Psalm   8: GBS  9  liturgie.nu  9  online-bijbel.nl  9  1774  9  psalmboek.nl  9
+  Psalm   9: GBS 20  liturgie.nu 20  online-bijbel.nl 20  1774 20  psalmboek.nl 20
+  Psalm  10: GBS  9  liturgie.nu  9  online-bijbel.nl  9  1774  9  psalmboek.nl  9
+  Psalm  11: GBS  4  liturgie.nu  4  online-bijbel.nl  4  1774  4  psalmboek.nl  4
+  Psalm  12: GBS  8  liturgie.nu  8  online-bijbel.nl  8  1774  8  psalmboek.nl  8
+  Psalm  13: GBS  5  liturgie.nu  5  online-bijbel.nl  5  1774  5  psalmboek.nl  5
+  Psalm  14: GBS  7  liturgie.nu  7  online-bijbel.nl  7  1774  7  psalmboek.nl  7
+  Psalm  15: GBS  5  liturgie.nu  5  online-bijbel.nl  5  1774  5  psalmboek.nl  5
+  Psalm  16: GBS  6  liturgie.nu  6  online-bijbel.nl  6  1774  6  psalmboek.nl  6
+  Psalm  17: GBS  8  liturgie.nu  8  online-bijbel.nl  8  1774  8  psalmboek.nl  8
+  Psalm  18: GBS 15  liturgie.nu 16  online-bijbel.nl 15  1774 16  psalmboek.nl 15
+  Psalm  19: GBS  7  liturgie.nu  7  online-bijbel.nl  7  1774  7  psalmboek.nl  7
+  Psalm  20: GBS  5  liturgie.nu  5  online-bijbel.nl  5  1774  5  psalmboek.nl  5
+  Psalm  21: GBS 13  liturgie.nu 13  online-bijbel.nl 13  1774 13  psalmboek.nl 13
+  Psalm  22: GBS 16  liturgie.nu 16  online-bijbel.nl 16  1774 16  psalmboek.nl 16
+  Psalm  23: GBS  3  liturgie.nu  3  online-bijbel.nl  3  1774  3  psalmboek.nl  3
+  Psalm  24: GBS  5  liturgie.nu  5  online-bijbel.nl  5  1774  5  psalmboek.nl  5
+  Psalm  25: GBS 10  liturgie.nu 10  online-bijbel.nl 10  1774 10  psalmboek.nl 10
+  Psalm  26: GBS 12  liturgie.nu 12  online-bijbel.nl 12  1774 12  psalmboek.nl 12
+  Psalm  27: GBS  7  liturgie.nu  7  online-bijbel.nl  7  1774  7  psalmboek.nl  7
+  Psalm  28: GBS  6  liturgie.nu  6  online-bijbel.nl  6  1774  6  psalmboek.nl  6
+  Psalm  29: GBS  6  liturgie.nu  6  online-bijbel.nl  6  1774  6  psalmboek.nl  6
+  Psalm  30: GBS  8  liturgie.nu  8  online-bijbel.nl  8  1774  8  psalmboek.nl  8
+  Psalm  31: GBS 19  liturgie.nu 19  online-bijbel.nl 19  1774 19  psalmboek.nl 19
+  Psalm  32: GBS  6  liturgie.nu  6  online-bijbel.nl  6  1774  6  psalmboek.nl  6
+  Psalm  33: GBS 11  liturgie.nu 11  online-bijbel.nl 11  1774 11  psalmboek.nl 11
+  Psalm  34: GBS 11  liturgie.nu 11  online-bijbel.nl 11  1774 11  psalmboek.nl 11
+  Psalm  35: GBS 13  liturgie.nu 13  online-bijbel.nl 13  1774 13  psalmboek.nl 13
+  Psalm  36: GBS  3  liturgie.nu  3  online-bijbel.nl  3  1774  3  psalmboek.nl  3
+  Psalm  37: GBS 20  liturgie.nu 20  online-bijbel.nl 20  1774 20
+  Psalm  38: GBS 22  liturgie.nu 22  online-bijbel.nl 22  1774 22
+  Psalm  39: GBS  8  liturgie.nu  8  online-bijbel.nl  8  1774  8
+  Psalm  40: GBS  8  liturgie.nu  8  online-bijbel.nl  8  1774  8
+  Psalm  41: GBS  7  liturgie.nu  7  online-bijbel.nl  7  1774  7
+  Psalm  42: GBS  7  liturgie.nu  7  online-bijbel.nl  7  1774  7
+  Psalm  43: GBS  5  liturgie.nu  5  online-bijbel.nl  5  1774  5
+  Psalm  44: GBS 14  liturgie.nu 14  online-bijbel.nl 14  1774 14
+  Psalm  45: GBS  8  liturgie.nu  8  online-bijbel.nl  8  1774  8
+  Psalm  46: GBS  6  liturgie.nu  6  online-bijbel.nl  6  1774  6
+  Psalm  47: GBS  5  liturgie.nu  5  online-bijbel.nl  5  1774  5
+  Psalm  48: GBS  6  liturgie.nu  6  online-bijbel.nl  6  1774  6
+  Psalm  49: GBS  7  liturgie.nu  7  online-bijbel.nl  7  1774  7
+  Psalm  50: GBS  9  liturgie.nu  9  online-bijbel.nl  9  1774  9
+  Psalm  51: GBS 10  liturgie.nu 10  online-bijbel.nl 10  1774 10
+  Psalm  52: GBS  7  liturgie.nu  7  online-bijbel.nl  7  1774  7
+  Psalm  53: GBS  6  liturgie.nu  6  online-bijbel.nl  6  1774  6
+  Psalm  54: GBS  4  liturgie.nu  4  online-bijbel.nl  4  1774  4
+  Psalm  55: GBS 14  liturgie.nu 14  online-bijbel.nl 14  1774 14
+  Psalm  56: GBS  6  liturgie.nu  6  online-bijbel.nl  6  1774  6
+  Psalm  57: GBS  7  liturgie.nu  7  online-bijbel.nl  7  1774  7
+  Psalm  58: GBS  8  liturgie.nu  8  online-bijbel.nl  8  1774  8
+  Psalm  59: GBS 10  liturgie.nu 10  online-bijbel.nl 10  1774 10
+  Psalm  60: GBS  7  liturgie.nu  7  online-bijbel.nl  7  1774  7
+  Psalm  61: GBS  7  liturgie.nu  7  online-bijbel.nl  7  1774  7
+  Psalm  62: GBS  8  liturgie.nu  8  online-bijbel.nl  8  1774  8
+  Psalm  63: GBS  7  liturgie.nu  7  online-bijbel.nl  7  1774  7
+  Psalm  64: GBS 10  liturgie.nu 10  online-bijbel.nl 10  1774 10
+  Psalm  65: GBS  9  liturgie.nu  9  online-bijbel.nl  9  1774  9
+  Psalm  66: GBS 10  liturgie.nu 10  online-bijbel.nl 10  1774 10
+  Psalm  67: GBS  3  liturgie.nu  3  online-bijbel.nl  3  1774  3
+  Psalm  68: GBS 17  liturgie.nu 17  online-bijbel.nl 17  1774 17
+  Psalm  69: GBS 14  liturgie.nu 14  online-bijbel.nl 14  1774 14
+  Psalm  70: GBS  3  liturgie.nu  3  online-bijbel.nl  3  1774  3
+  Psalm  71: GBS 18  liturgie.nu 18  online-bijbel.nl 18  1774 18
+  Psalm  72: GBS 11  liturgie.nu 11  online-bijbel.nl 11  1774 11
+  Psalm  73: GBS 14  liturgie.nu 14  online-bijbel.nl 14  1774 14
+  Psalm  74: GBS 22  liturgie.nu 22  online-bijbel.nl 22  1774 22
+  Psalm  75: GBS  6  liturgie.nu  6  online-bijbel.nl  6  1774  6
+  Psalm  76: GBS  7  liturgie.nu  7  online-bijbel.nl  7  1774  7
+  Psalm  77: GBS 11  liturgie.nu 11  online-bijbel.nl 11  1774 11
+  Psalm  78: GBS 36  liturgie.nu 36  online-bijbel.nl 36  1774 36
+  Psalm  79: GBS  7  liturgie.nu  7  online-bijbel.nl  7  1774  7
+  Psalm  80: GBS 11  liturgie.nu 11  online-bijbel.nl 11  1774 11
+  Psalm  81: GBS 18  liturgie.nu 18  online-bijbel.nl 18  1774 18
+  Psalm  82: GBS  4  liturgie.nu  4  online-bijbel.nl  4  1774  4
+  Psalm  83: GBS 10  liturgie.nu 10  online-bijbel.nl 10  1774 10
+  Psalm  84: GBS  6  liturgie.nu  6  online-bijbel.nl  6  1774  6
+  Psalm  85: GBS  4  liturgie.nu  4  online-bijbel.nl  4  1774  4
+  Psalm  86: GBS  9  liturgie.nu  9  online-bijbel.nl  9  1774  9
+  Psalm  87: GBS  5  liturgie.nu  5  online-bijbel.nl  5  1774  5
+  Psalm  88: GBS 11  liturgie.nu 11  online-bijbel.nl 11  1774 11
+  Psalm  89: GBS 20  liturgie.nu 20  online-bijbel.nl 20  1774 20
+  Psalm  90: GBS  9  liturgie.nu  9  online-bijbel.nl  9  1774  9
+  Psalm  91: GBS  8  liturgie.nu  8  online-bijbel.nl  8  1774  8
+  Psalm  92: GBS  8  liturgie.nu  8  online-bijbel.nl  8  1774  8
+  Psalm  93: GBS  4  liturgie.nu  4  online-bijbel.nl  4  1774  4
+  Psalm  94: GBS 12  liturgie.nu 12  online-bijbel.nl 12  1774 12
+  Psalm  95: GBS  7  liturgie.nu  7  online-bijbel.nl  7  1774  7
+  Psalm  96: GBS  9  liturgie.nu  9  online-bijbel.nl  9  1774  9
+  Psalm  97: GBS  7  liturgie.nu  7  online-bijbel.nl  7  1774  7
+  Psalm  98: GBS  4  liturgie.nu  4  online-bijbel.nl  4  1774  4
+  Psalm  99: GBS  8  liturgie.nu  8  online-bijbel.nl  8  1774  8
+  Psalm 100: GBS  4  liturgie.nu  4  online-bijbel.nl  4  1774  4
+  Psalm 101: GBS  8  liturgie.nu  8  online-bijbel.nl  8  1774  8
+  Psalm 102: GBS 16  liturgie.nu 16  online-bijbel.nl 16  1774 16
+  Psalm 103: GBS 11  liturgie.nu 11  online-bijbel.nl 11  1774 11
+  Psalm 104: GBS 18  liturgie.nu 18  online-bijbel.nl 18  1774 18
+  Psalm 105: GBS 24  liturgie.nu 24  online-bijbel.nl 24  1774 24
+  Psalm 106: GBS 26  liturgie.nu 26  online-bijbel.nl 26  1774 26
+  Psalm 107: GBS 22  liturgie.nu 22  online-bijbel.nl 22  1774 22
+  Psalm 108: GBS  7  liturgie.nu  7  online-bijbel.nl  7  1774  7
+  Psalm 109: GBS 18  liturgie.nu 18  online-bijbel.nl 18  1774 18
+  Psalm 110: GBS  7  liturgie.nu  7  online-bijbel.nl  7  1774  7
+  Psalm 111: GBS  6  liturgie.nu  6  online-bijbel.nl  6  1774  6
+  Psalm 112: GBS  6  liturgie.nu  6  online-bijbel.nl  6  1774  6
+  Psalm 113: GBS  5  liturgie.nu  5  online-bijbel.nl  5  1774  5
+  Psalm 114: GBS  4  liturgie.nu  4  online-bijbel.nl  4  1774  4
+  Psalm 115: GBS  9  liturgie.nu  9  online-bijbel.nl  9  1774  9
+  Psalm 116: GBS 11  liturgie.nu 11  online-bijbel.nl 11  1774 11
+  Psalm 117: GBS  1  liturgie.nu  1  online-bijbel.nl  1  1774  1
+  Psalm 118: GBS 14  liturgie.nu 14  online-bijbel.nl 14  1774 14
+  Psalm 119: GBS 88  liturgie.nu 88  online-bijbel.nl 88  1774 88
+  Psalm 120: GBS  4  liturgie.nu  4  online-bijbel.nl  4  1774  4
+  Psalm 121: GBS  4  liturgie.nu  4  online-bijbel.nl  4  1774  4
+  Psalm 122: GBS  3  liturgie.nu  3  online-bijbel.nl  3  1774  3
+  Psalm 123: GBS  2  liturgie.nu  2  online-bijbel.nl  2  1774  2
+  Psalm 124: GBS  4  liturgie.nu  4  online-bijbel.nl  4  1774  4
+  Psalm 125: GBS  4  liturgie.nu  4  online-bijbel.nl  4  1774  4
+  Psalm 126: GBS  3  liturgie.nu  3  online-bijbel.nl  3  1774  3
+  Psalm 127: GBS  5  liturgie.nu  5  online-bijbel.nl  5  1774  5
+  Psalm 128: GBS  4  liturgie.nu  4  online-bijbel.nl  4  1774  4
+  Psalm 129: GBS  6  liturgie.nu  6  online-bijbel.nl  6  1774  6
+  Psalm 130: GBS  4  liturgie.nu  4  online-bijbel.nl  4  1774  4
+  Psalm 131: GBS  4  liturgie.nu  4  online-bijbel.nl  4  1774  4
+  Psalm 132: GBS 12  liturgie.nu 12  online-bijbel.nl 12  1774 12
+  Psalm 133: GBS  3  liturgie.nu  3  online-bijbel.nl  3  1774  3
+  Psalm 134: GBS  3  liturgie.nu  3  online-bijbel.nl  3  1774  3
+  Psalm 135: GBS 12  liturgie.nu 12  online-bijbel.nl 12  1774 12
+  Psalm 136: GBS 26  liturgie.nu 26  online-bijbel.nl 26  1774 26
+  Psalm 137: GBS  5  liturgie.nu  5  online-bijbel.nl  5  1774  5
+  Psalm 138: GBS  4  liturgie.nu  4  online-bijbel.nl  4  1774  4
+  Psalm 139: GBS 14  liturgie.nu 14  online-bijbel.nl 14  1774 14
+  Psalm 140: GBS 13  liturgie.nu 13  online-bijbel.nl 13  1774 13
+  Psalm 141: GBS 11  liturgie.nu 11  online-bijbel.nl 11  1774 11
+  Psalm 142: GBS  7  liturgie.nu  7  online-bijbel.nl  7  1774  7
+  Psalm 143: GBS 12  liturgie.nu 12  online-bijbel.nl 12  1774 12
+  Psalm 144: GBS  7  liturgie.nu  7  online-bijbel.nl  7  1774  7
+  Psalm 145: GBS  7  liturgie.nu  7  online-bijbel.nl  7  1774  7
+  Psalm 146: GBS  8  liturgie.nu  8  online-bijbel.nl  8  1774  8
+  Psalm 147: GBS 10  liturgie.nu 10  online-bijbel.nl 10  1774 10
+  Psalm 148: GBS  5  liturgie.nu  5  online-bijbel.nl  5  1774  5
+  Psalm 149: GBS  5  liturgie.nu  5  online-bijbel.nl  5  1774  5
+  Psalm 150: GBS  3  liturgie.nu  3  online-bijbel.nl  3  1774  3
+
+Besluiten (tools/psalm-correcties.json):
+1:1 nagekeken: GBS aangehouden: 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)
+2:2 nagekeken: GBS aangehouden: 'sterren' eigen lezing GBS (liturgie.nu 'starren', 1774 zie controle), nagekeken: geen tikfout
+2:5 nagekeken: GBS aangehouden: 'zelf' zoals 1774 (liturgie.nu 'zelv')
+4:1 VERBETERD: losse apostrof na 'enenmaal' weggehaald (GBS: "t' enenmaal'"; andere uitgaven 't' enemaal', 1774 't'eenemaal'); 'enenmaal' van de GBS aangehouden; GBS aangehouden: 'rechtszaak' (GBS; anderen 'rechtzaak'); 'enenmaal' eigen lezing GBS (liturgie.nu 'enemaal', 1774 zie controle), nagekeken: geen tikfout
+    GBS: Wil mij, wanneer ik roep, verhoren, / O God, Die mijne rechtszaak redt! / Gij hebt in angst mij hulp beschoren, / En mij doen gaan in ruime sporen; / Betoon genâ; hoor mijn gebed. / Wat moogt gij, mannen, toch beginnen? / Zal steeds tot schande zijn mijn eer? / Zult gij dan d' ijdelheid beminnen, / En, t' enenmaal' beroofd van zinnen, / De leugen zoeken, keer op keer?
+    nu:  Wil mij, wanneer ik roep, verhoren, / O God, Die mijne rechtszaak redt! / Gij hebt in angst mij hulp beschoren, / En mij doen gaan in ruime sporen; / Betoon genâ; hoor mijn gebed. / Wat moogt gij, mannen, toch beginnen? / Zal steeds tot schande zijn mijn eer? / Zult gij dan d' ijdelheid beminnen, / En, t' enenmaal beroofd van zinnen, / De leugen zoeken, keer op keer?
+4:3 nagekeken: GBS aangehouden: 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)
+5:1 nagekeken: GBS aangehouden: 'ter ore' (GBS; anderen 'ter oren')
+5:5 nagekeken: GBS aangehouden: 'hen' eigen lezing GBS (liturgie.nu 'hun', 1774 zie controle), nagekeken: geen tikfout
+5:6 nagekeken: GBS aangehouden: 'logenspreker' zoals 1774; 'wetsverbreker' eigen lezing GBS (liturgie.nu 'wetverbreker', 1774 zie controle), nagekeken: geen tikfout
+6:3 nagekeken: GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')
+6:8 nagekeken: GBS aangehouden: 'grijpt' zoals 1774 (liturgie.nu 'grijp')
+9:10 VERBETERD: tikfout GBS 'vluchtten' -> 'vluchten' (liturgie.nu, online-bijbel.nl, psalmboek.nl, 1774: vluchten/vlugten; rijm met 'zuchten')
+    GBS: Hij die Uw Naam in waarheid kent, / Zal, HEER', op U in zijn ellend' / Vertrouwen, wijl Gij nooit liet zuchten / Hen die gelovig tot U vluchtten.
+    nu:  Hij die Uw Naam in waarheid kent, / Zal, HEER', op U in zijn ellend' / Vertrouwen, wijl Gij nooit liet zuchten / Hen die gelovig tot U vluchten.
+10:2 nagekeken: GBS aangehouden: 'het' eigen lezing GBS (liturgie.nu 'hij', 1774 zie controle), nagekeken: geen tikfout; 'omhogesteekt' aaneen/los anders dan liturgie.nu ('omhoge steekt')
+10:4 nagekeken: GBS aangehouden: 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)
+10:5 nagekeken: GBS aangehouden: 'dichtbelommerd' aaneen/los anders dan liturgie.nu ('dicht belommerd')
+10:6 nagekeken: GBS aangehouden: 'hem' eigen lezing GBS (liturgie.nu 'hen', 1774 zie controle), nagekeken: geen tikfout
+11:3 nagekeken: GBS aangehouden: 'weleens' aaneen/los anders dan liturgie.nu ('wel eens')
+13:1 nagekeken: GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')
+13:2 nagekeken: GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')
+15:4 nagekeken: GBS aangehouden: 'tgeen' aaneen/los anders dan liturgie.nu ('t geen')
+17:2 nagekeken: GBS aangehouden: 'beide' zoals 1774 (liturgie.nu 'beiden')
+17:6 nagekeken: GBS aangehouden: 'terneer' aaneen/los anders dan liturgie.nu ('ter neer')
+18:3 nagekeken: GBS aangehouden: 'dichtopeengepakte' aaneen/los anders dan liturgie.nu ('dicht opeengepakte')
+18:5 VERBETERD: tikfout GBS 'bliksemschicht op -schichten' -> 'op schichten' (liturgie.nu, online-bijbel.nl, psalmboek.nl: 'bliksemschicht op schichten')
+    GBS: Hij deed vol kracht hen voor Zijn pijlen zwichten; / Verschrikte hen door bliksemschicht op -schichten. / De diepste kolk droogd' op een ogenblik, / En 't hart der aard' ontblootte zich van schrik, / Wanneer Gij scholdt; Uw adem, fel ontstoken, / Deed dus, o HEER', én land én water roken. / Hij zond mij hulp; Hij nam mij, op mijn beê, / En trok mij uit een grote jammerzee.
+    nu:  Hij deed vol kracht hen voor Zijn pijlen zwichten; / Verschrikte hen door bliksemschicht op schichten. / De diepste kolk droogd' op een ogenblik, / En 't hart der aard' ontblootte zich van schrik, / Wanneer Gij scholdt; Uw adem, fel ontstoken, / Deed dus, o HEER', én land én water roken. / Hij zond mij hulp; Hij nam mij, op mijn beê, / En trok mij uit een grote jammerzee.
+18:8 nagekeken: GBS aangehouden: 'terneer' aaneen/los anders dan liturgie.nu ('ter neer')
+18:11 nagekeken: GBS aangehouden: 'weer' zoals 1774 (liturgie.nu 'meer')
+18:15 nagekeken: GBS aangehouden: 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)
+19:3 nagekeken: GBS aangehouden: 'vanwaar' aaneen/los anders dan liturgie.nu ('van waar')
+19:4 nagekeken: GBS aangehouden: 'duister' zoals 1774 (liturgie.nu 'duistre')
+19:5 nagekeken: GBS aangehouden: 'honing' (moderne spelling; anderen 'honig')
+20:2 nagekeken: GBS aangehouden: 'offerspijs' zoals 1774 (liturgie.nu 'offerspijz')
+20:4 nagekeken: GBS aangehouden: 'terneergestoten' aaneen/los anders dan liturgie.nu ('terneer gestoten')
+21:1 nagekeken: GBS aangehouden: 'zielenvreugd' (GBS-spelling met tussen-n)
+22:2 nagekeken: GBS aangehouden: 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)
+22:6 nagekeken: GBS aangehouden: 'Basan' (GBS; anderen 'Bazan')
+22:7 nagekeken: GBS aangehouden: 'vaneengescheiden' aaneen/los anders dan liturgie.nu ('vaneen gescheiden')
+22:11 nagekeken: GBS aangehouden: 'henenzwiert' aaneen/los anders dan liturgie.nu ('henen zwiert'); 'wordt' zoals 1774 (liturgie.nu 'word')
+22:13 nagekeken: GBS aangehouden: 'rijkverzadigd' aaneen/los anders dan liturgie.nu ('rijk verzadigd')
+26:2 nagekeken: GBS aangehouden: 'openlag' aaneen/los anders dan liturgie.nu ('open lag')
+27:2 nagekeken: GBS aangehouden: 'zolang' aaneen/los anders dan liturgie.nu ('zo lang')
+27:4 nagekeken: GBS aangehouden: 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)
+30:5 nagekeken: GBS aangehouden: 'vastgezet' aaneen/los anders dan liturgie.nu ('vast gezet')
+30:6 nagekeken: GBS aangehouden: 'zei' zoals 1774 (liturgie.nu 'zeid')
+31:3 nagekeken: GBS aangehouden: 'burg' zoals 1774 (liturgie.nu 'burcht')
+31:10 nagekeken: GBS aangehouden: 'kwaad' zoals 1774 (liturgie.nu 'kwaads')
+31:12 nagekeken: GBS aangehouden: 'die' zoals 1774 (liturgie.nu 'wie')
+31:16 nagekeken: GBS aangehouden: 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)
+32:3 nagekeken: GBS aangehouden: 'eenieder' aaneen/los anders dan liturgie.nu ('een ieder')
+33:4 nagekeken: GBS aangehouden: 'tezaam' aaneen/los anders dan liturgie.nu ('te zaam'); 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)
+33:6 nagekeken: GBS aangehouden: 'erf' zoals 1774 (liturgie.nu 'erv')
+33:8 nagekeken: GBS aangehouden: 'dapper' zoals 1774 (liturgie.nu 'dappre')
+34:3 nagekeken: GBS aangehouden: 'hij' zoals 1774 (liturgie.nu 'en')
+34:6 nagekeken: GBS aangehouden: 'neemt' zoals 1774 (liturgie.nu 'neem')
+34:10 nagekeken: GBS aangehouden: 'wordt' zoals 1774 (liturgie.nu 'word')
+35:4 nagekeken: GBS aangehouden: 'tenietgebracht' aaneen/los anders dan liturgie.nu ('teniet gebracht')
+35:8 nagekeken: GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')
+35:10 nagekeken: GBS aangehouden: 'dierbaarst' zoals 1774 (liturgie.nu 'dienstbaarst')
+37:1 nagekeken: GBS aangehouden: 'ternauwernood' aaneen/los anders dan liturgie.nu ('ter nauwernood')
+37:12 nagekeken: GBS aangehouden: 'bestier' zoals 1774 (liturgie.nu 'bestuur')
+37:17 nagekeken: GBS aangehouden: 'houd' zoals 1774 (liturgie.nu 'houdt')
+37:18 nagekeken: GBS aangehouden: 'groent' zoals 1774 (liturgie.nu 'groeit')
+38:8 nagekeken: GBS aangehouden: 'zielensmarte' (tussen-n)
+38:19 nagekeken: GBS aangehouden: 'hoogverheven' aaneen/los anders dan liturgie.nu ('hoog verheven')
+38:21 nagekeken: GBS aangehouden: 'vergeweken' aaneen/los anders dan liturgie.nu ('ver geweken')
+39:6 nagekeken: GBS aangehouden: 'van' zoals 1774 (liturgie.nu 'met')
+41:5 nagekeken: GBS aangehouden: 'vreeen' aaneen/los anders dan liturgie.nu ('vree en')
+43:3 nagekeken: GBS aangehouden: 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)
+44:4 nagekeken: GBS aangehouden: 'moed' zoals 1774 (liturgie.nu 'moeds'); 'henenvluchten' aaneen/los anders dan liturgie.nu ('henen vluchten')
+45:2 nagekeken: GBS aangehouden: 'zegerijk' zoals 1774 (liturgie.nu 'zegenrijk')
+45:7 nagekeken: GBS aangehouden: 'staatsie' eigen lezing GBS (liturgie.nu 'statie', 1774 zie controle), nagekeken: geen tikfout; 'rijkgestikt' aaneen/los anders dan liturgie.nu ('rijk gestikt'); 'daar' zoals 1774 (liturgie.nu 'waar')
+45:8 nagekeken: GBS aangehouden: 'volken' eigen lezing GBS (liturgie.nu 'volkren', 1774 zie controle), nagekeken: geen tikfout
+46:3 nagekeken: GBS aangehouden: 'den' zoals 1774 (liturgie.nu 'de')
+47:4 nagekeken: GBS aangehouden: 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)
+48:2 nagekeken: GBS aangehouden: 'en' zoals 1774 (liturgie.nu 'een')
+48:3 nagekeken: GBS aangehouden: 'tgeen' aaneen/los anders dan liturgie.nu ('t geen')
+48:5 nagekeken: GBS aangehouden: 'de' zoals 1774 (liturgie.nu 'den')
+49:5 nagekeken: GBS aangehouden: 'tzelfde' aaneen/los anders dan liturgie.nu ('t zelfde')
+50:8 nagekeken: GBS aangehouden: 'ge' zoals 1774 (liturgie.nu 'gij')
+51:4 nagekeken: GBS aangehouden: 'zielenvreugd' (GBS-spelling met tussen-n)
+53:1 VERBETERD: aanhalingsteken: GBS heeft twee enkele (’’) i.p.v. een dubbel sluitteken; vgl. Ps. 14:1 met dezelfde regel
+    GBS: De trotse dwaas zegt in zijn boos gemoed: / "Daar is geen God.'' Zij doven 't licht der rede, / En maken zich, door gruwelijke zeden, / Afschuwelijk; daar is geen mens die goed / Op aarde doet.
+    nu:  De trotse dwaas zegt in zijn boos gemoed: / "Daar is geen God." Zij doven 't licht der rede, / En maken zich, door gruwelijke zeden, / Afschuwelijk; daar is geen mens die goed / Op aarde doet.
+53:5 nagekeken: GBS aangehouden: 'onverwachtst' zoals 1774 (liturgie.nu 'onverwachts')
+55:1 nagekeken: GBS aangehouden: 'ter ore' (GBS; anderen 'ter oren')
+55:3 nagekeken: GBS aangehouden: 'doodsschrik' (moderne spelling)
+55:6 nagekeken: GBS aangehouden: 't' aller ure' (GBS; anderen 'uren')
+55:8 nagekeken: GBS aangehouden: 'mijzelf' aaneen/los anders dan liturgie.nu ('mij zelf')
+55:11 nagekeken: GBS aangehouden: 'de' zoals 1774 (liturgie.nu 'der')
+58:4 nagekeken: GBS aangehouden: 'jongen' zoals 1774 (liturgie.nu 'jonge')
+59:7 nagekeken: GBS aangehouden: 'logens' zoals 1774
+60:6 nagekeken: GBS aangehouden: 'deedt' zoals 1774 (liturgie.nu 'deed')
+61:1 nagekeken: GBS aangehouden: 'verafgelegen' aaneen/los anders dan liturgie.nu ('veraf gelegen')
+62:2 nagekeken: GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')
+62:3 nagekeken: GBS aangehouden: 'leugenvond' zoals 1774 (liturgie.nu 'logenvond')
+63:7 nagekeken: GBS aangehouden: 'de' zoals 1774 (liturgie.nu 'der')
+65:5 nagekeken: GBS aangehouden: 'die' zoals 1774 (liturgie.nu 'wie')
+65:6 nagekeken: GBS aangehouden: 'drooggemaakt' aaneen/los anders dan liturgie.nu ('droog gemaakt')
+66:5 nagekeken: GBS aangehouden: 'gedreigd' zoals 1774 (liturgie.nu 'bedreigd')
+66:7 nagekeken: GBS aangehouden: 'rookwerk' zoals 1774 (liturgie.nu 'reukwerk')
+68:2 nagekeken: GBS aangehouden: 'zielenvreugd' (GBS-spelling met tussen-n)
+68:6 nagekeken: GBS aangehouden: 'hoezeer' aaneen/los anders dan liturgie.nu ('hoe zeer'); 'de' zoals 1774 (liturgie.nu 'der')
+68:7 nagekeken: GBS aangehouden: 'zalmon' zoals 1774 (liturgie.nu 'salmon')
+68:8 nagekeken: GBS aangehouden: 'Basans' (GBS; anderen 'Bazans'); 'volken' eigen lezing GBS (liturgie.nu 'volkren', 1774 zie controle), nagekeken: geen tikfout
+68:11 nagekeken: GBS aangehouden: 'Basan' (GBS; anderen 'Bazan')
+68:13 nagekeken: GBS aangehouden: 'elks' eigen lezing GBS (liturgie.nu 'elk', 1774 zie controle), nagekeken: geen tikfout
+68:15 nagekeken: GBS aangehouden: 'zilver' zoals 1774 (liturgie.nu 'zilvers')
+69:2 nagekeken: GBS aangehouden: 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)
+69:5 nagekeken: GBS aangehouden: 'snarenspel' zoals 1774 (liturgie.nu 'snarenpel')
+69:8 nagekeken: GBS aangehouden: 'ze' zoals 1774 (liturgie.nu 'haar'); 'treft' eigen lezing GBS (liturgie.nu 'treff', 1774 zie controle), nagekeken: geen tikfout
+71:2 nagekeken: GBS aangehouden: 'vindt' eigen lezing GBS (liturgie.nu 'vind', 1774 zie controle), nagekeken: geen tikfout
+71:11 nagekeken: GBS aangehouden: 'henentreden' aaneen/los anders dan liturgie.nu ('henen treden')
+71:15 nagekeken: GBS aangehouden: 'hartenleed' (tussen-n)
+72:4 nagekeken: GBS aangehouden: 'volken' eigen lezing GBS (liturgie.nu 'volkren', 1774 zie controle), nagekeken: geen tikfout
+73:3 nagekeken: GBS aangehouden: 'ze' zoals 1774 (liturgie.nu 'zij')
+73:6 nagekeken: GBS aangehouden: 'dan' zoals 1774 (liturgie.nu 'den'); 'zie' zoals 1774 (liturgie.nu 'ziet')
+73:8 nagekeken: GBS aangehouden: 'die' eigen lezing GBS (liturgie.nu 'de', 1774 zie controle), nagekeken: geen tikfout
+74:9 nagekeken: GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')
+74:10 nagekeken: GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')
+74:14 nagekeken: GBS aangehouden: 'daar' zoals 1774 (liturgie.nu 'waar')
+78:1 nagekeken: GBS aangehouden: 'ter ore' (GBS; anderen 'ter oren')
+78:6 nagekeken: GBS aangehouden: 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)
+78:28 nagekeken: GBS aangehouden: 'in' zoals 1774 (liturgie.nu 'met')
+78:32 nagekeken: GBS aangehouden: 'ter' zoals 1774 (liturgie.nu 'ten')
+78:35 nagekeken: GBS aangehouden: 'ten' zoals 1774 (liturgie.nu 'tot')
+79:2 nagekeken: GBS aangehouden: 'deerniswaardig' zoals 1774 (liturgie.nu 'deerniswekkend')
+79:3 nagekeken: GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')
+80:1 nagekeken: GBS aangehouden: 'ter ore' (GBS; anderen 'ter oren')
+80:3 nagekeken: GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')
+80:4 nagekeken: GBS aangehouden: 'hartenleed' (tussen-n)
+80:8 nagekeken: GBS aangehouden: 'verspreidt' zoals 1774 (liturgie.nu 'verspreid')
+81:13 nagekeken: GBS aangehouden: 'andre' zoals 1774 (liturgie.nu 'andren')
+81:14 nagekeken: GBS aangehouden: 'goeddacht' aaneen/los anders dan liturgie.nu ('goed dacht')
+81:18 nagekeken: GBS aangehouden: 'honingbeken' zoals 1774 (liturgie.nu 'honigbeken')
+82:1 nagekeken: GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')
+83:4 nagekeken: GBS aangehouden: 'saamvergaadren' aaneen/los anders dan liturgie.nu ('saam vergaadren')
+83:8 nagekeken: GBS aangehouden: 'vindt' zoals 1774 (liturgie.nu 'vind')
+84:2 nagekeken: GBS aangehouden: 'jonkskens' eigen lezing GBS (liturgie.nu 'jongskens', 1774 zie controle), nagekeken: geen tikfout
+84:3 nagekeken: GBS aangehouden: 'hen' zoals 1774 (liturgie.nu 'hem')
+84:5 nagekeken: GBS aangehouden: 'gezalfden' eigen lezing GBS (liturgie.nu 'gezalfde', 1774 zie controle), nagekeken: geen tikfout; 'mijns' zoals 1774 (liturgie.nu 'mijn')
+84:6 nagekeken: GBS aangehouden: 'den' zoals 1774 (liturgie.nu 'de')
+86:3 nagekeken: GBS aangehouden: 'ter ore' (GBS; anderen 'ter oren')
+88:3 nagekeken: GBS aangehouden: 'hunnen' zoals 1774 (liturgie.nu 'hunne')
+89:3 nagekeken: GBS aangehouden: 'hemelingen' zoals 1774 (liturgie.nu 'hemellingen')
+89:5 nagekeken: GBS aangehouden: 'verheft' eigen lezing GBS (liturgie.nu 'verheff', 1774 zie controle), nagekeken: geen tikfout
+89:14 nagekeken: GBS aangehouden: 'tgeen' aaneen/los anders dan liturgie.nu ('t geen')
+89:18 nagekeken: GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')
+90:3 nagekeken: GBS aangehouden: 'tijd' zoals 1774 (liturgie.nu 'tijds')
+90:4 nagekeken: GBS aangehouden: 'doodsschrik' (moderne spelling)
+90:7 nagekeken: GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')
+91:2 nagekeken: GBS aangehouden: 'ter' zoals 1774 (liturgie.nu 'ten')
+91:3 nagekeken: GBS aangehouden: 'duister' eigen lezing GBS (liturgie.nu 'duistre', 1774 zie controle), nagekeken: geen tikfout
+91:5 nagekeken: GBS aangehouden: 'dien' zoals 1774 (liturgie.nu 'die')
+94:2 nagekeken: GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')
+94:11 nagekeken: GBS aangehouden: 'schaadlijkheden' zoals 1774 (liturgie.nu 'schandlijkheden')
+96:5 nagekeken: GBS aangehouden: 'dien' zoals 1774 (liturgie.nu 'die')
+98:3 nagekeken: GBS aangehouden: 'doe' zoals 1774 (liturgie.nu 'doet'); 'groten' zoals 1774 (liturgie.nu 'grote')
+100:1 nagekeken: GBS aangehouden: 'juicht' zoals 1774 (liturgie.nu 'juich')
+101:7 nagekeken: GBS aangehouden: 'zoekt' zoals 1774 (liturgie.nu 'zocht')
+101:8 nagekeken: GBS aangehouden: 'iedre' eigen lezing GBS (liturgie.nu 'ieder', 1774 zie controle), nagekeken: geen tikfout
+102:7 nagekeken: GBS aangehouden: 'langgewenste' aaneen/los anders dan liturgie.nu ('lang gewenste')
+103:1 nagekeken: GBS aangehouden: 'prees' zoals 1774 (liturgie.nu 'preez')
+103:5 nagekeken: GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')
+104:9 nagekeken: GBS aangehouden: 'vogeltje' zoals 1774 (liturgie.nu 'vogelte')
+104:11 nagekeken: GBS aangehouden: 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)
+105:2 nagekeken: GBS aangehouden: 'wie' eigen lezing GBS (liturgie.nu 'die', 1774 zie controle), nagekeken: geen tikfout
+105:3 nagekeken: GBS aangehouden: 'tgeen' aaneen/los anders dan liturgie.nu ('t geen')
+105:10 nagekeken: GBS aangehouden: 'heen gezonden' aaneen/los anders dan liturgie.nu ('heengezonden')
+105:13 nagekeken: GBS aangehouden: 'zijns' zoals 1774 (liturgie.nu 'zijn')
+105:14 nagekeken: GBS aangehouden: 'hen' zoals 1774 (liturgie.nu 'hun')
+105:18 nagekeken: GBS aangehouden: 'vijgenboom' eigen lezing GBS (liturgie.nu 'vijgeboom', 1774 zie controle), nagekeken: geen tikfout
+105:22 nagekeken: GBS aangehouden: ''tgeen' aaneen (GBS schrijft ''tgeen', ''tzelfde', ''twelk', ''tzij')
+106:6 nagekeken: GBS aangehouden: 'dat' zoals 1774 (liturgie.nu 'dit'); 'hen' zoals 1774 (liturgie.nu 'hun')
+106:11 nagekeken: GBS aangehouden: 'gelijkgesteld' aaneen/los anders dan liturgie.nu ('gelijk gesteld')
+106:17 nagekeken: GBS aangehouden: 'de' zoals 1774 (liturgie.nu 'den'); 'standhield' aaneen/los anders dan liturgie.nu ('stand hield')
+106:25 nagekeken: GBS aangehouden: 'bijeenvergaadren' aaneen/los anders dan liturgie.nu ('bijeen vergaadren')
+107:14 nagekeken: GBS aangehouden: 'ervan' aaneen/los anders dan liturgie.nu ('er van')
+107:20 nagekeken: GBS aangehouden: 'dwalen' zoals 1774 (liturgie.nu 'dalen')
+108:3 nagekeken: GBS aangehouden: 'zou' zoals 1774 (liturgie.nu 'zal')
+108:5 nagekeken: GBS aangehouden: 'twelk' aaneen/los anders dan liturgie.nu ('t welk')
+108:6 nagekeken: GBS aangehouden: 'heil' zoals 1774 (liturgie.nu 'heils'); 'hadt' zoals 1774 (liturgie.nu 'had')
+109:4 nagekeken: GBS aangehouden: 'houd' zoals 1774 (liturgie.nu 'houdt')
+109:15 nagekeken: GBS aangehouden: 'verbeid' zoals 1774 (liturgie.nu 'verbeidt')
+111:3 nagekeken: GBS aangehouden: 'zijn verbond' eigen lezing GBS (liturgie.nu 'zijns verbonds', 1774 zie controle), nagekeken: geen tikfout
+112:4 nagekeken: GBS aangehouden: 'welondersteund' aaneen/los anders dan liturgie.nu ('wel ondersteund')
+112:5 nagekeken: GBS aangehouden: 'dikwerf' zoals 1774 (liturgie.nu 'dikwijls')
+113:2 nagekeken: GBS aangehouden: 'vanwaar' aaneen/los anders dan liturgie.nu ('van waar')
+116:6 nagekeken: GBS aangehouden: 'sprak' zoals 1774 (liturgie.nu 'spak')
+118:4 nagekeken: GBS aangehouden: 'vertrouwt' eigen lezing GBS (liturgie.nu 'vertrouw', 1774 zie controle), nagekeken: geen tikfout
+119:7 nagekeken: GBS aangehouden: 'die' zoals 1774 (liturgie.nu 'de')
+119:23 nagekeken: GBS aangehouden: 'moed' zoals 1774 (liturgie.nu 'moeds')
+119:24 nagekeken: GBS aangehouden: 'ernaar' aaneen/los anders dan liturgie.nu ('er naar'); 'tgeen' aaneen/los anders dan liturgie.nu ('t geen')
+119:25 nagekeken: GBS aangehouden: 'tgeen' aaneen/los anders dan liturgie.nu ('t geen')
+119:28 nagekeken: GBS aangehouden: 'tijd' zoals 1774 (liturgie.nu 'tijds')
+119:41 nagekeken: GBS aangehouden: 'tgeen' aaneen/los anders dan liturgie.nu ('t geen')
+119:52 nagekeken: GBS aangehouden: 'honing' (moderne spelling; anderen 'honig')
+119:56 nagekeken: GBS aangehouden: 'ten' zoals 1774 (liturgie.nu 'ter'); 'erf' zoals 1774 (liturgie.nu 'erv')
+119:61 nagekeken: GBS aangehouden: 'rechtszaak' (GBS; anderen 'rechtzaak')
+119:85 nagekeken: GBS aangehouden: 'ternederboog' aaneen/los anders dan liturgie.nu ('ter nederboog')
+120:4 nagekeken: GBS aangehouden: 'rede' zoals 1774 (liturgie.nu 'reden')
+121:4 nagekeken: GBS aangehouden: 'tzij' aaneen/los anders dan liturgie.nu ('t zij')
+122:2 nagekeken: GBS aangehouden: 'daarbinnen' aaneen/los anders dan liturgie.nu ('daar binnen')
+125:2 nagekeken: GBS aangehouden: 'twelk' aaneen/los anders dan liturgie.nu ('t welk')
+126:3 nagekeken: GBS aangehouden: 'ter' zoals 1774 (liturgie.nu 'te')
+127:3 nagekeken: GBS aangehouden: 'die' zoals 1774 (liturgie.nu 'wie')
+130:2 nagekeken: GBS aangehouden: 'zal' zoals 1774 (liturgie.nu 'zou')
+131:1 nagekeken: GBS aangehouden: 'tgeen' aaneen/los anders dan liturgie.nu ('t geen')
+131:2 nagekeken: GBS aangehouden: 'stilgezet' aaneen/los anders dan liturgie.nu ('stil gezet'); 'vindt' zoals 1774 (liturgie.nu 'vind')
+132:4 nagekeken: GBS aangehouden: 'zie' zoals 1774 (liturgie.nu 'ziet')
+133:1 nagekeken: GBS aangehouden: 'tzelfde' aaneen/los anders dan liturgie.nu ('t zelfde'); 'samenwonen' aaneen/los anders dan liturgie.nu ('samen wonen')
+135:2 nagekeken: GBS aangehouden: 'liefelijken' zoals 1774 (liturgie.nu 'liefelijke')
+135:7 nagekeken: GBS aangehouden: 'erf' zoals 1774 (liturgie.nu 'erv')
+136:6 nagekeken: GBS aangehouden: 'god' zoals 1774 (liturgie.nu '-')
+136:20 nagekeken: GBS aangehouden: 'Basans' (GBS; anderen 'Bazans')
+139:5 nagekeken: GBS aangehouden: 'zou' zoals 1774 (liturgie.nu 'zoud')
+139:10 nagekeken: GBS aangehouden: 'zand' zoals 1774 (liturgie.nu 'zands')
+139:14 nagekeken: GBS aangehouden: 'tgeen' aaneen/los anders dan liturgie.nu ('t geen'); 'voedt' zoals 1774 (liturgie.nu 'voed')
+140:5 nagekeken: GBS aangehouden: 'de' zoals 1774 (liturgie.nu 'hun')
+140:6 nagekeken: GBS aangehouden: 'ter ore' (GBS; anderen 'ter oren')
+140:8 nagekeken: GBS aangehouden: 'treft' eigen lezing GBS (liturgie.nu 'treff', 1774 zie controle), nagekeken: geen tikfout; 'verheft' eigen lezing GBS (liturgie.nu 'verheff', 1774 zie controle), nagekeken: geen tikfout
+140:12 nagekeken: GBS aangehouden: 'rechtszaak' (GBS; anderen 'rechtzaak')
+141:7 nagekeken: GBS aangehouden: 'vrijgelaten' aaneen/los anders dan liturgie.nu ('vrij gelaten')
+141:8 nagekeken: GBS aangehouden: 'beenders' zoals 1774 (liturgie.nu 'beendren')
+144:1 nagekeken: GBS aangehouden: 'burg' zoals 1774 (liturgie.nu 'burcht')
+146:1 nagekeken: GBS aangehouden: 'zolang' aaneen/los anders dan liturgie.nu ('zo lang')

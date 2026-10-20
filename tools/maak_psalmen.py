@@ -1,4 +1,7 @@
-"""Stap 2: maakt assets/data/psalmen.json uit de opgehaalde pagina's (zie bouw_psalmen.py,
+"""VERVANGEN door tools/bouw_psalmen_gbs.py (GBS-uitgave is de standaard; psalm-correcties.json bevat
+nu de besluiten voor die GBS-tekst). Oude werkwijze hieronder, ter naslag.
+
+Stap 2: maakt assets/data/psalmen.json uit de opgehaalde pagina's (zie bouw_psalmen.py,
 die alles in de cache zet) en controleert elk vers woord voor woord.
 
 Bron is psalmboek.nl: die tekst en leestekens komen overeen met wat de gemeente zingt.

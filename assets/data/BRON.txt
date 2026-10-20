@@ -1,10 +1,14 @@
 Teksten in dit programma (eenmalig opgehaald en gecontroleerd, zie tools/):
 
 psalmen.json
-  Psalmen in de berijming van 1773 en de enige gezangen (151-160), van psalmboek.nl:
-  de herziene tekst zoals de gemeente die zingt (bijv. Ps. 49:6 "hun verleden staat").
-  Gecontroleerd tegen de uitgave van 1774 (DBNL): aantal verzen per psalm, aantal regels
-  per vers en woordgelijkenis; afwijkingen zijn met de hand nagelopen.
+  Psalm 1-150 in de berijming van 1773, uitgave van de Gereformeerde Bijbelstichting (GBS Bijbel Online,
+  bijbel-statenvertaling.com), zoals in de GBS-psalmboeken van de HHK. Alleen typografie aangepast
+  (’ -> ', “ ” -> ") en de melodiestreepjes ("welda - - dig") weggelaten; vier tikfouten van de site verbeterd
+  (9:10, 18:5, 53:1, 4:1). Gecontroleerd tegen liturgie.nu, online-bijbel.nl, psalmboek.nl (Ps. 1-36) en de
+  uitgave van 1774 (DBNL): aantal verzen en regels gelijk; elk woord dat alleen de GBS heeft is nagelopen
+  (221 verzen, besluiten in tools/psalm-correcties.json, verslag in tools/controle-psalmen.txt).
+  Verschillen tussen de uitgaven: tools/psalm-edities-verschillen.txt. De vroegere psalmboek.nl-tekst van
+  Ps. 1-36 staat in tools/psalmen-1-36-psalmboek.json. Gezangen (151-160) zitten er niet in.
 
 statenvertaling.json
   Statenvertaling, 66 boeken, van statenvertaling.net, met de Nederlandse versindeling

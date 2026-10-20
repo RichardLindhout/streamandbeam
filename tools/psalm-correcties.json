@@ -1,1 +1,669 @@
-{}
+{
+ "1:1": {
+  "=": "GBS aangehouden: 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)"
+ },
+ "2:2": {
+  "=": "GBS aangehouden: 'sterren' eigen lezing GBS (liturgie.nu 'starren', 1774 zie controle), nagekeken: geen tikfout"
+ },
+ "2:5": {
+  "=": "GBS aangehouden: 'zelf' zoals 1774 (liturgie.nu 'zelv')"
+ },
+ "4:1": {
+  "enenmaal'": "enenmaal",
+  "=": "losse apostrof na 'enenmaal' weggehaald (GBS: \"t' enenmaal'\"; andere uitgaven 't' enemaal', 1774 't'eenemaal'); 'enenmaal' van de GBS aangehouden; GBS aangehouden: 'rechtszaak' (GBS; anderen 'rechtzaak'); 'enenmaal' eigen lezing GBS (liturgie.nu 'enemaal', 1774 zie controle), nagekeken: geen tikfout"
+ },
+ "4:3": {
+  "=": "GBS aangehouden: 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)"
+ },
+ "5:1": {
+  "=": "GBS aangehouden: 'ter ore' (GBS; anderen 'ter oren')"
+ },
+ "5:5": {
+  "=": "GBS aangehouden: 'hen' eigen lezing GBS (liturgie.nu 'hun', 1774 zie controle), nagekeken: geen tikfout"
+ },
+ "5:6": {
+  "=": "GBS aangehouden: 'logenspreker' zoals 1774; 'wetsverbreker' eigen lezing GBS (liturgie.nu 'wetverbreker', 1774 zie controle), nagekeken: geen tikfout"
+ },
+ "6:3": {
+  "=": "GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')"
+ },
+ "6:8": {
+  "=": "GBS aangehouden: 'grijpt' zoals 1774 (liturgie.nu 'grijp')"
+ },
+ "9:10": {
+  "vluchtten": "vluchten",
+  "=": "tikfout GBS 'vluchtten' -> 'vluchten' (liturgie.nu, online-bijbel.nl, psalmboek.nl, 1774: vluchten/vlugten; rijm met 'zuchten')"
+ },
+ "10:2": {
+  "=": "GBS aangehouden: 'het' eigen lezing GBS (liturgie.nu 'hij', 1774 zie controle), nagekeken: geen tikfout; 'omhogesteekt' aaneen/los anders dan liturgie.nu ('omhoge steekt')"
+ },
+ "10:4": {
+  "=": "GBS aangehouden: 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)"
+ },
+ "10:5": {
+  "=": "GBS aangehouden: 'dichtbelommerd' aaneen/los anders dan liturgie.nu ('dicht belommerd')"
+ },
+ "10:6": {
+  "=": "GBS aangehouden: 'hem' eigen lezing GBS (liturgie.nu 'hen', 1774 zie controle), nagekeken: geen tikfout"
+ },
+ "11:3": {
+  "=": "GBS aangehouden: 'weleens' aaneen/los anders dan liturgie.nu ('wel eens')"
+ },
+ "13:1": {
+  "=": "GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')"
+ },
+ "13:2": {
+  "=": "GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')"
+ },
+ "15:4": {
+  "=": "GBS aangehouden: 'tgeen' aaneen/los anders dan liturgie.nu ('t geen')"
+ },
+ "17:2": {
+  "=": "GBS aangehouden: 'beide' zoals 1774 (liturgie.nu 'beiden')"
+ },
+ "17:6": {
+  "=": "GBS aangehouden: 'terneer' aaneen/los anders dan liturgie.nu ('ter neer')"
+ },
+ "18:3": {
+  "=": "GBS aangehouden: 'dichtopeengepakte' aaneen/los anders dan liturgie.nu ('dicht opeengepakte')"
+ },
+ "18:5": {
+  "-schichten": "schichten",
+  "=": "tikfout GBS 'bliksemschicht op -schichten' -> 'op schichten' (liturgie.nu, online-bijbel.nl, psalmboek.nl: 'bliksemschicht op schichten')"
+ },
+ "18:8": {
+  "=": "GBS aangehouden: 'terneer' aaneen/los anders dan liturgie.nu ('ter neer')"
+ },
+ "18:11": {
+  "=": "GBS aangehouden: 'weer' zoals 1774 (liturgie.nu 'meer')"
+ },
+ "18:15": {
+  "=": "GBS aangehouden: 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)"
+ },
+ "19:3": {
+  "=": "GBS aangehouden: 'vanwaar' aaneen/los anders dan liturgie.nu ('van waar')"
+ },
+ "19:4": {
+  "=": "GBS aangehouden: 'duister' zoals 1774 (liturgie.nu 'duistre')"
+ },
+ "19:5": {
+  "=": "GBS aangehouden: 'honing' (moderne spelling; anderen 'honig')"
+ },
+ "20:2": {
+  "=": "GBS aangehouden: 'offerspijs' zoals 1774 (liturgie.nu 'offerspijz')"
+ },
+ "20:4": {
+  "=": "GBS aangehouden: 'terneergestoten' aaneen/los anders dan liturgie.nu ('terneer gestoten')"
+ },
+ "21:1": {
+  "=": "GBS aangehouden: 'zielenvreugd' (GBS-spelling met tussen-n)"
+ },
+ "22:2": {
+  "=": "GBS aangehouden: 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)"
+ },
+ "22:6": {
+  "=": "GBS aangehouden: 'Basan' (GBS; anderen 'Bazan')"
+ },
+ "22:7": {
+  "=": "GBS aangehouden: 'vaneengescheiden' aaneen/los anders dan liturgie.nu ('vaneen gescheiden')"
+ },
+ "22:11": {
+  "=": "GBS aangehouden: 'henenzwiert' aaneen/los anders dan liturgie.nu ('henen zwiert'); 'wordt' zoals 1774 (liturgie.nu 'word')"
+ },
+ "22:13": {
+  "=": "GBS aangehouden: 'rijkverzadigd' aaneen/los anders dan liturgie.nu ('rijk verzadigd')"
+ },
+ "26:2": {
+  "=": "GBS aangehouden: 'openlag' aaneen/los anders dan liturgie.nu ('open lag')"
+ },
+ "27:2": {
+  "=": "GBS aangehouden: 'zolang' aaneen/los anders dan liturgie.nu ('zo lang')"
+ },
+ "27:4": {
+  "=": "GBS aangehouden: 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)"
+ },
+ "30:5": {
+  "=": "GBS aangehouden: 'vastgezet' aaneen/los anders dan liturgie.nu ('vast gezet')"
+ },
+ "30:6": {
+  "=": "GBS aangehouden: 'zei' zoals 1774 (liturgie.nu 'zeid')"
+ },
+ "31:3": {
+  "=": "GBS aangehouden: 'burg' zoals 1774 (liturgie.nu 'burcht')"
+ },
+ "31:10": {
+  "=": "GBS aangehouden: 'kwaad' zoals 1774 (liturgie.nu 'kwaads')"
+ },
+ "31:12": {
+  "=": "GBS aangehouden: 'die' zoals 1774 (liturgie.nu 'wie')"
+ },
+ "31:16": {
+  "=": "GBS aangehouden: 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)"
+ },
+ "32:3": {
+  "=": "GBS aangehouden: 'eenieder' aaneen/los anders dan liturgie.nu ('een ieder')"
+ },
+ "33:4": {
+  "=": "GBS aangehouden: 'tezaam' aaneen/los anders dan liturgie.nu ('te zaam'); 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)"
+ },
+ "33:6": {
+  "=": "GBS aangehouden: 'erf' zoals 1774 (liturgie.nu 'erv')"
+ },
+ "33:8": {
+  "=": "GBS aangehouden: 'dapper' zoals 1774 (liturgie.nu 'dappre')"
+ },
+ "34:3": {
+  "=": "GBS aangehouden: 'hij' zoals 1774 (liturgie.nu 'en')"
+ },
+ "34:6": {
+  "=": "GBS aangehouden: 'neemt' zoals 1774 (liturgie.nu 'neem')"
+ },
+ "34:10": {
+  "=": "GBS aangehouden: 'wordt' zoals 1774 (liturgie.nu 'word')"
+ },
+ "35:4": {
+  "=": "GBS aangehouden: 'tenietgebracht' aaneen/los anders dan liturgie.nu ('teniet gebracht')"
+ },
+ "35:8": {
+  "=": "GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')"
+ },
+ "35:10": {
+  "=": "GBS aangehouden: 'dierbaarst' zoals 1774 (liturgie.nu 'dienstbaarst')"
+ },
+ "37:1": {
+  "=": "GBS aangehouden: 'ternauwernood' aaneen/los anders dan liturgie.nu ('ter nauwernood')"
+ },
+ "37:12": {
+  "=": "GBS aangehouden: 'bestier' zoals 1774 (liturgie.nu 'bestuur')"
+ },
+ "37:17": {
+  "=": "GBS aangehouden: 'houd' zoals 1774 (liturgie.nu 'houdt')"
+ },
+ "37:18": {
+  "=": "GBS aangehouden: 'groent' zoals 1774 (liturgie.nu 'groeit')"
+ },
+ "38:8": {
+  "=": "GBS aangehouden: 'zielensmarte' (tussen-n)"
+ },
+ "38:19": {
+  "=": "GBS aangehouden: 'hoogverheven' aaneen/los anders dan liturgie.nu ('hoog verheven')"
+ },
+ "38:21": {
+  "=": "GBS aangehouden: 'vergeweken' aaneen/los anders dan liturgie.nu ('ver geweken')"
+ },
+ "39:6": {
+  "=": "GBS aangehouden: 'van' zoals 1774 (liturgie.nu 'met')"
+ },
+ "41:5": {
+  "=": "GBS aangehouden: 'vreeen' aaneen/los anders dan liturgie.nu ('vree en')"
+ },
+ "43:3": {
+  "=": "GBS aangehouden: 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)"
+ },
+ "44:4": {
+  "=": "GBS aangehouden: 'moed' zoals 1774 (liturgie.nu 'moeds'); 'henenvluchten' aaneen/los anders dan liturgie.nu ('henen vluchten')"
+ },
+ "45:2": {
+  "=": "GBS aangehouden: 'zegerijk' zoals 1774 (liturgie.nu 'zegenrijk')"
+ },
+ "45:7": {
+  "=": "GBS aangehouden: 'staatsie' eigen lezing GBS (liturgie.nu 'statie', 1774 zie controle), nagekeken: geen tikfout; 'rijkgestikt' aaneen/los anders dan liturgie.nu ('rijk gestikt'); 'daar' zoals 1774 (liturgie.nu 'waar')"
+ },
+ "45:8": {
+  "=": "GBS aangehouden: 'volken' eigen lezing GBS (liturgie.nu 'volkren', 1774 zie controle), nagekeken: geen tikfout"
+ },
+ "46:3": {
+  "=": "GBS aangehouden: 'den' zoals 1774 (liturgie.nu 'de')"
+ },
+ "47:4": {
+  "=": "GBS aangehouden: 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)"
+ },
+ "48:2": {
+  "=": "GBS aangehouden: 'en' zoals 1774 (liturgie.nu 'een')"
+ },
+ "48:3": {
+  "=": "GBS aangehouden: 'tgeen' aaneen/los anders dan liturgie.nu ('t geen')"
+ },
+ "48:5": {
+  "=": "GBS aangehouden: 'de' zoals 1774 (liturgie.nu 'den')"
+ },
+ "49:5": {
+  "=": "GBS aangehouden: 'tzelfde' aaneen/los anders dan liturgie.nu ('t zelfde')"
+ },
+ "50:8": {
+  "=": "GBS aangehouden: 'ge' zoals 1774 (liturgie.nu 'gij')"
+ },
+ "51:4": {
+  "=": "GBS aangehouden: 'zielenvreugd' (GBS-spelling met tussen-n)"
+ },
+ "53:1": {
+  "God.''": "God.\"",
+  "=": "aanhalingsteken: GBS heeft twee enkele (’’) i.p.v. een dubbel sluitteken; vgl. Ps. 14:1 met dezelfde regel"
+ },
+ "53:5": {
+  "=": "GBS aangehouden: 'onverwachtst' zoals 1774 (liturgie.nu 'onverwachts')"
+ },
+ "55:1": {
+  "=": "GBS aangehouden: 'ter ore' (GBS; anderen 'ter oren')"
+ },
+ "55:3": {
+  "=": "GBS aangehouden: 'doodsschrik' (moderne spelling)"
+ },
+ "55:6": {
+  "=": "GBS aangehouden: 't' aller ure' (GBS; anderen 'uren')"
+ },
+ "55:8": {
+  "=": "GBS aangehouden: 'mijzelf' aaneen/los anders dan liturgie.nu ('mij zelf')"
+ },
+ "55:11": {
+  "=": "GBS aangehouden: 'de' zoals 1774 (liturgie.nu 'der')"
+ },
+ "58:4": {
+  "=": "GBS aangehouden: 'jongen' zoals 1774 (liturgie.nu 'jonge')"
+ },
+ "59:7": {
+  "=": "GBS aangehouden: 'logens' zoals 1774"
+ },
+ "60:6": {
+  "=": "GBS aangehouden: 'deedt' zoals 1774 (liturgie.nu 'deed')"
+ },
+ "61:1": {
+  "=": "GBS aangehouden: 'verafgelegen' aaneen/los anders dan liturgie.nu ('veraf gelegen')"
+ },
+ "62:2": {
+  "=": "GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')"
+ },
+ "62:3": {
+  "=": "GBS aangehouden: 'leugenvond' zoals 1774 (liturgie.nu 'logenvond')"
+ },
+ "63:7": {
+  "=": "GBS aangehouden: 'de' zoals 1774 (liturgie.nu 'der')"
+ },
+ "65:5": {
+  "=": "GBS aangehouden: 'die' zoals 1774 (liturgie.nu 'wie')"
+ },
+ "65:6": {
+  "=": "GBS aangehouden: 'drooggemaakt' aaneen/los anders dan liturgie.nu ('droog gemaakt')"
+ },
+ "66:5": {
+  "=": "GBS aangehouden: 'gedreigd' zoals 1774 (liturgie.nu 'bedreigd')"
+ },
+ "66:7": {
+  "=": "GBS aangehouden: 'rookwerk' zoals 1774 (liturgie.nu 'reukwerk')"
+ },
+ "68:2": {
+  "=": "GBS aangehouden: 'zielenvreugd' (GBS-spelling met tussen-n)"
+ },
+ "68:6": {
+  "=": "GBS aangehouden: 'hoezeer' aaneen/los anders dan liturgie.nu ('hoe zeer'); 'de' zoals 1774 (liturgie.nu 'der')"
+ },
+ "68:7": {
+  "=": "GBS aangehouden: 'zalmon' zoals 1774 (liturgie.nu 'salmon')"
+ },
+ "68:8": {
+  "=": "GBS aangehouden: 'Basans' (GBS; anderen 'Bazans'); 'volken' eigen lezing GBS (liturgie.nu 'volkren', 1774 zie controle), nagekeken: geen tikfout"
+ },
+ "68:11": {
+  "=": "GBS aangehouden: 'Basan' (GBS; anderen 'Bazan')"
+ },
+ "68:13": {
+  "=": "GBS aangehouden: 'elks' eigen lezing GBS (liturgie.nu 'elk', 1774 zie controle), nagekeken: geen tikfout"
+ },
+ "68:15": {
+  "=": "GBS aangehouden: 'zilver' zoals 1774 (liturgie.nu 'zilvers')"
+ },
+ "69:2": {
+  "=": "GBS aangehouden: 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)"
+ },
+ "69:5": {
+  "=": "GBS aangehouden: 'snarenspel' zoals 1774 (liturgie.nu 'snarenpel')"
+ },
+ "69:8": {
+  "=": "GBS aangehouden: 'ze' zoals 1774 (liturgie.nu 'haar'); 'treft' eigen lezing GBS (liturgie.nu 'treff', 1774 zie controle), nagekeken: geen tikfout"
+ },
+ "71:2": {
+  "=": "GBS aangehouden: 'vindt' eigen lezing GBS (liturgie.nu 'vind', 1774 zie controle), nagekeken: geen tikfout"
+ },
+ "71:11": {
+  "=": "GBS aangehouden: 'henentreden' aaneen/los anders dan liturgie.nu ('henen treden')"
+ },
+ "71:15": {
+  "=": "GBS aangehouden: 'hartenleed' (tussen-n)"
+ },
+ "72:4": {
+  "=": "GBS aangehouden: 'volken' eigen lezing GBS (liturgie.nu 'volkren', 1774 zie controle), nagekeken: geen tikfout"
+ },
+ "73:3": {
+  "=": "GBS aangehouden: 'ze' zoals 1774 (liturgie.nu 'zij')"
+ },
+ "73:6": {
+  "=": "GBS aangehouden: 'dan' zoals 1774 (liturgie.nu 'den'); 'zie' zoals 1774 (liturgie.nu 'ziet')"
+ },
+ "73:8": {
+  "=": "GBS aangehouden: 'die' eigen lezing GBS (liturgie.nu 'de', 1774 zie controle), nagekeken: geen tikfout"
+ },
+ "74:9": {
+  "=": "GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')"
+ },
+ "74:10": {
+  "=": "GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')"
+ },
+ "74:14": {
+  "=": "GBS aangehouden: 'daar' zoals 1774 (liturgie.nu 'waar')"
+ },
+ "78:1": {
+  "=": "GBS aangehouden: 'ter ore' (GBS; anderen 'ter oren')"
+ },
+ "78:6": {
+  "=": "GBS aangehouden: 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)"
+ },
+ "78:28": {
+  "=": "GBS aangehouden: 'in' zoals 1774 (liturgie.nu 'met')"
+ },
+ "78:32": {
+  "=": "GBS aangehouden: 'ter' zoals 1774 (liturgie.nu 'ten')"
+ },
+ "78:35": {
+  "=": "GBS aangehouden: 'ten' zoals 1774 (liturgie.nu 'tot')"
+ },
+ "79:2": {
+  "=": "GBS aangehouden: 'deerniswaardig' zoals 1774 (liturgie.nu 'deerniswekkend')"
+ },
+ "79:3": {
+  "=": "GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')"
+ },
+ "80:1": {
+  "=": "GBS aangehouden: 'ter ore' (GBS; anderen 'ter oren')"
+ },
+ "80:3": {
+  "=": "GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')"
+ },
+ "80:4": {
+  "=": "GBS aangehouden: 'hartenleed' (tussen-n)"
+ },
+ "80:8": {
+  "=": "GBS aangehouden: 'verspreidt' zoals 1774 (liturgie.nu 'verspreid')"
+ },
+ "81:13": {
+  "=": "GBS aangehouden: 'andre' zoals 1774 (liturgie.nu 'andren')"
+ },
+ "81:14": {
+  "=": "GBS aangehouden: 'goeddacht' aaneen/los anders dan liturgie.nu ('goed dacht')"
+ },
+ "81:18": {
+  "=": "GBS aangehouden: 'honingbeken' zoals 1774 (liturgie.nu 'honigbeken')"
+ },
+ "82:1": {
+  "=": "GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')"
+ },
+ "83:4": {
+  "=": "GBS aangehouden: 'saamvergaadren' aaneen/los anders dan liturgie.nu ('saam vergaadren')"
+ },
+ "83:8": {
+  "=": "GBS aangehouden: 'vindt' zoals 1774 (liturgie.nu 'vind')"
+ },
+ "84:2": {
+  "=": "GBS aangehouden: 'jonkskens' eigen lezing GBS (liturgie.nu 'jongskens', 1774 zie controle), nagekeken: geen tikfout"
+ },
+ "84:3": {
+  "=": "GBS aangehouden: 'hen' zoals 1774 (liturgie.nu 'hem')"
+ },
+ "84:5": {
+  "=": "GBS aangehouden: 'gezalfden' eigen lezing GBS (liturgie.nu 'gezalfde', 1774 zie controle), nagekeken: geen tikfout; 'mijns' zoals 1774 (liturgie.nu 'mijn')"
+ },
+ "84:6": {
+  "=": "GBS aangehouden: 'den' zoals 1774 (liturgie.nu 'de')"
+ },
+ "86:3": {
+  "=": "GBS aangehouden: 'ter ore' (GBS; anderen 'ter oren')"
+ },
+ "88:3": {
+  "=": "GBS aangehouden: 'hunnen' zoals 1774 (liturgie.nu 'hunne')"
+ },
+ "89:3": {
+  "=": "GBS aangehouden: 'hemelingen' zoals 1774 (liturgie.nu 'hemellingen')"
+ },
+ "89:5": {
+  "=": "GBS aangehouden: 'verheft' eigen lezing GBS (liturgie.nu 'verheff', 1774 zie controle), nagekeken: geen tikfout"
+ },
+ "89:14": {
+  "=": "GBS aangehouden: 'tgeen' aaneen/los anders dan liturgie.nu ('t geen')"
+ },
+ "89:18": {
+  "=": "GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')"
+ },
+ "90:3": {
+  "=": "GBS aangehouden: 'tijd' zoals 1774 (liturgie.nu 'tijds')"
+ },
+ "90:4": {
+  "=": "GBS aangehouden: 'doodsschrik' (moderne spelling)"
+ },
+ "90:7": {
+  "=": "GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')"
+ },
+ "91:2": {
+  "=": "GBS aangehouden: 'ter' zoals 1774 (liturgie.nu 'ten')"
+ },
+ "91:3": {
+  "=": "GBS aangehouden: 'duister' eigen lezing GBS (liturgie.nu 'duistre', 1774 zie controle), nagekeken: geen tikfout"
+ },
+ "91:5": {
+  "=": "GBS aangehouden: 'dien' zoals 1774 (liturgie.nu 'die')"
+ },
+ "94:2": {
+  "=": "GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')"
+ },
+ "94:11": {
+  "=": "GBS aangehouden: 'schaadlijkheden' zoals 1774 (liturgie.nu 'schandlijkheden')"
+ },
+ "96:5": {
+  "=": "GBS aangehouden: 'dien' zoals 1774 (liturgie.nu 'die')"
+ },
+ "98:3": {
+  "=": "GBS aangehouden: 'doe' zoals 1774 (liturgie.nu 'doet'); 'groten' zoals 1774 (liturgie.nu 'grote')"
+ },
+ "100:1": {
+  "=": "GBS aangehouden: 'juicht' zoals 1774 (liturgie.nu 'juich')"
+ },
+ "101:7": {
+  "=": "GBS aangehouden: 'zoekt' zoals 1774 (liturgie.nu 'zocht')"
+ },
+ "101:8": {
+  "=": "GBS aangehouden: 'iedre' eigen lezing GBS (liturgie.nu 'ieder', 1774 zie controle), nagekeken: geen tikfout"
+ },
+ "102:7": {
+  "=": "GBS aangehouden: 'langgewenste' aaneen/los anders dan liturgie.nu ('lang gewenste')"
+ },
+ "103:1": {
+  "=": "GBS aangehouden: 'prees' zoals 1774 (liturgie.nu 'preez')"
+ },
+ "103:5": {
+  "=": "GBS aangehouden: 'hoelang' aaneen/los anders dan liturgie.nu ('hoe lang')"
+ },
+ "104:9": {
+  "=": "GBS aangehouden: 'vogeltje' zoals 1774 (liturgie.nu 'vogelte')"
+ },
+ "104:11": {
+  "=": "GBS aangehouden: 'waar' i.p.v. 'daar' (GBS-modernisering, vaker)"
+ },
+ "105:2": {
+  "=": "GBS aangehouden: 'wie' eigen lezing GBS (liturgie.nu 'die', 1774 zie controle), nagekeken: geen tikfout"
+ },
+ "105:3": {
+  "=": "GBS aangehouden: 'tgeen' aaneen/los anders dan liturgie.nu ('t geen')"
+ },
+ "105:10": {
+  "=": "GBS aangehouden: 'heen gezonden' aaneen/los anders dan liturgie.nu ('heengezonden')"
+ },
+ "105:13": {
+  "=": "GBS aangehouden: 'zijns' zoals 1774 (liturgie.nu 'zijn')"
+ },
+ "105:14": {
+  "=": "GBS aangehouden: 'hen' zoals 1774 (liturgie.nu 'hun')"
+ },
+ "105:18": {
+  "=": "GBS aangehouden: 'vijgenboom' eigen lezing GBS (liturgie.nu 'vijgeboom', 1774 zie controle), nagekeken: geen tikfout"
+ },
+ "105:22": {
+  "=": "GBS aangehouden: ''tgeen' aaneen (GBS schrijft ''tgeen', ''tzelfde', ''twelk', ''tzij')"
+ },
+ "106:6": {
+  "=": "GBS aangehouden: 'dat' zoals 1774 (liturgie.nu 'dit'); 'hen' zoals 1774 (liturgie.nu 'hun')"
+ },
+ "106:11": {
+  "=": "GBS aangehouden: 'gelijkgesteld' aaneen/los anders dan liturgie.nu ('gelijk gesteld')"
+ },
+ "106:17": {
+  "=": "GBS aangehouden: 'de' zoals 1774 (liturgie.nu 'den'); 'standhield' aaneen/los anders dan liturgie.nu ('stand hield')"
+ },
+ "106:25": {
+  "=": "GBS aangehouden: 'bijeenvergaadren' aaneen/los anders dan liturgie.nu ('bijeen vergaadren')"
+ },
+ "107:14": {
+  "=": "GBS aangehouden: 'ervan' aaneen/los anders dan liturgie.nu ('er van')"
+ },
+ "107:20": {
+  "=": "GBS aangehouden: 'dwalen' zoals 1774 (liturgie.nu 'dalen')"
+ },
+ "108:3": {
+  "=": "GBS aangehouden: 'zou' zoals 1774 (liturgie.nu 'zal')"
+ },
+ "108:5": {
+  "=": "GBS aangehouden: 'twelk' aaneen/los anders dan liturgie.nu ('t welk')"
+ },
+ "108:6": {
+  "=": "GBS aangehouden: 'heil' zoals 1774 (liturgie.nu 'heils'); 'hadt' zoals 1774 (liturgie.nu 'had')"
+ },
+ "109:4": {
+  "=": "GBS aangehouden: 'houd' zoals 1774 (liturgie.nu 'houdt')"
+ },
+ "109:15": {
+  "=": "GBS aangehouden: 'verbeid' zoals 1774 (liturgie.nu 'verbeidt')"
+ },
+ "111:3": {
+  "=": "GBS aangehouden: 'zijn verbond' eigen lezing GBS (liturgie.nu 'zijns verbonds', 1774 zie controle), nagekeken: geen tikfout"
+ },
+ "112:4": {
+  "=": "GBS aangehouden: 'welondersteund' aaneen/los anders dan liturgie.nu ('wel ondersteund')"
+ },
+ "112:5": {
+  "=": "GBS aangehouden: 'dikwerf' zoals 1774 (liturgie.nu 'dikwijls')"
+ },
+ "113:2": {
+  "=": "GBS aangehouden: 'vanwaar' aaneen/los anders dan liturgie.nu ('van waar')"
+ },
+ "116:6": {
+  "=": "GBS aangehouden: 'sprak' zoals 1774 (liturgie.nu 'spak')"
+ },
+ "118:4": {
+  "=": "GBS aangehouden: 'vertrouwt' eigen lezing GBS (liturgie.nu 'vertrouw', 1774 zie controle), nagekeken: geen tikfout"
+ },
+ "119:7": {
+  "=": "GBS aangehouden: 'die' zoals 1774 (liturgie.nu 'de')"
+ },
+ "119:23": {
+  "=": "GBS aangehouden: 'moed' zoals 1774 (liturgie.nu 'moeds')"
+ },
+ "119:24": {
+  "=": "GBS aangehouden: 'ernaar' aaneen/los anders dan liturgie.nu ('er naar'); 'tgeen' aaneen/los anders dan liturgie.nu ('t geen')"
+ },
+ "119:25": {
+  "=": "GBS aangehouden: 'tgeen' aaneen/los anders dan liturgie.nu ('t geen')"
+ },
+ "119:28": {
+  "=": "GBS aangehouden: 'tijd' zoals 1774 (liturgie.nu 'tijds')"
+ },
+ "119:41": {
+  "=": "GBS aangehouden: 'tgeen' aaneen/los anders dan liturgie.nu ('t geen')"
+ },
+ "119:52": {
+  "=": "GBS aangehouden: 'honing' (moderne spelling; anderen 'honig')"
+ },
+ "119:56": {
+  "=": "GBS aangehouden: 'ten' zoals 1774 (liturgie.nu 'ter'); 'erf' zoals 1774 (liturgie.nu 'erv')"
+ },
+ "119:61": {
+  "=": "GBS aangehouden: 'rechtszaak' (GBS; anderen 'rechtzaak')"
+ },
+ "119:85": {
+  "=": "GBS aangehouden: 'ternederboog' aaneen/los anders dan liturgie.nu ('ter nederboog')"
+ },
+ "120:4": {
+  "=": "GBS aangehouden: 'rede' zoals 1774 (liturgie.nu 'reden')"
+ },
+ "121:4": {
+  "=": "GBS aangehouden: 'tzij' aaneen/los anders dan liturgie.nu ('t zij')"
+ },
+ "122:2": {
+  "=": "GBS aangehouden: 'daarbinnen' aaneen/los anders dan liturgie.nu ('daar binnen')"
+ },
+ "125:2": {
+  "=": "GBS aangehouden: 'twelk' aaneen/los anders dan liturgie.nu ('t welk')"
+ },
+ "126:3": {
+  "=": "GBS aangehouden: 'ter' zoals 1774 (liturgie.nu 'te')"
+ },
+ "127:3": {
+  "=": "GBS aangehouden: 'die' zoals 1774 (liturgie.nu 'wie')"
+ },
+ "130:2": {
+  "=": "GBS aangehouden: 'zal' zoals 1774 (liturgie.nu 'zou')"
+ },
+ "131:1": {
+  "=": "GBS aangehouden: 'tgeen' aaneen/los anders dan liturgie.nu ('t geen')"
+ },
+ "131:2": {
+  "=": "GBS aangehouden: 'stilgezet' aaneen/los anders dan liturgie.nu ('stil gezet'); 'vindt' zoals 1774 (liturgie.nu 'vind')"
+ },
+ "132:4": {
+  "=": "GBS aangehouden: 'zie' zoals 1774 (liturgie.nu 'ziet')"
+ },
+ "133:1": {
+  "=": "GBS aangehouden: 'tzelfde' aaneen/los anders dan liturgie.nu ('t zelfde'); 'samenwonen' aaneen/los anders dan liturgie.nu ('samen wonen')"
+ },
+ "135:2": {
+  "=": "GBS aangehouden: 'liefelijken' zoals 1774 (liturgie.nu 'liefelijke')"
+ },
+ "135:7": {
+  "=": "GBS aangehouden: 'erf' zoals 1774 (liturgie.nu 'erv')"
+ },
+ "136:6": {
+  "=": "GBS aangehouden: 'god' zoals 1774 (liturgie.nu '-')"
+ },
+ "136:20": {
+  "=": "GBS aangehouden: 'Basans' (GBS; anderen 'Bazans')"
+ },
+ "139:5": {
+  "=": "GBS aangehouden: 'zou' zoals 1774 (liturgie.nu 'zoud')"
+ },
+ "139:10": {
+  "=": "GBS aangehouden: 'zand' zoals 1774 (liturgie.nu 'zands')"
+ },
+ "139:14": {
+  "=": "GBS aangehouden: 'tgeen' aaneen/los anders dan liturgie.nu ('t geen'); 'voedt' zoals 1774 (liturgie.nu 'voed')"
+ },
+ "140:5": {
+  "=": "GBS aangehouden: 'de' zoals 1774 (liturgie.nu 'hun')"
+ },
+ "140:6": {
+  "=": "GBS aangehouden: 'ter ore' (GBS; anderen 'ter oren')"
+ },
+ "140:8": {
+  "=": "GBS aangehouden: 'treft' eigen lezing GBS (liturgie.nu 'treff', 1774 zie controle), nagekeken: geen tikfout; 'verheft' eigen lezing GBS (liturgie.nu 'verheff', 1774 zie controle), nagekeken: geen tikfout"
+ },
+ "140:12": {
+  "=": "GBS aangehouden: 'rechtszaak' (GBS; anderen 'rechtzaak')"
+ },
+ "141:7": {
+  "=": "GBS aangehouden: 'vrijgelaten' aaneen/los anders dan liturgie.nu ('vrij gelaten')"
+ },
+ "141:8": {
+  "=": "GBS aangehouden: 'beenders' zoals 1774 (liturgie.nu 'beendren')"
+ },
+ "144:1": {
+  "=": "GBS aangehouden: 'burg' zoals 1774 (liturgie.nu 'burcht')"
+ },
+ "146:1": {
+  "=": "GBS aangehouden: 'zolang' aaneen/los anders dan liturgie.nu ('zo lang')"
+ }
+}

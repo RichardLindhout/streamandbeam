@@ -1,0 +1,539 @@
+Verschillen tussen uitgaven van de psalmberijming 1773 (stand oktober 2026)
+==========================================================================
+
+Vergeleken uitgaven
+  GBS          Gereformeerde Bijbelstichting, GBS Bijbel Online (bijbel-statenvertaling.com/1773/psalm/N/).
+               Dit is de standaard voor assets/data/psalmen.json.
+  psalmboek.nl psalmboek.nl (Ps. 1-36 eerder opgehaald; 37-150 alleen de ca. 120 verzen die het
+               Internet Archive bewaard heeft; de site blokkeert ons IP-adres).
+  liturgie.nu  liturgie.nu/psalmen/N
+  online-bijbel online-bijbel.nl/psalm/N/
+  1774         DBNL, "Het boek der psalmen ..." (herdruk 1774), oude spelling. De DBNL-overname mist hier
+               en daar regels (o.a. 74:13, 84:5, 92:8, 128:3) en heeft "PAUZE"-aanwijzingen.
+
+Aantal verzen: GBS, liturgie.nu, online-bijbel.nl, psalmboek.nl en 1774 hebben voor alle 150 psalmen
+hetzelfde aantal verzen, behalve Ps. 18: liturgie.nu 16, de anderen 15 (1774 op DBNL is daar verschoven).
+Bijvoorbeeld Ps. 68: 17, Ps. 78: 36, Ps. 89: 20, Ps. 119: 88, Ps. 136: 26, Ps. 117: 1 vers. Ook het aantal
+regels per vers is overal gelijk.
+
+Wat typisch GBS is
+  - HEER' met apostrof (HEER', HEEREN); op een aantal plaatsen "Heer'" in gewone letters (9:14, 14:7, 46:6,
+    57:7 ...), waar liturgie.nu HEER' heeft (vermoedelijk een bewust onderscheid van de GBS, niet nagegaan).
+    psalmboek.nl schrijft HEER zonder apostrof, online-bijbel.nl overal Heer'.
+  - Meer hoofdletters voor God en de Messias: Die, Mij, Mijn, Zelf, Naam, Rots, Burg, Toeverlaat, Hulp.
+  - Eigen, wat lichtere interpunctie (bijv. 1:1 "Welzalig hij die in der bozen raad" zonder komma's).
+  - Modernisering van woordvormen: "waar" voor betrekkelijk "daar" (1:1 "Noch nederzit waar zulken",
+    4:3, 10:4, 22:2, 27:4, 33:4 ...), "honing" (honig), "Basan" (Bazan), "Jakob" (psalmboek.nl: Jacob),
+    tussen-n (zielenvreugd, hartenleed, zielensmarte), "hen" voor "hun" als lijdend voorwerp,
+    "wordt"/"vindt"/"treft" waar anderen de aanvoegende wijs "word'"/"vind'"/"treff'" hebben.
+  - Aaneen geschreven: hoelang, zolang, terneer, tenietgebracht, 'tgeen, 'tzelfde, 'twelk, 'tzij.
+  - Soms terug naar 1774 waar de anderen afwijken: "logenspreker", "bestier" (37:12), "groent" (37:18),
+    "dierbaarst" (35:10; anderen "dienstbaarst"), "bedorven" (31:10), "voor dat".
+  - Een enkele grammaticale ingreep: 10:2 "Het zegent" (anderen "Hij zegent"), 73:8 "Die Godsregering".
+  - Klemtoontekens bij namen: Pínehas, Sísera, Abírams, Melchizédeks; nadruk: én ... én, wél, één.
+  - Melodiestreepjes bij lange noten ("welda - - dig", "bo - zen"); die zijn in psalmen.json weggelaten.
+  - Tikfouten op de GBS-site (verbeterd, zie tools/psalm-correcties.json): 9:10 "vluchtten",
+    18:5 "bliksemschicht op -schichten", 53:1 "God.’’" (twee enkele aanhalingstekens), 4:1 "t’ enenmaal’"
+    (losse apostrof). Typografie: ’ en “ ” zijn in psalmen.json ' en ".
+
+De andere uitgaven in het kort
+  psalmboek.nl  Woordelijk het dichtst bij GBS (66% van de regels letterlijk gelijk), maar schrijft HEER,
+                Jacob, "daar", "honig", "ter oren"; tikfouten "ln" (= In), "in't", "neergehogen".
+                Deelt met GBS de lezing 22:3 "Dien 't boze volk" (de anderen en 1774: "Wien").
+  liturgie.nu   Schrijft samenstellingen aaneen (vanouds, terneer, voordezen, hooggeducht), Jakob, HEER',
+                melodiestreepjes (vol-ken), tikfouten "ln", "lk", "ls"; 63% van de regels gelijk aan GBS.
+  online-bijbel Heer' voor HEER, laat accenten en apostrofs binnen woorden weg (andren, voen, gena),
+                schrijft samenstellingen los zoals 1774; 53% van de regels gelijk aan GBS.
+  1774          Oude spelling (vreezen, magt, menschen, Iakob), "smert", "hun", PAUZE-aanwijzingen;
+                26% van de regels letterlijk gelijk aan GBS.
+
+Tellingen en voorbeelden (automatisch, woordniveau; "woordverschil" omvat ook tikfouten van de andere
+bron en verschillen als hen/hun; bij 1774 is "oude spelling" een ruwe schatting)
+
+=== GBS tegenover psalmboek.nl (Ps. 1-36 volledig, 37-150 alleen gearchiveerde verzen) ===
+389 verzen vergeleken; 1790 van 2706 regels letterlijk gelijk (66%), na gelijktrekken van ’/' en “/".
+Verschillen (per plek, woordniveau):
+     75  woordverschil
+    123  spatie/apostrof in woord (in't, and'ren/andren, aaneen/los)
+      2  spatie/aaneenschrijving
+     33  accenten (gâ/ga, vermeêrd)
+    140  HEER / HEER' / Heer'
+    183  hoofdletters
+    481  leestekens
+     18  leestekens+hoofdletters
+    845  apostrof/aanhalingsteken-typografie
+  voorbeelden woordverschil:
+     4:1  GBS «t’ enenmaal’»  ↔  «t' enemaal»
+     4:3  GBS «Waar»  ↔  «Daar»
+     4:4  GBS «In»  ↔  «ln»
+     5:1  GBS «ore;»  ↔  «oren;»
+     5:5  GBS «hen»  ↔  «hun»
+     6:8  GBS «grijpt moed; wijkt, bozen;»  ↔  «grijp moed: wijkt bozen,»
+     7:2  GBS «heb»  ↔  «hebb'»
+     9:10  GBS «vluchtten.»  ↔  «vluchten.»
+     18:1  GBS «lijden;»  ↔  «'t lijden,»
+     18:11  GBS «weer»  ↔  «meer»
+     21:1  GBS «zielenvreugd»  ↔  «zielevreugd»
+     24:3  GBS «’s Jakob,»  ↔  «'s Jacob,»
+     30:6  GBS «zei: “O»  ↔  «zeid': "O»
+     31:12  GBS «die verbolgen»  ↔  «wie verbolgen,»
+     37:18  GBS «groent,»  ↔  «groeit,»
+     43:3  GBS «Waar»  ↔  «Daar»
+     45:7  GBS «staatsie,»  ↔  «statie,»
+     46:3  GBS «den»  ↔  «de»
+     46:5  GBS «heren;»  ↔  «heeren:»
+     54:1  GBS «rechtszaak»  ↔  «rechtzaak»
+  voorbeelden spatie/apostrof in woord (in't, and'ren/andren, aaneen/los):
+     6:3  GBS «Hoelang»  ↔  «Hoe lang»
+     13:1  GBS «Hoelang»  ↔  «Hoe lang»
+     18:8  GBS «terneer»  ↔  «ter neer,»
+     31:15  GBS «is ’t goed»  ↔  «is't goed,»
+     47:1  GBS «tezaam verheugd.»  ↔  «te zaâm verheugd;»
+     69:1  GBS «grond;»  ↔  «grond';»
+  voorbeelden spatie/aaneenschrijving:
+     12:5  GBS «Ik”,»  ↔  «Ik ",»
+     28:6  GBS «rijksgezalfde staag»  ↔  «Rijksgezalfde staâg»
+  voorbeelden accenten (gâ/ga, vermeêrd):
+     7:2  GBS «vreegenoot bedrogen»  ↔  «vreêgenoot bedrogen;»
+     7:8  GBS «Waarmee»  ↔  «Waarmeê»
+     12:1  GBS «vree betracht,»  ↔  «vreê betracht.»
+     22:9  GBS «een;»  ↔  «één.»
+     28:1  GBS «neergestort.»  ↔  «neêrgestort.»
+     60:1  GBS «weêr»  ↔  «weer»
+  voorbeelden HEER / HEER' / Heer':
+     9:20  GBS «HEER’,»  ↔  «HEER,»
+     10:8  GBS «HEER’»  ↔  «HEER»
+     11:4  GBS «HEER’»  ↔  «HEER»
+     25:5  GBS «HEER’,»  ↔  «HEER,»
+     34:5  GBS «HEER’»  ↔  «HEER»
+     70:1  GBS «HEER’!»  ↔  «HEER!»
+  voorbeelden hoofdletters:
+     9:13  GBS «Die»  ↔  «die»
+     16:6  GBS «Mij»  ↔  «mij»
+     22:1  GBS «Mij,»  ↔  «mij,»
+     33:3  GBS «Woord»  ↔  «woord»
+     33:10  GBS «Lust.»  ↔  «lust.»
+     63:1  GBS «Toeverlaat;»  ↔  «toeverlaat;»
+  voorbeelden leestekens:
+     7:2  GBS «verdrukt);»  ↔  «verdrukt;)»
+     13:1  GBS «wenden,»  ↔  «wenden?»
+     22:9  GBS «verdelen.»  ↔  «verdelen;»
+     32:2  GBS «’k zweeg,»  ↔  «'k zweeg»
+     32:4  GBS «raad;»  ↔  «raad,»
+     34:5  GBS «Gij»  ↔  «Gij,»
+  voorbeelden leestekens+hoofdletters:
+     3:2  GBS «Betrouwen.»  ↔  «betrouwen;»
+     3:2  GBS «Schild Dat»  ↔  «schild, dat»
+     6:3  GBS «Toeverlaat!»  ↔  «toeverlaat?»
+     18:9  GBS «Rots»  ↔  «rots,»
+     25:4  GBS «Heeren;»  ↔  «HEEREN.»
+     66:1  GBS «Naams,»  ↔  «naams»
+
+=== GBS tegenover liturgie.nu ===
+1431 verzen vergeleken; 5925 van 9405 regels letterlijk gelijk (63%), na gelijktrekken van ’/' en “/".
+Verschillen (per plek, woordniveau):
+    198  woordverschil
+    181  spatie/apostrof in woord (in't, and'ren/andren, aaneen/los)
+    127  accenten (gâ/ga, vermeêrd)
+     42  HEER / HEER' / Heer'
+    374  hoofdletters
+   2988  leestekens
+     79  leestekens+hoofdletters
+      1  apostrof/aanhalingsteken-typografie
+  voorbeelden woordverschil:
+     18:2  GBS «hoog»  ↔  «hoogst»
+     33:9  GBS «benauwdheid»  ↔  «benauwheid»
+     45:5  GBS «In»  ↔  «ln»
+     45:7  GBS «staatsie,»  ↔  «statie,»
+     54:3  GBS «Ik»  ↔  «lk»
+     55:6  GBS «ure,»  ↔  «uren,»
+     63:7  GBS «de»  ↔  «der»
+     68:6  GBS «de»  ↔  «der»
+     73:8  GBS «Die»  ↔  «De»
+     78:28  GBS «in»  ↔  «met»
+     78:35  GBS «ten»  ↔  «tot»
+     80:4  GBS «hartenleed.»  ↔  «harteleed.»
+     84:5  GBS «gezalfden»  ↔  «gezalfde»
+     90:3  GBS «tijd»  ↔  «tijds»
+     91:2  GBS «ter»  ↔  «ten»
+     104:9  GBS «vogeltje»  ↔  «vogelte»
+     105:2  GBS «wie»  ↔  «die»
+     119:61  GBS «rechtszaak»  ↔  «rechtzaak»
+     127:3  GBS «Die»  ↔  «Wie»
+     136:6  GBS «God»  ↔  «»
+  voorbeelden spatie/apostrof in woord (in't, and'ren/andren, aaneen/los):
+     12:3  GBS «Snij’»  ↔  «Snij»
+     18:8  GBS «terneer»  ↔  «ter neer,»
+     55:8  GBS «mijzelf»  ↔  «mij zelf,»
+     79:3  GBS «Hoelang»  ↔  «Hoe lang»
+     103:5  GBS «hoelang»  ↔  «hoe lang»
+     119:41  GBS «’tgeen»  ↔  «’t geen»
+  voorbeelden accenten (gâ/ga, vermeêrd):
+     7:2  GBS «vreegenoot bedrogen»  ↔  «vreêgenoot bedrogen;»
+     7:6  GBS «alree»  ↔  «alreê»
+     25:3  GBS «gâ,»  ↔  «ga,»
+     60:1  GBS «weêr»  ↔  «weer»
+     91:6  GBS «dragen.»  ↔  «dra-gen.»
+     138:1  GBS «saam,»  ↔  «saâm,»
+  voorbeelden HEER / HEER' / Heer':
+     9:14  GBS «Heer’,»  ↔  «HEER’,»
+     14:7  GBS «Heer’.»  ↔  «HEER’.»
+     46:6  GBS «Heer’,»  ↔  «HEER’,»
+     57:7  GBS «Heer’,»  ↔  «HEER’,»
+     102:13  GBS «Heer’»  ↔  «HEER’»
+     104:10  GBS «Heer’,»  ↔  «HEER’,»
+  voorbeelden hoofdletters:
+     59:10  GBS «Sterkte,»  ↔  «sterkte,»
+     62:1  GBS «Hulp»  ↔  «hulp»
+     96:1  GBS «Naam»  ↔  «naam»
+     115:5  GBS «Hulp,»  ↔  «hulp,»
+     115:9  GBS «Bron»  ↔  «bron»
+     144:1  GBS «Rotssteen»  ↔  «rotssteen»
+  voorbeelden leestekens:
+     3:1  GBS «Maar,»  ↔  «Maar»
+     4:2  GBS «neergezegen;»  ↔  «neergezegen,»
+     9:17  GBS «hel,»  ↔  «hel;»
+     16:4  GBS «ogen;»  ↔  «ogen,»
+     17:1  GBS «horen;»  ↔  «horen!»
+     19:7  GBS «vrij.»  ↔  «vrij,»
+  voorbeelden leestekens+hoofdletters:
+     25:2  GBS «Heer’!»  ↔  «HEER’,»
+     25:4  GBS «Heeren;»  ↔  «HEEREN.»
+     66:1  GBS «Naams,»  ↔  «naams»
+     68:5  GBS «Beschermer,»  ↔  «beschermer»
+     96:6  GBS «Zich verspreidt.»  ↔  «zich verspreidt;»
+     139:4  GBS «Uw glans.»  ↔  «uw glans;»
+
+=== GBS tegenover online-bijbel.nl ===
+1431 verzen vergeleken; 4972 van 9405 regels letterlijk gelijk (53%), na gelijktrekken van ’/' en “/".
+Verschillen (per plek, woordniveau):
+    216  woordverschil
+    926  spatie/apostrof in woord (in't, and'ren/andren, aaneen/los)
+     10  spatie/aaneenschrijving
+    382  accenten (gâ/ga, vermeêrd)
+    312  HEER / HEER' / Heer'
+    494  hoofdletters
+   2812  leestekens
+    136  leestekens+hoofdletters
+   2449  apostrof/aanhalingsteken-typografie
+  voorbeelden woordverschil:
+     4:1  GBS «En, t’ enenmaal’»  ↔  «En t' enemaal»
+     7:4  GBS «volken»  ↔  «volkren»
+     21:1  GBS «zielenvreugd»  ↔  «zielevreugd»
+     22:6  GBS «Basan,»  ↔  «Bazan,»
+     31:16  GBS «Waar»  ↔  «Daar»
+     37:12  GBS «bestier»  ↔  «bestuur»
+     45:7  GBS «staatsie,»  ↔  «statie,»
+     51:4  GBS «zielenvreugd;»  ↔  «zielevreugd;»
+     66:5  GBS «gedreigd»  ↔  «bedreigd»
+     68:1  GBS «ontzaglijk»  ↔  «ontzagglijk»
+     68:13  GBS «Naftali»  ↔  «Nafthali»
+     69:2  GBS «waar»  ↔  «daar»
+     69:5  GBS «’t snarenspel»  ↔  «'t snarenpel»
+     78:35  GBS «Zich ten»  ↔  «zich tot»
+     83:8  GBS «vindt;»  ↔  «vind';»
+     103:1  GBS «prees!»  ↔  «preez'!»
+     108:6  GBS «hadt;»  ↔  «had;»
+     119:20  GBS «rees!»  ↔  «reez'!»
+     119:84  GBS «miss’,»  ↔  «mis,»
+     132:4  GBS «Zie, ’t»  ↔  «Ziet, 't»
+  voorbeelden spatie/apostrof in woord (in't, and'ren/andren, aaneen/los):
+     9:19  GBS «heid’nen»  ↔  «heidnen»
+     18:8  GBS «terneer»  ↔  «ter neer,»
+     37:18  GBS «dwing’lands waargenomen;»  ↔  «dwinglands waargenomen:»
+     40:3  GBS «wond’ren»  ↔  «wondren»
+     44:8  GBS «heid’nen,»  ↔  «heidnen,»
+     48:5  GBS «Juda’s»  ↔  «Judas»
+  voorbeelden spatie/aaneenschrijving:
+     25:3  GBS «’t Vaderlijk meêdogen,»  ↔  «'t vaderlijk meedogen,»
+     36:1  GBS «“Gods»  ↔  «" Gods»
+     81:3  GBS «“’t»  ↔  «" 't»
+     107:16  GBS «overheên»  ↔  «Overheen»
+     118:8  GBS «HEEREN daân,»  ↔  «Heeren daan,»
+     139:8  GBS «Uw wonderdaân,»  ↔  «uw wonderdaan,»
+  voorbeelden accenten (gâ/ga, vermeêrd):
+     55:3  GBS «weên»  ↔  «ween»
+     78:7  GBS «Kanân»  ↔  «Kanan»
+     80:9  GBS «weêr,»  ↔  «weer,»
+     85:4  GBS «genâ»  ↔  «gena»
+     132:2  GBS «treê,»  ↔  «tree,»
+     138:1  GBS «goôn,»  ↔  «goon,»
+  voorbeelden HEER / HEER' / Heer':
+     5:1  GBS «HEER’,»  ↔  «Heer',»
+     16:3  GBS «HEER’,»  ↔  «Heer',»
+     31:19  GBS «HEER’,»  ↔  «Heer',»
+     37:2  GBS «HEER’»  ↔  «Heer'»
+     68:2  GBS «HEER’»  ↔  «Heer'»
+     69:3  GBS «HEER’»  ↔  «Heer'»
+  voorbeelden hoofdletters:
+     2:1  GBS «Hun»  ↔  «hun»
+     22:4  GBS «Die»  ↔  «die»
+     29:3  GBS «’s HEEREN»  ↔  «'s Heeren»
+     31:16  GBS «Uw»  ↔  «uw»
+     68:7  GBS «Zijn»  ↔  «zijn»
+     89:20  GBS «gezalfde»  ↔  «Gezalfde»
+  voorbeelden leestekens:
+     7:3  GBS «straff’»  ↔  «straff',»
+     14:4  GBS «Neen;»  ↔  «Neen,»
+     16:5  GBS «vergeten;»  ↔  «vergeten,»
+     18:9  GBS «God»  ↔  «God,»
+     18:13  GBS «d’ ogen;»  ↔  «d' ogen,»
+     19:4  GBS «gedogen;»  ↔  «gedogen.»
+  voorbeelden leestekens+hoofdletters:
+     20:3  GBS «HEER’!»  ↔  «Heer',»
+     35:1  GBS «Heil alleen.”»  ↔  «heil alleen".»
+     94:5  GBS «Die onz’ oren»  ↔  «die onz' oren,»
+     105:2  GBS «HEER’.»  ↔  «Heer'!»
+     118:10  GBS «HEEREN;»  ↔  «Heeren:»
+     140:7  GBS «Sterkte!»  ↔  «sterkte,»
+
+=== GBS tegenover DBNL: uitgave 1774 ===
+1416 verzen vergeleken; 2377 van 9187 regels letterlijk gelijk (26%), na gelijktrekken van ’/' en “/".
+Verschillen (per plek, woordniveau):
+    209  woordverschil
+   1599  spatie/apostrof in woord (in't, and'ren/andren, aaneen/los)
+      8  spatie/aaneenschrijving
+    181  accenten (gâ/ga, vermeêrd)
+   4186  oude spelling (1774)
+    272  HEER / HEER' / Heer'
+   1451  hoofdletters
+   1078  leestekens
+     95  leestekens+hoofdletters
+   1802  apostrof/aanhalingsteken-typografie
+  voorbeelden woordverschil:
+     5:1  GBS «ore;»  ↔  «ooren;»
+     17:7  GBS «hen»  ↔  «hun,»
+     22:1  GBS «Gij Mij,»  ↔  «Ge mij,»
+     22:4  GBS «het hoofd,»  ↔  «den kop,»
+     29:6  GBS «/ Hem, Die Jakobs heilig kroost / Zeeg’nen zal met vreed’ en troost.»  ↔  «»
+     31:16  GBS «Waar»  ↔  «Daar»
+     37:2  GBS «u»  ↔  «uw»
+     38:7  GBS «Is»  ↔  «ls»
+     40:2  GBS «En God eerbiedig hulde biên; /»  ↔  «»
+     43:1  GBS «hen»  ↔  «hun,»
+     65:5  GBS «Gij,»  ↔  «Ge,»
+     71:2  GBS «/ Steeds toevlucht vindt in smart;»  ↔  «»
+     72:4  GBS «/ Men zal Hem van d’ Eufraat vereren,»  ↔  «»
+     73:1  GBS «hen»  ↔  «hun»
+     78:6  GBS «Waar»  ↔  «Daar»
+     85:4  GBS «waar»  ↔  «daar»
+     99:7  GBS «hen»  ↔  «hun»
+     104:11  GBS «Waar»  ↔  «Daar»
+     106:14  GBS «hen»  ↔  «hun»
+     114:1  GBS «aard»  ↔  «aart»
+  voorbeelden spatie/apostrof in woord (in't, and'ren/andren, aaneen/los):
+     3:1  GBS «t’ ontrukken;»  ↔  «t'ontrukken;»
+     6:4  GBS «eind’lijk, HEER’,»  ↔  «eindlijk, HEER,»
+     7:8  GBS «zichzelven,»  ↔  «zich zelven,»
+     15:2  GBS «zijn»  ↔  «zijn'»
+     24:4  GBS «eeuw’ge deuren,»  ↔  «eeuwge deuren!»
+     36:2  GBS «grond’loos;»  ↔  «grondloos:»
+  voorbeelden spatie/aaneenschrijving:
+     8:4  GBS «Uw teerste»  ↔  «uw teêrste»
+     21:8  GBS «Uw Rijk weerstaan.»  ↔  «uw rijk weêrstaan.»
+     22:15  GBS «Hem neer;»  ↔  «hem neêr;»
+     25:7  GBS «Zijn vreeverbond,»  ↔  «zijn vreêverbond,»
+     91:7  GBS «Mij teer»  ↔  «mij teêr»
+     119:71  GBS «armoe Uw»  ↔  «armoê uw»
+  voorbeelden accenten (gâ/ga, vermeêrd):
+     29:5  GBS «neer.»  ↔  «neêr.»
+     30:4  GBS «Weer»  ↔  «Weêr»
+     78:22  GBS «neergeslagen;»  ↔  «neêrgeslagen;»
+     95:3  GBS «neer;»  ↔  «neêr;»
+     97:4  GBS «neer»  ↔  «neêr»
+     102:9  GBS «Weer»  ↔  «Weêr»
+  voorbeelden oude spelling (1774):
+     2:5  GBS «Zijn Gezalfde hoont;»  ↔  «zijn' Gezalfden hoont:»
+     3:1  GBS «saamgezworen»  ↔  «saamgezwooren»
+     4:1  GBS «t’ enenmaal’»  ↔  «t'eenemaal»
+     7:4  GBS «volken»  ↔  «volkren»
+     10:5  GBS «poten.»  ↔  «pooten.»
+     10:6  GBS «HEER’, d’ ellendigen genâ;»  ↔  «HEER! d'ellendigen genaê;»
+  voorbeelden HEER / HEER' / Heer':
+     7:1  GBS «HEER’,»  ↔  «HEER,»
+     46:6  GBS «HEER’,»  ↔  «HEER,»
+     84:2  GBS «HEER’»  ↔  «HEER»
+     103:11  GBS «HEER’,»  ↔  «HEER,»
+     139:10  GBS «Heer’!»  ↔  «Heer!»
+     146:8  GBS «HEER’.»  ↔  «Heer.»
+  voorbeelden hoofdletters:
+     10:8  GBS «Uw»  ↔  «uw»
+     16:6  GBS «Mij»  ↔  «mij»
+     26:3  GBS «Uw»  ↔  «uw»
+     35:11  GBS «Uw»  ↔  «uw»
+     37:14  GBS «Hem»  ↔  «hem»
+     45:6  GBS «Zijn bruid»  ↔  «zijn Bruid»
+  voorbeelden leestekens:
+     2:7  GBS «zij»  ↔  «zij,»
+     7:8  GBS «’t geweld»  ↔  «'t geweld,»
+     27:7  GBS «God,»  ↔  «God!»
+     44:4  GBS «duchten;»  ↔  «duchten:»
+     52:5  GBS «“Zie,”»  ↔  «“Zie,»
+     60:1  GBS «Ai,»  ↔  «Ai!»
+  voorbeelden leestekens+hoofdletters:
+     45:2  GBS «Held, Uw»  ↔  «Held! uw»
+     66:1  GBS «“O,»  ↔  «“o!»
+     80:2  GBS «Uw eer.»  ↔  «uw eer:»
+     81:12  GBS «Mijn trouwverbond;»  ↔  «mijn trouwverbond:»
+     104:15  GBS «God, Uw»  ↔  «God! uw»
+     139:6  GBS «Uw gezicht;»  ↔  «uw gezicht:»
+
+=== Psalm 1-36: alle woordverschillen GBS tegenover psalmboek.nl (de tekst die tot nu toe in psalmen.json stond) ===
+  1:1  GBS «nederzit waar»  ↔  «nederzit, daar»
+  2:2  GBS «sterren»  ↔  «starren»
+  2:5  GBS «Zelf»  ↔  «zelv'»
+  4:1  GBS «rechtszaak»  ↔  «rechtzaak»
+  4:1  GBS «t’ enenmaal’»  ↔  «t' enemaal»
+  4:3  GBS «Waar»  ↔  «Daar»
+  4:4  GBS «In»  ↔  «ln»
+  5:1  GBS «ore;»  ↔  «oren;»
+  5:3  GBS «»  ↔  «'t»
+  5:5  GBS «hen»  ↔  «hun»
+  5:6  GBS «logenspreker.»  ↔  «leugenspreker.»
+  5:6  GBS «wetsverbreker,»  ↔  «wetverbreker,»
+  6:8  GBS «grijpt moed; wijkt, bozen;»  ↔  «grijp moed: wijkt bozen,»
+  7:1  GBS «leeuwentanden,»  ↔  «leeuwetanden,»
+  7:2  GBS «heb bedreven»  ↔  «hebb' bedreven,»
+  7:2  GBS «heb»  ↔  «hebb'»
+  7:2  GBS «heb toegewogen,»  ↔  «hebb' toegewogen;»
+  7:5  GBS «Bondsgod,»  ↔  «Bondgod,»
+  7:7  GBS «In»  ↔  «ln»
+  9:10  GBS «vluchtten.»  ↔  «vluchten.»
+  10:2  GBS «Het»  ↔  «Hij»
+  10:4  GBS «waar»  ↔  «daar»
+  10:6  GBS «hem»  ↔  «hen»
+  14:7  GBS «Jakob»  ↔  «Jacob»
+  16:1  GBS «Bondsgod,»  ↔  «Bondgod,»
+  17:2  GBS «beide»  ↔  «beiden»
+  18:1  GBS «lijden;»  ↔  «'t lijden,»
+  18:11  GBS «weer»  ↔  «meer»
+  18:13  GBS «geveinsd’lijk neergebogen;»  ↔  «geveinsd'lijk neergehogen;»
+  18:13  GBS «burg»  ↔  «burcht»
+  18:15  GBS «waar ’t»  ↔  «daar 't»
+  19:4  GBS «duister’»  ↔  «duist're»
+  19:5  GBS «honing»  ↔  «honig»
+  20:1  GBS «Jakob»  ↔  «Jacob»
+  20:2  GBS «offerspijs gedenken!»  ↔  «offerspijz' gedenken:»
+  21:1  GBS «zielenvreugd»  ↔  «zielevreugd»
+  22:2  GBS «waar»  ↔  «daar»
+  22:6  GBS «Basan,»  ↔  «Bazan,»
+  22:11  GBS «wordt»  ↔  «word»
+  22:12  GBS «Jakobs»  ↔  «Jacobs»
+  22:15  GBS «In ’t»  ↔  «ln 't»
+  24:3  GBS «’s Jakob,»  ↔  «'s Jacob,»
+  26:5  GBS «godd’lozen;»  ↔  «godlozen;»
+  27:4  GBS «Waar»  ↔  «Daar»
+  28:6  GBS «erf,»  ↔  «erv',»
+  29:6  GBS «Die Jakobs»  ↔  «die Jacobs»
+  30:6  GBS «zei: “O»  ↔  «zeid': "O»
+  31:3  GBS «Burg,»  ↔  «burcht,»
+  31:6  GBS «Gij»  ↔  «Ge»
+  31:10  GBS «kwaad»  ↔  «kwaads»
+  31:12  GBS «die verbolgen»  ↔  «wie verbolgen,»
+  31:16  GBS «Waar»  ↔  «Daar»
+  33:4  GBS «Waar»  ↔  «Daar»
+  33:6  GBS «erf»  ↔  «erv'»
+  33:8  GBS «Dapper’»  ↔  «Dappre»
+  33:9  GBS «triomferen;»  ↔  «triumferen;»
+  34:3  GBS «Hij»  ↔  «En»
+  34:6  GBS «Neemt mijn»  ↔  «Neem mijn'»
+  34:7  GBS «logentaal»  ↔  «leugentaal»
+  34:10  GBS «wordt;»  ↔  «word';»
+  35:10  GBS «’t dierbaarst»  ↔  «'t dienstbaarst»
+  en verder aaneen/los en apostrof binnen een woord:
+  2:4  GBS «aard’ erkenn’»  ↔  «aard erkenn'»
+  2:6  GBS «vanouds»  ↔  «van ouds»
+  2:6  GBS «uw»  ↔  «uw'»
+  2:7  GBS «Heer’!»  ↔  «HEER;»
+  3:3  GBS «zij;»  ↔  «zij';»
+  4:4  GBS «terneer;»  ↔  «ter neer;»
+  6:3  GBS «Hoelang»  ↔  «Hoe lang»
+  6:3  GBS «Hoelang»  ↔  «Hoe lang»
+  7:3  GBS «moet’»  ↔  «moet»
+  9:11  GBS «HEER’, Die»  ↔  «HEER, die»
+  10:2  GBS «omhogesteekt,»  ↔  «omhoge steekt,»
+  10:5  GBS «’t dichtbelommerd»  ↔  «'t dicht belommerd»
+  10:6  GBS «ga';»  ↔  «ga;»
+  11:3  GBS «weleens d’ oprechten,»  ↔  «wel eens d' oprechten;»
+  13:1  GBS «Hoelang,»  ↔  «Hoe lang,»
+  13:1  GBS «Hoelang»  ↔  «Hoe lang»
+  13:2  GBS «Hoelang»  ↔  «Hoe lang»
+  13:2  GBS «Hoelang»  ↔  «Hoe lang»
+  15:4  GBS «’tgeen»  ↔  «'t geen»
+  16:4  GBS «HEER’, Die»  ↔  «HEER, die»
+  17:2  GBS «vreugd»  ↔  «vreugd'»
+  17:4  GBS «vreeslijk»  ↔  «vrees'lijk»
+  17:4  GBS «vleug’len»  ↔  «vleuglen»
+  17:6  GBS «terneer;»  ↔  «ter neer;»
+  18:2  GBS «’t vreeslijk»  ↔  «'t vrees'lijk»
+  18:3  GBS «dichtopeengepakte wolken;»  ↔  «dicht opeengepakte wolken.»
+  18:4  GBS «tezaam»  ↔  «te zaam»
+  18:5  GBS «HEER’, én»  ↔  «HEER, èn»
+  18:8  GBS «terneer»  ↔  «ter neer,»
+  18:14  GBS «HEER’;»  ↔  «HEER,»
+  19:1  GBS «held’re»  ↔  «heldre»
+  19:3  GBS «Vanwaar z’»  ↔  «Van waar z'»
+  19:7  GBS «HEER’, Die»  ↔  «HEER, die»
+  20:3  GBS «HEER’!»  ↔  «HEER.»
+  20:4  GBS «terneergestoten,»  ↔  «ter neer gestoten,»
+  21:2  GBS «smeekt’»  ↔  «smeekt»
+  21:3  GBS «van ’t»  ↔  «van't»
+  21:13  GBS «eeuwenlang,»  ↔  «eeuwen lang,»
+  22:7  GBS «vaneengescheiden.»  ↔  «vaneen gescheiden.»
+  22:7  GBS «dood’lijk»  ↔  «doodlijk»
+  22:8  GBS «In ’t»  ↔  «In't»
+  22:9  GBS «dit, weltevreên; / Z’»  ↔  «dit wel tevreên. Z'»
+  22:9  GBS «in ’t»  ↔  «in't»
+  22:10  GBS «van ’t»  ↔  «van't»
+  22:11  GBS «henenzwiert;»  ↔  «henen zwiert;»
+  22:11  GBS «naar ’t leven.»  ↔  «naar't leven,»
+  22:13  GBS «beloofd’ in ’t»  ↔  «beloofd' In't»
+  22:13  GBS «rijkverzadigd»  ↔  «rijk verzadigd»
+  23:2  GBS «duist’re dalen,»  ↔  «duistre dalen;»
+  24:3  GBS «is ’t»  ↔  «is't»
+  25:2  GBS «Heer’!»  ↔  «HEER,»
+  25:3  GBS «aan ’t Vaderlijk»  ↔  «aan't vaderlijk»
+  25:6  GBS «aardrijk»  ↔  «aard'rijk»
+  25:10  GBS «HEER’!»  ↔  «HEER,»
+  26:2  GBS «openlag.»  ↔  «open lag.»
+  26:3  GBS «tijd»  ↔  «tijd'»
+  26:8  GBS «In ’t huis»  ↔  «In't huis,»
+  27:1  GBS «HEER’, Die»  ↔  «HEER, die»
+  27:1  GBS «is ’t, Die»  ↔  «is't ,die»
+  27:2  GBS «zolang»  ↔  «zo lang»
+  27:3  GBS «in ’t»  ↔  «in't»
+  27:5  GBS «HEER’, van»  ↔  «HEER ,van»
+  28:1  GBS «word»  ↔  «word'»
+  28:1  GBS «in ’t»  ↔  «in't»
+  28:4  GBS «naar ’t»  ↔  «naar't»
+  29:1  GBS «in ’t»  ↔  «in't»
+  29:4  GBS «aan ’t zuchten;»  ↔  «aan't zuchten,»
+  29:6  GBS «HEER’, Die wond’ren»  ↔  «HEER, die wond'ren»
+  30:3  GBS «HEER’, Die»  ↔  «HEER, die»
+  30:5  GBS «vastgezet,»  ↔  «vast gezet,»
+  31:10  GBS «in ’t»  ↔  «in't»
+  31:13  GBS «HEER’!»  ↔  «HEER;»
+  31:15  GBS «is ’t goed»  ↔  «is't goed,»
+  32:1  GBS «die, in ’t»  ↔  «die in't»
+  32:3  GBS «eenieder»  ↔  «een ieder»
+  32:4  GBS «naar ’t»  ↔  «naar't»
+  33:1  GBS «HEER’;»  ↔  «HEER.»
+  33:4  GBS «Tezaam vergaad’ren»  ↔  «Te zaâm vergaad'ren»
+  33:5  GBS «Snood’»  ↔  «Snood»
+  33:8  GBS «Die ’t»  ↔  «Die't»
+  34:4  GBS «welbewaard.»  ↔  «wèl bewaard.»
+  34:5  GBS «tijd,»  ↔  «tijd',»
+  34:6  GBS «in ’t»  ↔  «in't»
+  34:9  GBS «tijd,»  ↔  «tijd'»
+  34:10  GBS «ternederstort;»  ↔  «ternederstort';»
+  35:1  GBS «tekeer;»  ↔  «te keer;»
+  35:2  GBS «naar ’t»  ↔  «naar't»
+  35:4  GBS «tenietgebracht;»  ↔  «te niet gebracht;»
+  35:5  GBS «HEER’?»  ↔  «HEER?"»
+  35:6  GBS «in ’t»  ↔  «in't»
+  35:8  GBS «Hoelang»  ↔  «Hoe lang»
+  35:10  GBS «ongeneugt.»  ↔  «ongeneugt'.»
+  35:13  GBS «tijd,»  ↔  «tijd',»
+  36:1  GBS «is ’t»  ↔  «is't»
+  12:5  GBS «Ik”,»  ↔  «Ik ",»
+  28:6  GBS «rijksgezalfde staag»  ↔  «Rijksgezalfde staâg»
