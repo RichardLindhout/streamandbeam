@@ -568,22 +568,32 @@ fn build_slides(svc: &Service) -> Vec<Slide> {
     slides
 }
 
-/// The liturgy overview: (item index, line) for every item with a reference.
+/// The liturgy overview, as on the boards before the sermon: the psalms, the reading,
+/// the sermon text and the catechism. (item index, line) per line.
 fn liturgy(svc: &Service) -> Vec<(usize, String)> {
-    svc.items
-        .iter()
-        .enumerate()
-        .filter(|(_, o)| !o.reference.is_empty())
-        .map(|(i, o)| {
-            let line = match o.kind.as_str() {
-                "lezing" => format!("Lezen: {}", o.reference),
-                "catechismus" => format!("Catechismus: {}", o.reference),
-                "nazang" => format!("Na de dienst: {}", o.reference),
-                _ => o.reference.clone(),
-            };
-            (i, line)
-        })
-        .collect()
+    let mut out = Vec::new();
+    let mut text_done = false;
+    for (i, o) in svc.items.iter().enumerate() {
+        let line = match o.kind.as_str() {
+            "lezing" => format!("Lezen: {}", o.reference),
+            "catechismus" => format!("HC {}", o.reference),
+            "nazang" => format!("Na de dienst: {}", o.reference),
+            // The text of the sermon, once, where the sermon starts.
+            "preek" if !text_done && !svc.text.reference.is_empty() => {
+                text_done = true;
+                if svc.text.kind == "catechismus" {
+                    format!("Tekst: HC {}", svc.text.reference)
+                } else {
+                    format!("Tekst: {}", svc.text.reference)
+                }
+            }
+            _ => o.reference.clone(),
+        };
+        if !line.is_empty() && !line.ends_with(": ") {
+            out.push((i, line));
+        }
+    }
+    out
 }
 
 /// What the boards show, as the church wants it: the liturgy (with the current part
@@ -595,7 +605,15 @@ fn board_slides(svc: &Service, slides: &[Slide]) -> Vec<Slide> {
     slides
         .iter()
         .map(|sl| match sl.kind.as_str() {
-            "slotzang" | "nazang" | "einde" => sl.clone(),
+            // The last psalm and the song after the service: only which one, in large letters.
+            "slotzang" | "nazang" => Slide {
+                item: sl.item,
+                kind: "slotzang".into(),
+                header: if sl.kind == "nazang" { "Na de dienst".into() } else { "Slotzang".into() },
+                sub: svc.items.get(sl.item).map(|i| i.reference.clone()).unwrap_or_default(),
+                ..Default::default()
+            },
+            "einde" => sl.clone(),
             "preek" => Slide { verses: Vec::new(), ..sl.clone() },
             _ => Slide {
                 item: sl.item,
