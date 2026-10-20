@@ -83,7 +83,7 @@ async fn main() -> anyhow::Result<()> {
     let show = show::Show::new(opts.data_dir.join("liturgie.json"), opts.liturgy_url.clone()).await;
     let engine = stream::Engine::new()?;
     let director = director::Director::new(engine.clone(), &opts.data_dir);
-    let listener = listen::Listener::new(director.settings().whisper_model.into());
+    let listener = listen::Listener::new();
     engine.set_listener(listener.clone());
     if director.settings().autopilot != "uit" {
         listener.start();

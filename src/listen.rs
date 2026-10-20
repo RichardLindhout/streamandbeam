@@ -15,7 +15,21 @@ use std::time::{Duration, Instant};
 use whisper_rs::{FullParams, SamplingStrategy, WhisperContext, WhisperContextParameters};
 
 const RATE: usize = 16_000;
-const MODEL_URL: &str = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small-q5_1.bin";
+
+/// Whisper models, best first: (file, download, size). The large one hears Dutch much
+/// better; on a computer too slow for it the program falls back to the small one.
+const MODELS: [(&str, &str, &str); 2] = [
+    ("modellen/ggml-large-v3-turbo-q5_0.bin", "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q5_0.bin", "550 MB"),
+    ("modellen/ggml-small-q5_1.bin", "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small-q5_1.bin", "190 MB"),
+];
+/// Longer than this per 6-second window and the computer cannot keep up with a model.
+const TOO_SLOW: Duration = Duration::from_secs(4);
+
+/// Words of every service; telling Whisper beforehand makes it hear them far better
+/// (measured: "49-4-6" became "Psalm 49 vers 6").
+const VOCABULARY: &str = "Kerkdienst van de Hersteld Hervormde Gemeente. Laten wij zingen Psalm 42 vers 5. \
+Wij lezen uit het Woord van God. Laten wij bidden. De Heere, de gemeente, de Heidelbergse Catechismus, Zondag 22, \
+de Schriftlezing, het gebed, de collecte, amen.";
 
 #[derive(Debug, Clone, Default, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -43,16 +57,17 @@ pub struct Listener {
     /// (when, text) of the last two minutes.
     transcript: Mutex<VecDeque<(Instant, String)>>,
     status: Mutex<ListenStatus>,
-    model: PathBuf,
+    /// The parts of the current service ("Psalm 49 vers 6, Johannes"), added to the vocabulary.
+    service_words: Mutex<String>,
 }
 
 impl Listener {
-    pub fn new(model: PathBuf) -> Arc<Listener> {
+    pub fn new() -> Arc<Listener> {
         Arc::new(Listener {
             audio: Mutex::new(VecDeque::new()),
             transcript: Mutex::new(VecDeque::new()),
             status: Mutex::new(ListenStatus::default()),
-            model,
+            service_words: Mutex::new(String::new()),
         })
     }
 
@@ -83,16 +98,23 @@ impl Listener {
         });
     }
 
-    fn transcribe_loop(&self) -> Result<()> {
-        if !self.model.exists() {
-            println!("Whisper-model downloaden (eenmalig, ±190 MB)…");
-            std::fs::create_dir_all(self.model.parent().unwrap())?;
-            let status = std::process::Command::new("curl").args(["-sSL", "-o"]).arg(&self.model).arg(MODEL_URL).status()?;
-            anyhow::ensure!(status.success() && self.model.exists(), "Whisper-model downloaden mislukt");
+    fn load(&self, model: usize) -> Result<WhisperContext> {
+        let (file, url, size) = MODELS[model];
+        let path = PathBuf::from(file);
+        if !path.exists() {
+            println!("Whisper-model downloaden (eenmalig, ±{size})…");
+            std::fs::create_dir_all(path.parent().unwrap())?;
+            let status = std::process::Command::new("curl").args(["-sSL", "-o"]).arg(&path).arg(url).status()?;
+            anyhow::ensure!(status.success() && path.exists(), "Whisper-model downloaden mislukt");
         }
-        let ctx = WhisperContext::new_with_params(self.model.to_str().unwrap(), WhisperContextParameters::default())
-            .context("Whisper-model laden")?;
+        WhisperContext::new_with_params(file, WhisperContextParameters::default()).context("Whisper-model laden")
+    }
+
+    fn transcribe_loop(&self) -> Result<()> {
+        let mut model = 0;
+        let mut ctx = self.load(model)?;
         let mut state = ctx.create_state()?;
+        let mut slow = 0;
         self.status.lock().unwrap().active = true;
         loop {
             std::thread::sleep(Duration::from_secs(5));
@@ -117,8 +139,20 @@ impl Listener {
             params.set_print_realtime(false);
             params.set_print_timestamps(false);
             params.set_suppress_blank(true);
+            let prompt = format!("{VOCABULARY} {}", self.service_words.lock().unwrap());
+            params.set_initial_prompt(&prompt);
+            let started = Instant::now();
             if state.full(params, &window).is_err() {
                 continue;
+            }
+            // Three slow windows in a row: this computer cannot keep up, take the smaller model.
+            slow = if started.elapsed() > TOO_SLOW { slow + 1 } else { 0 };
+            if slow >= 3 && model + 1 < MODELS.len() {
+                model += 1;
+                println!("meeluisteren: computer te traag voor het grote model, verder met het kleine");
+                ctx = self.load(model)?;
+                state = ctx.create_state()?;
+                slow = 0;
             }
             // During organ music and singing Whisper may "hear" words that were never said;
             // it marks those pieces as probably not speech, so they are skipped.
@@ -157,6 +191,11 @@ impl Listener {
             tokio::time::sleep(Duration::from_secs(15)).await;
             let mode = mode();
             let view = show.view();
+            if let Some(svc) = view.service() {
+                // e.g. "Psalm 49 vers 6. Johannes 10:11-18." so Whisper expects these.
+                let words: Vec<String> = svc.items.iter().filter(|i| !i.reference.is_empty()).map(|i| i.reference.replace(" : ", " vers ")).collect();
+                *self.service_words.lock().unwrap() = words.join(". ");
+            }
             if view.index != last_index {
                 // The operator moved on; an old suggestion no longer applies.
                 last_index = view.index;
