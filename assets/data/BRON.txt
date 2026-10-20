@@ -1,0 +1,19 @@
+Teksten in dit programma (eenmalig opgehaald en gecontroleerd, zie tools/):
+
+psalmen.json
+  Psalmen in de berijming van 1773 en de enige gezangen (151-160), van psalmboek.nl:
+  de herziene tekst zoals de gemeente die zingt (bijv. Ps. 49:6 "hun verleden staat").
+  Gecontroleerd tegen de uitgave van 1774 (DBNL): aantal verzen per psalm, aantal regels
+  per vers en woordgelijkenis; afwijkingen zijn met de hand nagelopen.
+
+statenvertaling.json
+  Statenvertaling, 66 boeken, van statenvertaling.net, met de Nederlandse versindeling
+  (psalmopschriften als vers 1, Job 39 begint bij "Zult gij voor den ouden leeuw").
+  Elk vers vergeleken met getbible.net: dat is een gemoderniseerde, onregelmatige variant
+  ("de zevende dag" naast "den zevende dag", "gras" i.p.v. "grasscheutjes"), dus
+  statenvertaling.net is aangehouden. Geen ontbrekende of lege verzen.
+
+catechismus.json
+  Heidelberger Catechismus, tekst van de Nationale Synode van Dordrecht, uit de uitgave van
+  Stichting De Gihonbron (2017); 129 vragen in 52 zondagen. Voetnoten en
+  bijbelverwijzingen weggelaten. Vraag 57 vergeleken met de livestream van 18 okt. 2026.

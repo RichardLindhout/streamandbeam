@@ -10,8 +10,12 @@ function slideHTML(s) {
   const bar = `<div class="bar"><h1>${esc(s.header)}</h1><span>${esc(s.sub)}</span></div>`;
   switch (s.kind) {
     case "welkom":
+    case "einde":
       return `<div class="head"><h1>${esc(s.header)}</h1><p>${esc(s.sub)}</p></div>
-        <ul>${(s.list || []).map((l) => `<li>${esc(l)}</li>`).join("")}</ul>`;
+        <ul>${(s.list || []).concat(s.lines || []).map((l) => `<li>${esc(l)}</li>`).join("")}</ul>
+        <p class="footer">${esc(s.footer)}</p>`;
+    case "catechismus":
+      return bar + `<div class="body"><div class="fit">${(s.lines || []).map((l) => `<p>${esc(l)}</p>`).join("")}</div></div>`;
     case "slotzang":
       if (!s.lines || !s.lines.length) {
         return `<div class="announce"><small>${esc(s.header)}</small><strong>${esc(s.sub)}</strong></div>`;
@@ -26,6 +30,7 @@ function slideHTML(s) {
       const points = (s.points || []).map((p) => `<li>${esc(p)}</li>`).join("");
       return bar + `<div class="body"><div class="fit">
         ${verse ? `<div class="verse">${verse}</div>` : ""}
+        ${(s.lines || []).map((l) => `<div>${esc(l)}</div>`).join("")}
         ${s.theme ? `<div class="theme">${esc(s.theme)}</div>` : ""}
         ${points ? `<ol>${points}</ol>` : ""}</div></div>`;
     }

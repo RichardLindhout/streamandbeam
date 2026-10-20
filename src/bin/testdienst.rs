@@ -5,7 +5,10 @@
 //! live, clicks through every slide, tests the "no sound" warning and finally checks the
 //! camera positions, the recording and what "YouTube" received.
 //!
-//!     cargo build --release && target/release/testdienst [--snel]
+//!     cargo build --release && target/release/testdienst [--snel] [--youtube]
+//!
+//! With --youtube it goes live for real on the channel logged in under ./data (a private
+//! broadcast with "TEST" in the title) and checks that YouTube reports it live and ended.
 
 use anyhow::{Context, Result, bail};
 use serde_json::{Value, json};
@@ -46,6 +49,7 @@ impl Report {
 #[tokio::main]
 async fn main() -> Result<()> {
     let fast = std::env::args().any(|a| a == "--snel");
+    let real_youtube = std::env::args().any(|a| a == "--youtube");
     let bin_dir = std::env::current_exe()?.parent().unwrap().to_path_buf();
     let out = PathBuf::from("target/testdienst").join(chrono::Local::now().format("%Y-%m-%d-%H%M%S").to_string());
     std::fs::create_dir_all(&out)?;
@@ -74,6 +78,12 @@ async fn main() -> Result<()> {
         .context("ffmpeg starten (nodig als nep-YouTube)")?;
     procs.0.push(ffmpeg);
 
+    let main_settings: Value = std::fs::read("data/instellingen.json").ok().and_then(|b| serde_json::from_slice(&b).ok()).unwrap_or(json!({}));
+    if real_youtube {
+        std::fs::create_dir_all(out.join("data"))?;
+        std::fs::copy("data/youtube.json", out.join("data/youtube.json"))
+            .context("niet ingelogd bij YouTube: log eerst in via de bediening (data/youtube.json ontbreekt)")?;
+    }
     let api_key_ok = std::env::var("ANTHROPIC_API_KEY").is_ok();
     let mut app = Command::new(bin_dir.join("streamandbeam"));
     app.args(["--poort", "18080", "--liturgie-url", &format!("http://{CAMERA_HTTP}/kerkdiensten"), "--data"])
@@ -97,6 +107,13 @@ async fn main() -> Result<()> {
     settings["rtmpUrl"] = json!(RTMP);
     settings["streamKey"] = json!("testsleutel");
     settings["recordDir"] = json!(out.join("opnames"));
+    settings["introSeconds"] = json!(2);
+    settings["themeSeconds"] = json!(2);
+    if real_youtube {
+        settings["youtubeClientId"] = main_settings["youtubeClientId"].clone();
+        settings["youtubeClientSecret"] = main_settings["youtubeClientSecret"].clone();
+        settings["youtubeTest"] = json!(true);
+    }
     let saved = http.post(format!("{APP}/api/settings")).json(&settings).send().await?.status().is_success();
     r.check(saved, "instellingen opgeslagen");
 
@@ -116,17 +133,18 @@ async fn main() -> Result<()> {
         .iter()
         .flat_map(|s| s["items"].as_array().cloned().unwrap_or_default())
         .filter(|it| it["kind"] == "psalm" || it["kind"] == "slotzang")
-        .map(|it| it["ref"].as_str().unwrap_or("").replace(' ', ""))
+        .map(|it| it["ref"].as_str().unwrap_or("").to_string())
         .collect();
-    r.check(
-        psalms == ["55:1", "49:6", "16:6", "73:12,13", "17:8", "73:14"],
-        format!("psalmen in de juiste volgorde: {}", psalms.join(" / ")),
-    );
+    let want = ["Psalm 55 : 1", "Psalm 49 : 6", "Psalm 16 : 6", "Psalm 73 : 12, 13", "Psalm 17 : 8", "Psalm 73 : 14"];
+    r.check(psalms == want, format!("psalmen in de juiste volgorde: {}", psalms.join(" / ")));
     let slides = state["slides"].as_array().cloned().unwrap_or_default();
     let missing: Vec<String> = slides
         .iter()
-        .filter(|s| s["lines"].as_array().is_some_and(|l| l.iter().any(|l| l.as_str().unwrap_or("").starts_with('('))))
-        .map(|s| s["header"].as_str().unwrap_or("").to_string())
+        .filter(|s| {
+            let empty = s["lines"].as_array().is_none_or(|l| l.is_empty()) && s["verses"].as_array().is_none_or(|v| v.is_empty());
+            matches!(s["kind"].as_str(), Some("psalm" | "lezing" | "catechismus")) && empty
+        })
+        .map(|s| format!("{} ({})", s["header"].as_str().unwrap_or(""), s["sub"].as_str().unwrap_or("")))
         .collect();
     r.check(missing.is_empty(), format!("{} dia's, alle teksten geladen {}", slides.len(), if missing.is_empty() { String::new() } else { format!("(ontbreekt: {})", missing.join(", ")) }));
 
@@ -141,6 +159,20 @@ async fn main() -> Result<()> {
     .await
     .is_ok();
     r.check(sound_ok, "geluid komt binnen, geen waarschuwing");
+    if real_youtube {
+        let live = wait_until(Duration::from_secs(180), || async {
+            let yt: Value = http.get(format!("{APP}/api/youtube")).send().await.ok()?.json().await.ok()?;
+            (yt["status"] == "live").then(|| yt["broadcast"]["watchUrl"].as_str().unwrap_or("").to_string())
+        })
+        .await;
+        match &live {
+            Ok(url) => r.check(true, format!("YouTube meldt LIVE: {url}")),
+            Err(_) => {
+                let yt: Value = http.get(format!("{APP}/api/youtube")).send().await?.json().await?;
+                r.check(false, format!("YouTube kwam niet op live (status: {})", yt["status"]));
+            }
+        }
+    }
     let preview = wait_until(Duration::from_secs(10), || async {
         let jpeg = http.get(format!("{APP}/preview.jpg")).send().await.ok()?.bytes().await.ok()?;
         (jpeg.len() > 1000).then_some(jpeg.len())
@@ -149,7 +181,7 @@ async fn main() -> Result<()> {
     r.check(preview.is_ok(), format!("voorbeeldbeeld voor de bediener ({} kB)", preview.unwrap_or(0) / 1024));
 
     println!("\n4. Hele dienst doorklikken");
-    let pause = Duration::from_millis(if fast { 1200 } else { 3000 });
+    let pause = Duration::from_millis(if real_youtube { 6000 } else if fast { 1200 } else { 3000 });
     let mut errors = Vec::new();
     for i in 0..slides.len() {
         http.post(format!("{APP}/api/go")).json(&json!({"index": i})).send().await?;
@@ -164,8 +196,16 @@ async fn main() -> Result<()> {
     r.check(errors.is_empty(), format!("geen fouten tijdens de dienst {}", errors.join("; ")));
     let rec: Value = http.get(format!("{APP}/api/stream")).send().await?.json().await?;
     let recording = rec["recording"].as_str().unwrap_or("").to_string();
+    let broadcast: Value = http.get(format!("{APP}/api/youtube")).send().await?.json().await?;
     http.post(format!("{APP}/api/stream")).json(&json!({"mode": "stop"})).send().await?;
     tokio::time::sleep(Duration::from_secs(2)).await;
+    if real_youtube {
+        // The broadcast is closed on stop; check with YouTube itself.
+        tokio::time::sleep(Duration::from_secs(10)).await;
+        let yt: Value = http.get(format!("{APP}/api/youtube")).send().await?.json().await?;
+        let id = broadcast["broadcast"]["id"].as_str().unwrap_or("");
+        r.check(!id.is_empty() && yt["broadcast"].is_null(), format!("YouTube-uitzending {id} afgesloten"));
+    }
 
     println!("\n5. Camera-posities");
     let expected = expected_presets(&slides);
@@ -174,7 +214,12 @@ async fn main() -> Result<()> {
 
     println!("\n6. Opname en YouTube-ontvangst");
     let min = slides.len() as f64 * pause.as_secs_f64() * 0.8;
-    for (what, file) in [("opname", PathBuf::from(&recording)), ("YouTube", youtube.clone())] {
+    let checks: Vec<(&str, PathBuf)> = if real_youtube {
+        vec![("opname", PathBuf::from(&recording))]
+    } else {
+        vec![("opname", PathBuf::from(&recording)), ("YouTube", youtube.clone())]
+    };
+    for (what, file) in checks {
         match probe(&file) {
             Ok((streams, secs)) => r.check(
                 streams.contains("h264") && streams.contains("aac") && secs >= min,
@@ -186,7 +231,7 @@ async fn main() -> Result<()> {
     let sheet = out.join("overzicht.jpg");
     let tiles = Command::new("ffmpeg")
         .args(["-loglevel", "error", "-y", "-i"])
-        .arg(&youtube)
+        .arg(if real_youtube { PathBuf::from(&recording) } else { youtube.clone() })
         .args(["-vf", &format!("fps=1/{},scale=480:-1,tile=5x5", pause.as_secs().max(1)), "-frames:v", "1"])
         .arg(&sheet)
         .status()?;
@@ -224,8 +269,8 @@ fn expected_presets(slides: &[Value]) -> Vec<u32> {
     let mut out: Vec<u32> = Vec::new();
     for s in slides {
         let p = match s["kind"].as_str().unwrap_or("") {
-            "welkom" => 1,
-            "psalm" | "slotzang" => 2,
+            "welkom" | "einde" => 1,
+            "psalm" | "slotzang" | "collecte" => 2,
             "gebed" => 4,
             _ => 3,
         };
@@ -268,26 +313,32 @@ where
     }
 }
 
-/// The example website's service, as Claude reads it; used when the Claude API is not available.
+/// The example website's service, as Claude maps it; used when the Claude API is not available.
 fn fallback_service() -> Value {
-    let item = |id: &str, kind: &str, label: &str, r: &str| json!({"id": id, "kind": kind, "label": label, "ref": r});
+    let simple = |id: &str, kind: &str, label: &str| json!({"id": id, "kind": kind, "label": label});
+    let psalm = |id: &str, kind: &str, label: &str, n: u32, verses: &[u32]| {
+        json!({"id": id, "kind": kind, "label": label, "psalm": n, "verses": verses})
+    };
     json!({
         "id": "2026-10-18 16:00", "date": "2026-10-18", "label": "Middagdienst", "time": "16:00",
-        "textRef": "Heidelbergse Catechismus, vraag en antwoord 57",
+        "text": {"kind": "catechismus", "label": "Heidelbergse Catechismus", "questions": [57]},
         "theme": "Dit mijn lichaam", "points": ["Nu ik leef", "Als ik sterf", "Als Jezus terugkomt"],
         "items": [
-            item("i1", "welkom", "Welkom", ""),
-            item("i2", "psalm", "Voorzang", "55: 1"),
-            item("i3", "psalm", "Zingen", "49: 6"),
-            item("i4", "gebed", "Gebed", ""),
-            item("i5", "lezing", "Schriftlezing", "1 Korinthe 6:15-20"),
-            item("i6", "psalm", "Zingen", "16: 6"),
-            item("i7", "preek", "Prediking", ""),
-            item("i8", "psalm", "Tussenzang", "73: 12, 13"),
-            item("i9", "preek", "Prediking", ""),
-            item("i10", "psalm", "Zingen", "17: 8"),
-            item("i11", "gebed", "Dankgebed", ""),
-            item("i12", "slotzang", "Slotzang", "73: 14"),
+            simple("i1", "welkom", "Welkom"),
+            psalm("i2", "psalm", "Voorzang", 55, &[1]),
+            psalm("i3", "psalm", "Zingen", 49, &[6]),
+            psalm("i4", "psalm", "Zingen", 16, &[6]),
+            simple("i5", "gebed", "Gebed"),
+            json!({"id": "i6", "kind": "lezing", "label": "Schriftlezing", "passage": {"book": 46, "chapter": 6, "from": 15, "to": 20}}),
+            json!({"id": "i7", "kind": "catechismus", "label": "Heidelbergse Catechismus", "questions": [57]}),
+            json!({"id": "i8", "kind": "collecte", "label": "Collecte", "text": "1. GDC Noodhulp en Rampenfonds\n2. Beheer en onderhoud Levensbron\n3. Aflossing Bouwfonds"}),
+            psalm("i9", "psalm", "Zingen", 73, &[12, 13]),
+            simple("i10", "preek", "Prediking"),
+            psalm("i11", "psalm", "Tussenzang", 17, &[8]),
+            simple("i12", "preek", "Prediking"),
+            simple("i13", "gebed", "Dankgebed"),
+            psalm("i14", "slotzang", "Slotzang", 73, &[14]),
+            simple("i15", "einde", "Einde"),
         ]
     })
 }

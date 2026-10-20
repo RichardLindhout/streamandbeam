@@ -35,6 +35,27 @@ pub struct Settings {
     pub stream_key: String,
     pub record_dir: String,
     pub presets: Presets,
+    /// Shown as a QR code at the collecte and before/after the service.
+    pub qr_link: String,
+    /// Seconds the organ camera with "Psalm 42 : 5" shows before the verse (0 = off).
+    pub intro_seconds: u64,
+    /// Seconds the sermon theme shows before the camera turns to the predikant (0 = off).
+    pub theme_seconds: u64,
+    /// Go live automatically this many minutes before a service starts (0 = off).
+    pub auto_start_minutes: u64,
+    /// Stop automatically this many minutes after the end screen appears (0 = off).
+    pub auto_stop_minutes: u64,
+    /// OAuth client ("Desktop app") from Google Cloud Console, for logging in to YouTube.
+    pub youtube_client_id: String,
+    pub youtube_client_secret: String,
+    /// public, unlisted or private.
+    pub youtube_privacy: String,
+    /// Test broadcasts: private, with "TEST" in the title.
+    pub youtube_test: bool,
+    /// Listening along: "uit", "suggestie" (button blinks) or "automatisch".
+    pub autopilot: String,
+    /// Whisper model file, downloaded the first time.
+    pub whisper_model: String,
 }
 
 /// PTZOptics camera positions (preset numbers as saved in the camera).
@@ -64,6 +85,17 @@ impl Default for Settings {
             stream_key: String::new(),
             record_dir: "opnames".into(),
             presets: Presets::default(),
+            qr_link: "https://www.hhgtholen.nl".into(),
+            intro_seconds: 12,
+            theme_seconds: 20,
+            auto_start_minutes: 0,
+            auto_stop_minutes: 10,
+            youtube_client_id: String::new(),
+            youtube_client_secret: String::new(),
+            youtube_privacy: "public".into(),
+            youtube_test: false,
+            autopilot: "suggestie".into(),
+            whisper_model: "modellen/ggml-small-q5_1.bin".into(),
         }
     }
 }
@@ -134,6 +166,7 @@ pub struct Engine {
     overlay: Mutex<Option<gst::Buffer>>,
     preview: Mutex<Vec<u8>>,
     audio: Mutex<AudioWatch>,
+    listener: Mutex<Option<Arc<crate::listen::Listener>>>,
 }
 
 impl Engine {
@@ -151,6 +184,7 @@ impl Engine {
             overlay: Mutex::new(None),
             preview: Mutex::new(Vec::new()),
             audio: Mutex::new(AudioWatch::new()),
+            listener: Mutex::new(None),
         });
         // Keep feeding the current overlay: the compositor needs a steady flow of frames.
         let e = engine.clone();
@@ -159,6 +193,11 @@ impl Engine {
             e.push_overlay();
         });
         Ok(engine)
+    }
+
+    /// The listener gets a copy of the sound while the engine runs.
+    pub fn set_listener(&self, l: Arc<crate::listen::Listener>) {
+        *self.listener.lock().unwrap() = Some(l);
     }
 
     pub fn status(&self) -> Status {
@@ -224,6 +263,22 @@ impl Engine {
                 })
                 .build(),
         );
+        if let Some(listen) = pipeline.by_name("luister").and_then(|e| e.downcast::<gst_app::AppSink>().ok()) {
+            let e = self.clone();
+            listen.set_callbacks(
+                gst_app::AppSinkCallbacks::builder()
+                    .new_sample(move |sink| {
+                        let sample = sink.pull_sample().map_err(|_| gst::FlowError::Eos)?;
+                        let listener = e.listener.lock().unwrap().clone();
+                        if let (Some(l), Some(map)) = (listener, sample.buffer().and_then(|b| b.map_readable().ok())) {
+                            let samples: Vec<f32> = map.chunks_exact(4).map(|b| f32::from_le_bytes([b[0], b[1], b[2], b[3]])).collect();
+                            l.push_audio(&samples);
+                        }
+                        Ok(gst::FlowSuccess::Ok)
+                    })
+                    .build(),
+            );
+        }
         self.watch_bus(&pipeline, mode, settings.clone());
         *self.audio.lock().unwrap() = AudioWatch::new();
         pipeline.set_state(gst::State::Playing)?;
@@ -312,7 +367,9 @@ fn pipeline_description(mode: Mode, s: &Settings) -> Result<(String, String)> {
          compositor name=comp background=black ! video/x-raw,width={WIDTH},height={HEIGHT},framerate=25/1 ! videoconvert ! tee name=vt \
          vt. ! queue leaky=downstream max-size-buffers=2 ! videoscale ! videorate ! video/x-raw,width=640,height=360,framerate=5/1 \
            ! jpegenc quality=70 ! appsink name=preview max-buffers=1 drop=true sync=false \
-         {audio} ! audioconvert ! audioresample ! audio/x-raw,rate=48000,channels=2 ! level interval=100000000 ! tee name=at "
+         {audio} ! audioconvert ! audioresample ! audio/x-raw,rate=48000,channels=2 ! level interval=100000000 ! tee name=at \
+         at. ! queue leaky=downstream max-size-time=2000000000 ! audioconvert ! audioresample \
+           ! audio/x-raw,format=F32LE,rate=16000,channels=1 ! appsink name=luister sync=false max-buffers=100 drop=true "
     );
     if mode == Mode::Voorbeeld {
         d.push_str("at. ! queue ! fakesink sync=false");

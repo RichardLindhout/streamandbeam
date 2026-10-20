@@ -3,21 +3,24 @@
 //! who works from http://<this-pc>:8080.
 
 mod books;
+mod catechism;
 mod claude;
 mod director;
 mod extract;
+mod kerktijden;
+mod listen;
 mod render;
 mod show;
 mod stream;
 mod texts;
 mod web;
+mod youtube;
 
-use std::{path::PathBuf, sync::Arc};
+use std::path::PathBuf;
 
 struct Options {
     port: u16,
     data_dir: PathBuf,
-    old_spelling: bool,
     liturgy_url: String,
     command: Option<String>,
 }
@@ -26,7 +29,6 @@ fn parse_args() -> Options {
     let mut opts = Options {
         port: 8080,
         data_dir: "data".into(),
-        old_spelling: false,
         liturgy_url: extract::LITURGY_URL.into(),
         command: None,
     };
@@ -35,12 +37,10 @@ fn parse_args() -> Options {
         match arg.as_str() {
             "--poort" | "--port" => opts.port = args.next().and_then(|p| p.parse().ok()).unwrap_or(8080),
             "--data" => opts.data_dir = args.next().unwrap_or_default().into(),
-            "--oude-spelling" => opts.old_spelling = true,
             "--liturgie-url" => opts.liturgy_url = args.next().unwrap_or_default(),
             "-h" | "--help" => {
                 println!(
-                    "streamandbeam [--poort 8080] [--data data] [--oude-spelling] [--liturgie-url URL] [fetch|scenes]\n\n  \
-                     --oude-spelling  psalmen in de spelling van 1774 i.p.v. door Claude gemoderniseerd\n  \
+                    "streamandbeam [--poort 8080] [--data data] [--liturgie-url URL] [fetch|scenes]\n\n  \
                      fetch            laat zien wat Claude van de website leest\n  \
                      scenes           schrijf voorbeelden van de uitzendbeelden naar data/scenes"
                 );
@@ -66,7 +66,7 @@ async fn main() -> anyhow::Result<()> {
     let opts = parse_args();
     if opts.command.as_deref() == Some("fetch") {
         let ex = extract::extract_liturgy(&opts.liturgy_url).await?;
-        println!("{}", serde_json::to_string_pretty(&ex)?);
+        println!("{ex:#?}");
         return Ok(());
     }
 
@@ -74,10 +74,16 @@ async fn main() -> anyhow::Result<()> {
         return render::write_examples(&opts.data_dir.join("scenes"));
     }
 
-    let texts = Arc::new(texts::Texts { data_dir: opts.data_dir.clone(), modernize: !opts.old_spelling });
-    let show = show::Show::new(opts.data_dir.join("liturgie.json"), texts, opts.liturgy_url.clone()).await;
+    let show = show::Show::new(opts.data_dir.join("liturgie.json"), opts.liturgy_url.clone()).await;
     let engine = stream::Engine::new()?;
-    let director = director::Director::new(engine, opts.data_dir.join("instellingen.json"));
+    let director = director::Director::new(engine.clone(), &opts.data_dir);
+    let listener = listen::Listener::new(director.settings().whisper_model.into());
+    engine.set_listener(listener.clone());
+    if director.settings().autopilot != "uit" {
+        listener.start();
+    }
+    let d = director.clone();
+    tokio::spawn(listener.clone().suggest_loop(show.clone(), move || d.settings().autopilot));
     let photo = std::fs::read(opts.data_dir.join("kerk.jpg"))
         .ok()
         .or_else(|| Some(include_bytes!("../assets/images/kerk.jpg").to_vec()));
@@ -89,7 +95,7 @@ async fn main() -> anyhow::Result<()> {
     let base = format!("http://{}:{}", lan_ip(), opts.port);
     println!("Bediening:          {base}");
     println!("Schermen (TV's):    {base}/beam");
-    let listener = tokio::net::TcpListener::bind(("0.0.0.0", opts.port)).await?;
-    axum::serve(listener, web::router(show, director, format!("{base}/beam"))).await?;
+    let tcp = tokio::net::TcpListener::bind(("0.0.0.0", opts.port)).await?;
+    axum::serve(tcp, web::router(show, director, listener, format!("{base}/beam"), opts.port)).await?;
     Ok(())
 }

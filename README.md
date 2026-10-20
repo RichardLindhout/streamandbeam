@@ -1,98 +1,91 @@
 # Stream & Beam
 
-Shows the liturgy of HHG Tholen (psalms, Bible readings, sermon text and theme) on the
-screens in church, instead of a hand-made PowerPoint, and makes the YouTube stream
-(replacing OBS): PTZOptics camera + USB sound + our own scenes.
+Eén programma voor de diensten van HHG Tholen: de liturgie op de TV's in de kerk en de
+YouTube-uitzending (in plaats van PowerPoint en OBS).
 
-## How it works
+## Bedienen
 
-1. **Liturgie ophalen van website** reads https://www.hhgtholen.nl/kerkdiensten and lets
-   Claude extract every service: psalms and verses, readings, text, theme and points.
-2. The psalm texts (1773 berijming) come from DBNL, the Bible text (Statenvertaling)
-   from getbible.net. Both are stored in `data/` so a service works without internet.
-3. The service gets the usual order. Each predikant does it differently, so drag the
-   items (or use ↑↓) into the right order; changes are saved immediately.
-4. The TVs in church open `http://<pc>:8080/beam` and follow the operator live.
-   No laptop per screen is needed: any TV browser, Android TV / Google TV stick or
-   other small player that can show a web page works. The address is shown at startup
-   and at the top of the operator page.
-5. During the service, press **Volgende** (or →, spatie, a presentation clicker).
-   **Preek** jumps to the sermon screen, **Slotzang** to the separate closing-psalm
-   screen, **Zwart** blanks the screens.
+Open `http://<pc>:8080` op de PC, een laptop of een tablet.
 
-## YouTube stream
+1. **Dienst kiezen.** Bovenaan staan de diensten. **↻ Van website** haalt ze op van
+   hhgtholen.nl: Claude leest de liturgie en zet die in een vast formaat. Wat Claude niet
+   kon plaatsen, staat in een oranje blok. De predikant en de volgende dienst komen van
+   kerktijden.nl. Met **+ Nieuwe dienst** maak je er zelf een.
+2. **Aanvullen of wijzigen.** Typ in het invoerveld wat er komt, bijvoorbeeld
+   `ps 42:5, gebed, joh 3:16-21, HC 57, collecte`, en druk op Enter. Twijfelt het
+   programma, dan staat er ⚠ met de reden. Sleep of gebruik ↑↓ voor de volgorde van de
+   predikant.
+3. **Vrij aanpassen.** ✎ bij een onderdeel toont de dia's als gewone tekst. Wat je daar
+   typt, komt op de TV's en in de stream. **Herstel origineel** zet het terug.
+4. **Tijdens de dienst:** **Volgende** (→, spatie of een presentatie-clicker). **Preek**,
+   **Gebed** en **Slotzang** springen direct; **Zwart** maakt de TV's zwart.
 
-The **Uitzending** panel on the operator page shows a preview and has four modes:
-**Voorbeeld** (preview only), **Alleen opnemen** (record to a file), **Live op YouTube**
-(stream + record) and **Stop**. Every click on Volgende also picks the stream scene and
-moves the camera:
+De TV's openen `http://<pc>:8080/beam` en volgen de bediening vanzelf. Geef de PC een vast
+IP-adres in de router.
 
-| Item | Stream | Camera position |
+## Teksten
+
+Psalmen (berijming 1773 zoals de gemeente zingt), de Statenvertaling en de Heidelbergse
+Catechismus zitten in het programma. Ze zijn eenmalig opgehaald en gecontroleerd tegen een
+tweede bron; zie `assets/data/BRON.txt` en de scripts in `tools/`. Tijdens een dienst wordt
+er niets van internet gehaald.
+
+## YouTube-uitzending
+
+Onder **Uitzending**: Voorbeeld, Alleen opnemen, Live en Stop. Elke klik op Volgende kiest
+ook het beeld voor YouTube en draait de PTZOptics-camera naar de juiste positie:
+
+| Onderdeel | Op YouTube | Camera |
 |---|---|---|
-| Welkom | church frame with photo, date and service | overzicht |
-| Psalm / slotzang | white panel with the verse, camera in the round cut-out | orgel |
-| Slotzang (announcement) | camera with bar "Slotzang: Psalm 42 : 5" | orgel |
-| Schriftlezing, mededeling | white panel with the text | preekstoel |
-| Gebed | camera with bar "Gebed" (church screens go black) | doopvont |
-| Prediking | camera only | preekstoel |
+| Welkom / Einde | kerkfoto met datum, predikant, volgende dienst, QR-code | overzicht |
+| Psalm | eerst orgel met "Psalm 42 : 5" (voorspel), dan het vers met camera in de uitsparing | orgel |
+| Lezing, Catechismus | tekst met camera in de uitsparing ("Zondag 22" eronder) | preekstoel |
+| Collecte | doelen met QR-code | orgel |
+| Gebed | camera op de doopvont met "Gebed" (TV's zwart) | doopvont |
+| Prediking | eerst het thema met de punten, dan alleen de predikant | preekstoel |
 
-Camera positions are the preset numbers saved in the PTZOptics camera; set them under
-**Instellingen**, together with the camera IP, the sound source and the YouTube stream
-key. Recordings are saved as `.mkv` in the `opnames` folder. When the internet drops
-during a live stream, the stream restarts by itself after a few seconds.
+Een rode balk waarschuwt als er geen geluid binnenkomt. **Automatisch live** (minuten vooraf)
+en **automatisch stoppen** (minuten na het eindscherm) staan in de instellingen.
 
-`streamandbeam scenes` writes example images of the stream scenes to `data/scenes`.
+### YouTube koppelen (eenmalig, ±15 minuten)
 
-## Testing without the church equipment
+1. Ga naar https://console.cloud.google.com, maak een project ("Stream en Beam").
+2. **API's en services → Bibliotheek**: zet de **YouTube Data API v3** aan.
+3. **OAuth-toestemmingsscherm**: type *Extern*, vul de naam in, voeg het kerk-Google-account
+   toe als testgebruiker, en zet de status daarna op **In productie** (anders vervalt de
+   login na 7 dagen). Google noemt de app "niet geverifieerd"; voor eigen gebruik is dat
+   normaal.
+4. **Inloggegevens → OAuth-client-ID → Desktop-app**. Kopieer client-ID en -geheim naar de
+   instellingen van Stream & Beam.
+5. Open op de kerk-PC zelf `http://localhost:8080/youtube/login` en log in met het
+   kanaalaccount.
 
-`nepcamera` stands in for the church's equipment: an RTSP camera like the PTZOptics
-playing a recording of an earlier service (`testdata/dienst.mp4`), its sound as the
-"USB" input, the camera's position interface (logs every call) and an example church
-website with a liturgy page.
+Daarna maakt het programma bij **Live** zelf de uitzending aan, met titel en beschrijving uit
+de liturgie, en sluit die af bij **Stop**. Zonder login werkt de streamsleutel uit de
+instellingen.
 
-`testdienst` runs a complete service automatically against it and checks everything:
-liturgy from the example website, live to a fake YouTube (ffmpeg as RTMP receiver),
-clicking through every slide, the camera positions, the recording, what "YouTube"
-received, and the "no sound" warning. It writes a report and a contact sheet to
-`target/testdienst/<time>/`.
+## Installeren (Windows)
+
+1. GStreamer 1.28 (MSVC 64-bit) van https://gstreamer.freedesktop.org/download/: de
+   **runtime** én de **development** installer, optie "Complete".
+2. Rust van https://rustup.rs.
+3. `cargo build --release`, daarna `target\release\streamandbeam.exe`.
+4. Zet `ANTHROPIC_API_KEY` (voor het lezen van de website en het typen van onderdelen).
+5. Minder belasting: video-encoder `mfh264enc bitrate=4500` (elke videokaart),
+   `nvh264enc bitrate=4500` (NVIDIA) of `qsvh264enc bitrate=4500` (Intel).
+
+## Testen zonder kerk
+
+`nepcamera` speelt de camera na met een opname van een eerdere dienst (`testdata/dienst.mp4`),
+inclusief geluid, camera-posities en een voorbeeldwebsite. `testdienst` doet een complete
+dienst automatisch en controleert alles: liturgie, live naar een nep-YouTube, alle dia's,
+camera-posities, opname en de geluidswaarschuwing.
 
 ```sh
 cargo build --release
-target/release/testdienst          # --snel: shorter pause per slide
+target/release/testdienst            # --snel: kortere pauze per dia
+target/release/testdienst --youtube  # echt live op het kanaal, privé, met TEST in de titel
 ```
 
-Needs `ffmpeg`/`ffprobe` on the PATH. A test clip can be made from one of the church's
-own streams, e.g. with `yt-dlp --download-sections "*00:40:00-00:45:00"`, converted to
-`testdata/dienst.mp4` (H.264 + AAC). Without it, nepcamera uses a test picture.
-
-## Windows setup
-
-1. Install GStreamer 1.28 (MSVC 64-bit) from https://gstreamer.freedesktop.org/download/,
-   both the **runtime** and the **development** installer, with the "Complete" option.
-2. Install Rust from https://rustup.rs.
-3. `cargo build --release`
-4. For less load on the processor, set the video encoder to `mfh264enc bitrate=4500`
-   (any graphics card), `nvh264enc bitrate=4500` (NVIDIA) or `qsvh264enc bitrate=4500`
-   (Intel).
-5. Sound: leave the sound source empty for the default input, or pick the USB device
-   with `wasapisrc device="..."` (`gst-device-monitor-1.0 Audio/Source` lists the names).
-
-## Running
-
-```sh
-set ANTHROPIC_API_KEY=...          # needed for reading the website and modern spelling
-cargo build --release
-target\release\streamandbeam.exe   # prints the operator and TV addresses
-```
-
-Options:
-
-- `--poort 8080` port to listen on
-- `--data data` folder for cached texts and the saved liturgy
-- `--oude-spelling` show the psalms in the original 1774 spelling ("vreezen") instead of
-  letting Claude modernise it once per psalm
-
-`streamandbeam fetch` prints what Claude read from the website, for checking.
-
-Give the PC a fixed IP address on the church network (or a DHCP reservation in the
-router) so the TVs always find it at the same address.
+Nodig: `ffmpeg`/`ffprobe`. `streamandbeam scenes` schrijft voorbeelden van de
+YouTube-beelden naar `data/scenes`.

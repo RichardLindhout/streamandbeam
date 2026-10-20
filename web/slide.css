@@ -76,10 +76,10 @@
 .slotzang .announce strong { font-size: 200px; margin-top: 20px; }
 
 /* Welcome */
-.welkom .head { padding: 110px 110px 40px; }
-.welkom .head h1 { font-size: 92px; margin: 0; }
-.welkom .head p { font-size: 50px; margin: 18px 0 0; color: var(--warm); }
-.welkom ul {
+.welkom .head, .einde .head { padding: 110px 110px 40px; }
+.welkom .head h1, .einde .head h1 { font-size: 92px; margin: 0; }
+.welkom .head p, .einde .head p { font-size: 50px; margin: 18px 0 0; color: var(--warm); }
+.welkom ul, .einde ul {
   list-style: none;
   columns: 2;
   column-gap: 80px;
@@ -90,7 +90,14 @@
   padding: 40px 0 0;
 }
 
-.canvas.mededeling .body { text-align: center; }
+.canvas.mededeling .body, .canvas.collecte .body { text-align: center; }
+
+/* Catechism: question and answer */
+.catechismus .fit p { margin: 0 0 .6em; }
+.catechismus .fit p:first-child { color: var(--accent); }
+
+/* End of the service */
+.einde .footer { position: absolute; left: 110px; bottom: 80px; font-size: 50px; color: var(--warm); margin: 0; }
 
 /* During prayer the church screens stay black. */
 .canvas.black > *, .canvas.gebed > * { display: none; }

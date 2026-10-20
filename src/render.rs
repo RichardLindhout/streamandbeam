@@ -18,15 +18,19 @@ pub enum Scene {
     /// Camera with a bar at the bottom, e.g. "Gebed" or "Slotzang: Psalm 42 : 5".
     Bar { text: String },
     /// White panel with title and text on the left, camera in a round cut-out on the right.
-    Panel { title: String, paragraphs: Vec<String> },
-    /// Church frame shown before and after the service.
-    Holding { title: String, sub: String },
+    /// The footer (e.g. "Zondag 22") goes bottom left; `qr` adds the QR code bottom right.
+    Panel { title: String, paragraphs: Vec<String>, footer: String, qr: bool },
+    /// Church frame shown before and after the service, with an optional line above the
+    /// bottom bar (e.g. the next service) and the QR code.
+    Holding { title: String, sub: String, line: String, qr: bool },
 }
 
 pub struct Renderer {
     fonts: FontSystem,
     cache: SwashCache,
     photo: Option<Pixmap>,
+    /// The QR code's dark modules, row by row.
+    qr: Option<(usize, Vec<bool>)>,
 }
 
 #[derive(Clone, Copy)]
@@ -38,7 +42,8 @@ struct TextStyle {
 }
 
 impl Renderer {
-    pub fn new(photo: Option<&[u8]>) -> Renderer {
+    /// `qr_link` is shown as a QR code (e.g. the giving app or the church website).
+    pub fn new(photo: Option<&[u8]>, qr_link: &str) -> Renderer {
         let mut db = cosmic_text::fontdb::Database::new();
         db.load_font_data(include_bytes!("../assets/fonts/Lato-Regular.ttf").to_vec());
         db.load_font_data(include_bytes!("../assets/fonts/Lato-Bold.ttf").to_vec());
@@ -48,7 +53,10 @@ impl Renderer {
             pm.data_mut().copy_from_slice(img.as_raw()); // opaque photo, so already premultiplied
             Some(pm)
         });
-        Renderer { fonts: FontSystem::new_with_locale_and_db("nl-NL".into(), db), cache: SwashCache::new(), photo }
+        let qr = (!qr_link.is_empty()).then(|| qrcode::QrCode::new(qr_link).ok()).flatten().map(|code| {
+            (code.width(), code.to_colors().into_iter().map(|c| c == qrcode::Color::Dark).collect())
+        });
+        Renderer { fonts: FontSystem::new_with_locale_and_db("nl-NL".into(), db), cache: SwashCache::new(), photo, qr }
     }
 
     /// Renders a scene to straight-alpha RGBA pixels of WIDTH x HEIGHT.
@@ -62,7 +70,7 @@ impl Renderer {
                 let style = TextStyle { size: 60.0, bold: true, color: [255; 3], align: Align::Left };
                 self.text(&mut pm, &[(text.as_str(), style)], 90.0, h - 130.0, w - 180.0, 130.0, true);
             }
-            Scene::Panel { title, paragraphs } => {
+            Scene::Panel { title, paragraphs, footer, qr } => {
                 pm.fill(tiny_skia::Color::WHITE);
                 // Round cut-out on the right through which the camera is seen.
                 let mut pb = PathBuilder::new();
@@ -74,9 +82,16 @@ impl Renderer {
                 self.text(&mut pm, &[(title.as_str(), title_style)], 90.0, 50.0, 960.0, 90.0, false);
                 let body = paragraphs.join("\n");
                 let style = TextStyle { size: 46.0, bold: false, color: INK, align: Align::Left };
-                self.fit_text(&mut pm, &body, style, 90.0, 170.0, 960.0, h - 230.0);
+                self.fit_text(&mut pm, &body, style, 90.0, 170.0, 960.0, h - 300.0);
+                if !footer.is_empty() {
+                    let f = TextStyle { size: 38.0, bold: true, color: TEAL, align: Align::Left };
+                    self.text(&mut pm, &[(footer.as_str(), f)], 90.0, h - 110.0, 800.0, 60.0, true);
+                }
+                if *qr {
+                    self.draw_qr(&mut pm, 1000.0, h - 230.0, 170.0);
+                }
             }
-            Scene::Holding { title, sub } => {
+            Scene::Holding { title, sub, line, qr } => {
                 pm.fill(color(TEAL, 255));
                 let (px, py, pw, ph) = (130.0, 60.0, w - 190.0, h - 230.0);
                 if let Some(photo) = &self.photo {
@@ -87,9 +102,31 @@ impl Renderer {
                 let right = TextStyle { align: Align::Right, ..left };
                 self.text(&mut pm, &[(title.as_str(), left)], px + 40.0, h - 170.0, pw - 80.0, 110.0, true);
                 self.text(&mut pm, &[(sub.as_str(), right)], px + 40.0, h - 170.0, pw - 80.0, 110.0, true);
+                if !line.is_empty() {
+                    fill_rect(&mut pm, px, h - 290.0, pw, 110.0, TEAL, 230);
+                    let l = TextStyle { size: 46.0, bold: false, color: [255; 3], align: Align::Left };
+                    self.text(&mut pm, &[(line.as_str(), l)], px + 40.0, h - 290.0, pw - 300.0, 110.0, true);
+                }
+                if *qr {
+                    self.draw_qr(&mut pm, px + pw - 230.0, py + 30.0, 200.0);
+                }
             }
         }
         to_straight_rgba(pm)
+    }
+
+    /// Draws the QR code on a white square of `size` pixels.
+    fn draw_qr(&self, pm: &mut Pixmap, x: f32, y: f32, size: f32) {
+        let Some((width, dark)) = &self.qr else { return };
+        fill_rect(pm, x, y, size, size, [255; 3], 255);
+        let quiet = 2.0;
+        let cell = size / (*width as f32 + 2.0 * quiet);
+        for (i, is_dark) in dark.iter().enumerate() {
+            if *is_dark {
+                let (cx, cy) = ((i % width) as f32, (i / width) as f32);
+                fill_rect(pm, x + (cx + quiet) * cell, y + (cy + quiet) * cell, cell + 0.5, cell + 0.5, [0; 3], 255);
+            }
+        }
     }
 
     /// Draws text in the box, shrinking the font until it fits.
@@ -198,14 +235,34 @@ fn to_straight_rgba(pm: Pixmap) -> Vec<u8> {
 /// Writes every scene as a PNG, to check the design without a camera.
 pub fn write_examples(dir: &std::path::Path) -> anyhow::Result<()> {
     std::fs::create_dir_all(dir)?;
-    let mut r = Renderer::new(Some(include_bytes!("../assets/images/kerk.jpg")));
+    let mut r = Renderer::new(Some(include_bytes!("../assets/images/kerk.jpg")), "https://www.hhgtholen.nl");
     let scenes = [
-        ("welkom", Scene::Holding { title: "Zondag 18 oktober 2026".into(), sub: "Middagdienst".into() }),
+        ("welkom", Scene::Holding { title: "Zondag 18 oktober 2026".into(), sub: "Middagdienst · ds. A. den Hartog jr.".into(), line: String::new(), qr: true }),
+        ("einde", Scene::Holding {
+            title: "www.hhgtholen.nl".into(),
+            sub: "Hersteld Hervormde Gemeente Tholen".into(),
+            line: "Volgende dienst: Zondag 25 oktober om 9.30 uur · ds. K. Klopstra".into(),
+            qr: true,
+        }),
+        ("catechismus", Scene::Panel {
+            title: "Heidelbergse Catechismus".into(),
+            paragraphs: vec!["Vraag 57: Wat troost geeft u de opstanding des vleses?".into(), "Antwoord: Dat niet alleen mijn ziel na dit leven van stonden aan tot Christus, haar Hoofd, zal opgenomen worden, maar dat ook dit mijn vlees, door de kracht van Christus opgewekt zijnde, wederom met mijn ziel verenigd en aan het heerlijk lichaam van Christus gelijkvormig zal worden.".into()],
+            footer: "Zondag 22".into(),
+            qr: false,
+        }),
+        ("collecte", Scene::Panel {
+            title: "Collecte".into(),
+            paragraphs: vec!["1. GDC Noodhulp en Rampenfonds".into(), "2. Beheer en onderhoud Levensbron".into(), "3. Aflossing Bouwfonds".into()],
+            footer: String::new(),
+            qr: true,
+        }),
         ("balk", Scene::Bar { text: "Slotzang: Psalm 42 : 5".into() }),
         ("psalm", Scene::Panel {
             title: "Psalm 42 : 5".into(),
             paragraphs: ["Maar de HEER zal uitkomst geven,", "Hij, die 's daags zijn gunst gebiedt:", "'k Zal in dit vertrouwen leven,", "En dat melden in mijn lied."]
                 .map(String::from).to_vec(),
+            footer: String::new(),
+            qr: false,
         }),
     ];
     for (name, scene) in scenes {
