@@ -16,11 +16,82 @@ const WARM: [u8; 3] = [0x8f, 0x83, 0x77];
 const SAND: [u8; 3] = [0xe3, 0xda, 0xcf];
 const PAPER: [u8; 3] = [0xfb, 0xfa, 0xf7];
 
-/// The camera opening of the panel, measured on the church's stream: a circle with its
-/// centre just right of the picture, near the top.
-const CIRCLE: (f32, f32, f32) = (2025.0, 200.0, 950.0);
 /// Left margin of the panel text.
 const LEFT: f32 = 96.0;
+/// Air between the text and an area it avoids.
+const AIR: f32 = 48.0;
+/// Narrowest piece of line worth putting text on.
+const MIN_LINE: f32 = 320.0;
+
+/// An area of the panel the text keeps clear of, in pixels of the 1920x1080 picture
+/// (it may stick out of the picture). With `camera` the area is cut out of the panel,
+/// so the camera shows through, with a fine ring around it.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct Zone {
+    /// Round (circle or ellipse in the box) instead of a rectangle.
+    pub round: bool,
+    pub x: f32,
+    pub y: f32,
+    pub w: f32,
+    pub h: f32,
+    pub camera: bool,
+}
+
+impl Default for Zone {
+    fn default() -> Zone {
+        Zone::camera_circle()
+    }
+}
+
+impl Zone {
+    /// The camera opening as on the church's own stream: a large circle with its centre
+    /// just right of the picture, near the top.
+    pub fn camera_circle() -> Zone {
+        Zone { round: true, x: 1075.0, y: -750.0, w: 1900.0, h: 1900.0, camera: true }
+    }
+
+    fn path(&self, grow: f32) -> Option<tiny_skia::Path> {
+        let (x, y, w, h) = (self.x - grow, self.y - grow, self.w + 2.0 * grow, self.h + 2.0 * grow);
+        if self.round {
+            PathBuilder::from_oval(Rect::from_xywh(x, y, w, h)?)
+        } else {
+            Some(PathBuilder::from_rect(Rect::from_xywh(x, y, w, h)?))
+        }
+    }
+
+    /// The stretch of a text line from `top` to `bottom` this area covers, with air.
+    fn blocks(&self, top: f32, bottom: f32) -> Option<(f32, f32)> {
+        let (t, b) = (self.y - AIR, self.y + self.h + AIR);
+        if bottom <= t || top >= b {
+            return None;
+        }
+        if !self.round {
+            return Some((self.x - AIR, self.x + self.w + AIR));
+        }
+        let (rx, ry) = (self.w / 2.0, self.h / 2.0);
+        let (cx, cy) = (self.x + rx, self.y + ry);
+        // Widest point of the ellipse within the line.
+        let d = cy.clamp(top, bottom) - cy;
+        let half = if d.abs() >= ry { 0.0 } else { rx * (1.0 - (d / ry).powi(2)).sqrt() };
+        Some((cx - half - AIR, cx + half + AIR))
+    }
+}
+
+/// Where a text line from `y` to `y + line_h` can go: the first free stretch from the
+/// left that is wide enough, as (x, width).
+fn room(zones: &[Zone], y: f32, line_h: f32) -> Option<(f32, f32)> {
+    let mut blocked: Vec<(f32, f32)> = zones.iter().filter_map(|z| z.blocks(y, y + line_h)).collect();
+    blocked.sort_by(|a, b| a.0.total_cmp(&b.0));
+    let (mut x, end) = (LEFT, WIDTH as f32 - LEFT);
+    for (a, b) in blocked {
+        if a - x >= MIN_LINE {
+            return Some((x, a - x));
+        }
+        x = x.max(b);
+    }
+    (end - x >= MIN_LINE).then_some((x, end - x))
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Scene {
@@ -68,6 +139,8 @@ pub struct Renderer {
     logo: Option<Pixmap>,
     /// The QR code's dark modules, row by row.
     qr: Option<(usize, Vec<bool>)>,
+    /// Areas the panel text keeps clear of.
+    zones: Vec<Zone>,
 }
 
 /// Source Serif 4 for the texts (psalms, readings), Source Sans 3 for headings and labels.
@@ -118,6 +191,7 @@ impl Renderer {
             (code.width(), code.to_colors().into_iter().map(|c| c == qrcode::Color::Dark).collect())
         });
         Renderer {
+            zones: vec![Zone::camera_circle()],
             fonts: FontSystem::new_with_locale_and_db("nl-NL".into(), db),
             cache: SwashCache::new(),
             inside: load(images.inside),
@@ -137,6 +211,10 @@ impl Renderer {
             },
             qr_link,
         )
+    }
+
+    pub fn set_zones(&mut self, zones: &[Zone]) {
+        self.zones = zones.to_vec();
     }
 
     /// Renders a scene to straight-alpha RGBA pixels of WIDTH x HEIGHT.
@@ -172,13 +250,16 @@ impl Renderer {
     /// White panel with the camera in a large round opening; the text runs along the curve.
     #[allow(clippy::too_many_arguments)]
     fn panel(&mut self, pm: &mut Pixmap, label: &str, title: &str, paragraphs: &[String], style: Body, footer: &str, qr: bool) {
-        let (cx, cy, r) = CIRCLE;
         pm.fill(color(PAPER, 255));
-        // A fine coloured ring along the opening, then the opening itself.
-        fill_path(pm, PathBuilder::from_circle(cx, cy, r + 9.0), TEAL_2, 255);
+        // Camera openings: a fine coloured ring, then the opening itself.
         let mut clear = Paint::default();
         clear.blend_mode = tiny_skia::BlendMode::Clear;
-        pm.fill_path(&PathBuilder::from_circle(cx, cy, r).unwrap(), &clear, FillRule::Winding, Transform::identity(), None);
+        for z in self.zones.iter().filter(|z| z.camera) {
+            fill_path(pm, z.path(9.0), TEAL_2, 255);
+            if let Some(path) = z.path(0.0) {
+                pm.fill_path(&path, &clear, FillRule::Winding, Transform::identity(), None);
+            }
+        }
 
         let mut y = 64.0;
         if !label.is_empty() {
@@ -205,9 +286,9 @@ impl Renderer {
             }
             size -= 2.0;
         };
-        for (ly, spans) in lines {
+        for (lx, ly, spans) in lines {
             let spans: Vec<(&str, TextStyle)> = spans.iter().map(|(t, s)| (t.as_str(), *s)).collect();
-            self.line(pm, &spans, LEFT, ly);
+            self.line(pm, &spans, lx, ly);
         }
         if !footer.is_empty() {
             self.line(pm, &[(footer, TextStyle::new(34.0, Face::SansBold, TEAL))], LEFT, HEIGHT as f32 - 110.0);
@@ -218,24 +299,37 @@ impl Renderer {
         }
     }
 
-    /// Lays out paragraphs line by line; each line is as wide as the panel is at that
-    /// height (narrow at the top, wider lower down where the curve moves right).
-    /// Returns None when it does not fit above `bottom`.
-    fn flow(&mut self, paragraphs: &[String], style: Body, size: f32, top: f32, bottom: f32) -> Option<Vec<(f32, Vec<(String, TextStyle)>)>> {
+    /// Lays out paragraphs line by line; each line takes the free stretch at its height,
+    /// keeping clear of the zones (so it follows the curve of the camera opening, and
+    /// skips heights where nothing fits). Returns None when it does not fit above `bottom`.
+    #[allow(clippy::type_complexity)]
+    fn flow(&mut self, paragraphs: &[String], style: Body, size: f32, top: f32, bottom: f32) -> Option<Vec<(f32, f32, Vec<(String, TextStyle)>)>> {
         let numbered = style == Body::Verses;
         let number = TextStyle::new(size * 0.6, Face::SansBold, TEAL_2);
         let line_h = size * if style == Body::Lines { 1.38 } else { 1.42 };
         let gap = if style == Body::Lines { 0.0 } else { size * 0.35 };
         let mut out = Vec::new();
         let mut y = top;
+        let zones = self.zones.clone();
+        // The next height with room for a line, and that room.
+        let next = |y: &mut f32| -> Option<(f32, f32)> {
+            while *y < HEIGHT as f32 + 2000.0 {
+                if let Some(r) = room(&zones, *y, line_h) {
+                    return Some(r);
+                }
+                *y += line_h / 2.0;
+            }
+            None
+        };
         for (k, p) in paragraphs.iter().enumerate() {
             let colour = if style == Body::Question && k == 0 { TEAL_2 } else { INK };
             let body = TextStyle::new(size, Face::Serif, colour);
             if style == Body::Lines {
-                if self.measure(&[(p, body)]) > available(y, line_h) {
+                let (x, width) = next(&mut y)?;
+                if self.measure(&[(p, body)]) > width {
                     return None;
                 }
-                out.push((y, vec![(p.clone(), body)]));
+                out.push((x, y, vec![(p.clone(), body)]));
                 y += line_h;
                 continue;
             }
@@ -245,15 +339,17 @@ impl Renderer {
                 line.push((format!("{} ", words.remove(0)), number));
             }
             let mut text = String::new();
+            let (mut x, mut width) = next(&mut y)?;
             for w in words {
                 let candidate = if text.is_empty() { w.to_string() } else { format!("{text} {w}") };
                 let mut spans = line.clone();
                 spans.push((candidate.clone(), body));
                 let refs: Vec<(&str, TextStyle)> = spans.iter().map(|(t, s)| (t.as_str(), *s)).collect();
-                if !text.is_empty() && self.measure(&refs) > available(y, line_h) {
+                if !text.is_empty() && self.measure(&refs) > width {
                     line.push((text, body));
-                    out.push((y, std::mem::take(&mut line)));
+                    out.push((x, y, std::mem::take(&mut line)));
                     y += line_h;
+                    (x, width) = next(&mut y)?;
                     text = w.to_string();
                 } else {
                     text = candidate;
@@ -263,7 +359,7 @@ impl Renderer {
                 line.push((text, body));
             }
             if !line.is_empty() {
-                out.push((y, line));
+                out.push((x, y, line));
                 y += line_h;
             }
             y += gap;
@@ -377,16 +473,6 @@ impl Renderer {
             }
         });
     }
-}
-
-/// Room for text on a line from y to y+line_h: up to the curve, minus some air.
-fn available(y: f32, line_h: f32) -> f32 {
-    let (cx, cy, r) = CIRCLE;
-    let edge = |yy: f32| {
-        let d = yy - cy;
-        if d.abs() >= r { WIDTH as f32 } else { cx - (r * r - d * d).sqrt() }
-    };
-    edge(y).min(edge(y + line_h)) - LEFT - 48.0
 }
 
 fn color(c: [u8; 3], a: u8) -> tiny_skia::Color {

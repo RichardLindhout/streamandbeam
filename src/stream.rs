@@ -57,6 +57,9 @@ pub struct Settings {
     /// The YouTube channel (id) whose live stream is checked for sound and shown on the
     /// watch page.
     pub youtube_channel: String,
+    /// Areas of the stream panel the text keeps clear of; a camera area is cut out so the
+    /// camera shows through. Default: the large camera circle.
+    pub overlay_zones: Vec<crate::render::Zone>,
 }
 
 /// PTZOptics camera positions (preset numbers as saved in the camera).
@@ -97,6 +100,7 @@ impl Default for Settings {
             youtube_test: false,
             autopilot: "suggestie".into(),
             youtube_channel: "UCv0FTJ5pf3aXF7fhVYLwe2g".into(),
+            overlay_zones: vec![crate::render::Zone::camera_circle()],
         }
     }
 }

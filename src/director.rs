@@ -49,12 +49,17 @@ impl Director {
         v.index = index;
         v.override_board = None;
         let (scene, _, _) = scene_for(&v, Duration::from_secs(3600), &self.settings());
-        let key = format!("{scene:?}");
+        let zones = self.settings().overlay_zones;
+        let key = format!("{scene:?}{zones:?}");
         if let Some(png) = self.thumbs.lock().unwrap().get(&key) {
             return Some(png.clone());
         }
         let renderer = self.renderer.lock().unwrap().clone()?;
-        let rgba = renderer.lock().unwrap().render(&scene);
+        let rgba = {
+            let mut r = renderer.lock().unwrap();
+            r.set_zones(&zones);
+            r.render(&scene)
+        };
         let overlay = image::RgbaImage::from_raw(crate::render::WIDTH, crate::render::HEIGHT, rgba)?;
         let mut img = image::RgbaImage::from_fn(crate::render::WIDTH, crate::render::HEIGHT, |_, y| {
             let g = 70 + (y * 40 / crate::render::HEIGHT) as u8;
@@ -141,10 +146,17 @@ impl Director {
                 on_screen = (view.index, key, Instant::now());
             }
             let (scene, position, until) = scene_for(&view, on_screen.2.elapsed(), &settings);
-            if last_scene.as_ref() != Some(&scene) {
-                last_scene = Some(scene.clone());
+            let drawn = (scene.clone(), settings.overlay_zones.clone());
+            if last_scene.as_ref() != Some(&drawn) {
+                last_scene = Some(drawn);
                 let r = renderer.clone();
-                if let Ok(pixels) = tokio::task::spawn_blocking(move || r.lock().unwrap().render(&scene)).await {
+                let zones = settings.overlay_zones.clone();
+                let render = move || {
+                    let mut r = r.lock().unwrap();
+                    r.set_zones(&zones);
+                    r.render(&scene)
+                };
+                if let Ok(pixels) = tokio::task::spawn_blocking(render).await {
                     self.engine.set_overlay(pixels);
                 }
             }
