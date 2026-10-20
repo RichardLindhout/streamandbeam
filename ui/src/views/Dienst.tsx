@@ -32,6 +32,10 @@ function subline(p: ReturnType<typeof position>, svc: Service | undefined, statu
     const start = serviceStart(svc);
     if (!start) return "";
     const min = Math.ceil((+start - now) / 60_000);
+    if (min > 120) {
+      const day = start.toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long" });
+      return `dienst ${day} ${hhmm(start)}`;
+    }
     return min > 0 ? `dienst ${hhmm(start)} · nog ${min} min` : `dienst ${hhmm(start)}`;
   }
   if (p.kind === "einde") {
