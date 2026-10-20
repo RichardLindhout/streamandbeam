@@ -10,14 +10,14 @@ function SelectTrigger({ className, children, ...props }: React.ComponentProps<t
   return (
     <P.Trigger
       className={cn(
-        "flex h-10 w-full items-center justify-between gap-2 rounded-lg border border-input bg-background/60 px-3 text-sm whitespace-nowrap shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/30 data-[placeholder]:text-muted-foreground [&>span]:truncate",
+        "flex h-14 w-full items-center justify-between gap-2 rounded-xl border-2 border-input bg-card px-4 text-[22px] whitespace-nowrap shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/30 data-[placeholder]:text-muted-foreground [&>span]:truncate",
         className,
       )}
       {...props}
     >
       {children}
       <P.Icon asChild>
-        <ChevronDownIcon className="size-4 opacity-60" />
+        <ChevronDownIcon className="size-6 opacity-70" />
       </P.Icon>
     </P.Trigger>
   );
@@ -45,14 +45,14 @@ function SelectItem({ className, children, ...props }: React.ComponentProps<type
   return (
     <P.Item
       className={cn(
-        "relative flex w-full cursor-default items-center rounded-md py-2 pr-8 pl-3 text-sm outline-none select-none focus:bg-accent data-[disabled]:opacity-50",
+        "relative flex w-full cursor-default items-center min-h-14 rounded-lg py-2 pr-10 pl-4 text-[22px] outline-none select-none focus:bg-accent data-[disabled]:opacity-50",
         className,
       )}
       {...props}
     >
-      <span className="absolute right-2 flex size-4 items-center justify-center">
+      <span className="absolute right-3 flex size-5 items-center justify-center">
         <P.ItemIndicator>
-          <CheckIcon className="size-4 text-primary" />
+          <CheckIcon className="size-5 text-walnut" />
         </P.ItemIndicator>
       </span>
       <P.ItemText>{children}</P.ItemText>

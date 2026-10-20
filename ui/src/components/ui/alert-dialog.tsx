@@ -9,9 +9,9 @@ const AlertDialogTrigger = P.Trigger;
 function AlertDialogContent({ className, ...props }: React.ComponentProps<typeof P.Content>) {
   return (
     <P.Portal>
-      <P.Overlay className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm" />
+      <P.Overlay className="fixed inset-0 z-50 bg-[#2b1d12]/55" />
       <P.Content
-        className={cn("fixed top-1/2 left-1/2 z-50 grid w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 gap-5 rounded-2xl border bg-popover p-7 shadow-2xl", className)}
+        className={cn("fixed top-1/2 left-1/2 z-50 grid w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 gap-7 rounded-2xl border-2 bg-popover p-8 shadow-2xl", className)}
         {...props}
       />
     </P.Portal>
@@ -22,13 +22,13 @@ function AlertDialogHeader({ className, ...props }: React.ComponentProps<"div">)
   return <div className={cn("grid gap-2", className)} {...props} />;
 }
 function AlertDialogFooter({ className, ...props }: React.ComponentProps<"div">) {
-  return <div className={cn("grid grid-cols-2 gap-3", className)} {...props} />;
+  return <div className={cn("grid grid-cols-2 gap-4", className)} {...props} />;
 }
 function AlertDialogTitle({ className, ...props }: React.ComponentProps<typeof P.Title>) {
-  return <P.Title className={cn("font-serif text-2xl font-semibold tracking-tight", className)} {...props} />;
+  return <P.Title className={cn("font-serif text-[32px] leading-tight font-semibold tracking-tight", className)} {...props} />;
 }
 function AlertDialogDescription({ className, ...props }: React.ComponentProps<typeof P.Description>) {
-  return <P.Description className={cn("text-[15px] leading-relaxed text-muted-foreground", className)} {...props} />;
+  return <P.Description className={cn("text-[22px] leading-snug text-foreground", className)} {...props} />;
 }
 function AlertDialogAction({ className, ...props }: React.ComponentProps<typeof P.Action>) {
   return <P.Action className={cn(buttonVariants({ size: "lg" }), className)} {...props} />;

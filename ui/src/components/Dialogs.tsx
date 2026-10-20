@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { LogIn } from "lucide-react";
+import { CalendarPlus, Globe, LogIn } from "lucide-react";
+import { toast } from "sonner";
 import type { Settings, StreamStatus, View } from "@/lib/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { BoardBackground, StreamControls } from "./PrepareCards";
-import { post } from "@/lib/api";
+import { errorText, post } from "@/lib/api";
 import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -14,22 +15,42 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="grid gap-3">
-      <h4 className="text-[11px] font-bold tracking-[0.14em] text-primary uppercase">{title}</h4>
+      <h4 className="font-serif text-[24px] font-semibold">{title}</h4>
       {children}
     </section>
   );
 }
 
-export function SettingsDialog({ open, onOpenChange, state, status }: { open: boolean; onOpenChange: (b: boolean) => void; state: View | null; status: StreamStatus }) {
+export function SettingsDialog({ open, onOpenChange, state, status, onMade }: {
+  open: boolean; onOpenChange: (b: boolean) => void; state: View | null; status: StreamStatus; onMade?: () => void;
+}) {
   const [s, setS] = useState<Settings | null>(null);
   const [yt, setYt] = useState<{ configured: boolean; channel: string } | null>(null);
+  const [error, setError] = useState("");
+  const [fetching, setFetching] = useState(false);
+  const [newOpen, setNewOpen] = useState(false);
+  const live = status.mode === "live";
   useEffect(() => {
     if (!open) return;
-    fetch("/api/settings").then((r) => r.json()).then(setS);
+    setError("");
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((v: Settings) =>
+        // Older programs keep minutes after the end; show them as seconds.
+        setS({ ...v, autoStopSeconds: v.autoStopSeconds ?? (v.autoStopMinutes !== undefined ? v.autoStopMinutes * 60 : 0) }),
+      )
+      .catch(() => setError("Geen verbinding met de kerk-PC"));
     fetch("/api/youtube").then((r) => r.json()).then(setYt).catch(() => {});
   }, [open]);
 
-  const f = (k: keyof Settings, label: string, type: "text" | "number" | "password" = "text") =>
+  async function fetchSite() {
+    setFetching(true);
+    const r = await post("/api/fetch");
+    setFetching(false);
+    if (r.ok) toast.success("Diensten opgehaald");
+  }
+
+  const f = (k: string, label: string, type: "text" | "number" | "password" = "text") =>
     s && (
       <div className="grid gap-1.5">
         <Label htmlFor={k}>{label}</Label>
@@ -41,7 +62,7 @@ export function SettingsDialog({ open, onOpenChange, state, status }: { open: bo
         />
       </div>
     );
-  const sel = (k: keyof Settings, label: string, opts: [string, string][]) =>
+  const sel = (k: string, label: string, opts: [string, string][]) =>
     s && (
       <div className="grid gap-1.5">
         <Label>{label}</Label>
@@ -54,10 +75,10 @@ export function SettingsDialog({ open, onOpenChange, state, status }: { open: bo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-3xl">
         <DialogHeader className="border-b-0 pb-2">
           <DialogTitle>Instellingen</DialogTitle>
-          <DialogDescription>Camera, geluid, YouTube, de uitzending en het bord.</DialogDescription>
+          <DialogDescription className="sr-only">Instellingen</DialogDescription>
         </DialogHeader>
         <Tabs defaultValue="algemeen" className="flex min-h-0 flex-col">
         <TabsList>
@@ -69,7 +90,13 @@ export function SettingsDialog({ open, onOpenChange, state, status }: { open: bo
         <TabsContent value="bord"><DialogBody><BoardBackground state={state} /></DialogBody></TabsContent>
         <TabsContent value="algemeen" className="flex min-h-0 flex-col">
         {s ? (
-          <DialogBody className="gap-7">
+          <DialogBody className="gap-8">
+            <Section title="Diensten">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Button variant="outline" disabled={live || fetching} onClick={fetchSite}><Globe /> {fetching ? "Bezig…" : "Diensten ophalen van website"}</Button>
+                <Button variant="outline" disabled={live} onClick={() => setNewOpen(true)}><CalendarPlus /> Nieuwe dienst</Button>
+              </div>
+            </Section>
             <Section title="Camera en geluid">
               <div className="grid gap-3 sm:grid-cols-2">
                 {f("cameraIp", "IP-adres camera (leeg = testbeeld)")}
@@ -91,15 +118,15 @@ export function SettingsDialog({ open, onOpenChange, state, status }: { open: bo
                 {f("introSeconds", "Aankondiging psalm (sec)", "number")}
                 {f("themeSeconds", "Thema in beeld (sec)", "number")}
                 {f("autoStartMinutes", "Automatisch live (min vooraf, 0 = uit)", "number")}
-                {f("autoStopMinutes", "Automatisch stoppen (min na einde)", "number")}
-                {sel("autopilot", "Meeluisteren", [["uit", "Uit"], ["suggestie", "Suggestie (knop kleurt)"], ["automatisch", "Automatisch als het zeker is"]])}
+                {f("autoStopSeconds", "Stoppen na aftiteling (seconden)", "number")}
+                {sel("autopilot", "Meeluisteren", [["uit", "Uit"], ["suggestie", "Suggestie"], ["automatisch", "Automatisch"]])}
                 {f("qrLink", "Link in QR-code")}
               </div>
             </Section>
             <Section title="YouTube">
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-background/50 p-3 text-sm">
-                <span className="text-muted-foreground">
-                  {yt?.channel ? <>Ingelogd als <b className="text-foreground">{yt.channel}</b></> : yt?.configured ? "Nog niet ingelogd (alleen op deze PC)" : "Vul hieronder de Google-gegevens in, of gebruik een streamsleutel"}
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 bg-background/50 p-3 text-[20px]">
+                <span>
+                  {yt?.channel ? <>Ingelogd als <b>{yt.channel}</b></> : yt?.configured ? "Niet ingelogd" : "Niet ingesteld"}
                 </span>
                 {yt?.channel ? (
                   <Button variant="ghost" size="sm" onClick={async () => { await post("/api/youtube/logout"); setYt({ ...yt, channel: "" }); }}>Uitloggen</Button>
@@ -115,25 +142,26 @@ export function SettingsDialog({ open, onOpenChange, state, status }: { open: bo
                 {f("streamKey", "Of: YouTube-streamsleutel", "password")}
                 {f("rtmpUrl", "RTMP-adres")}
               </div>
-              <label className="flex items-center gap-3 text-sm">
+              <label className="flex min-h-14 items-center gap-3 text-[20px]">
                 <Switch checked={s.youtubeTest} onCheckedChange={(v) => setS({ ...s, youtubeTest: v })} />
-                Testuitzending (privé, met “TEST” in de titel)
+                Testuitzending
               </label>
             </Section>
             <Section title="Opnames">{f("recordDir", "Map voor opnames")}</Section>
           </DialogBody>
         ) : (
-          <DialogBody><div className="text-sm text-muted-foreground">Laden…</div></DialogBody>
+          <DialogBody><div className="text-[20px] text-muted-foreground">{error || "Laden…"}</div></DialogBody>
         )}
+        {error && s && <div className="mx-7 mb-3 rounded-xl bg-[#fbe9e7] px-4 py-3 text-[22px] font-semibold text-live">{error}</div>}
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Annuleer</Button>
           <Button
             disabled={!s}
             onClick={async () => {
-              // Keep what was changed elsewhere meanwhile (e.g. the text zones).
-              const latest: Settings = await (await fetch("/api/settings")).json();
-              await post("/api/settings", { ...latest, ...s, overlayZones: latest.overlayZones });
-              onOpenChange(false);
+              // settingsVersion goes back as it came: a save over someone else's newer one is refused (409).
+              const r = await post("/api/settings", s, { quiet: true });
+              if (r.ok) onOpenChange(false);
+              else setError(await errorText(r));
             }}
           >
             Opslaan
@@ -142,6 +170,7 @@ export function SettingsDialog({ open, onOpenChange, state, status }: { open: bo
         </TabsContent>
         </Tabs>
       </DialogContent>
+      <NewServiceDialog open={newOpen} onOpenChange={setNewOpen} onMade={onMade} />
     </Dialog>
   );
 }
@@ -157,12 +186,14 @@ function nextSunday() {
 
 export function NewServiceDialog({ open, onOpenChange, onMade }: { open: boolean; onOpenChange: (b: boolean) => void; onMade?: () => void }) {
   const [v, setV] = useState({ date: nextSunday(), time: "09:30", label: "Morgendienst" });
+  const [error, setError] = useState("");
+  useEffect(() => { if (open) setError(""); }, [open]);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Nieuwe dienst</DialogTitle>
-          <DialogDescription>Daarna typ je wat er komt, in elke volgorde — ook bij een rouw- of huwelijksdienst.</DialogDescription>
+          <DialogDescription className="sr-only">Datum, tijd en soort</DialogDescription>
         </DialogHeader>
         <DialogBody>
           <div className="grid grid-cols-2 gap-3">
@@ -170,14 +201,24 @@ export function NewServiceDialog({ open, onOpenChange, onMade }: { open: boolean
             <div className="grid gap-1.5"><Label htmlFor="nt">Tijd</Label><Input id="nt" type="time" value={v.time} onChange={(e) => setV({ ...v, time: e.target.value })} /></div>
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="nl">Soort dienst (vrij in te vullen)</Label>
+            <Label htmlFor="nl">Soort dienst</Label>
             <Input id="nl" list="kinds" value={v.label} onChange={(e) => setV({ ...v, label: e.target.value })} />
             <datalist id="kinds">{KINDS.map((k) => <option key={k} value={k} />)}</datalist>
           </div>
+          {error && <div className="rounded-xl bg-[#fbe9e7] px-4 py-3 text-[22px] font-semibold text-live">{error}</div>}
         </DialogBody>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Annuleer</Button>
-          <Button onClick={async () => { await post("/api/new-service", v); onOpenChange(false); onMade?.(); }}>Maak dienst</Button>
+          <Button
+            onClick={async () => {
+              const r = await post("/api/new-service", v, { quiet: true });
+              if (!r.ok) return setError(r.status === 409 ? "Er is al een dienst op dat moment" : await errorText(r));
+              onOpenChange(false);
+              onMade?.();
+            }}
+          >
+            Maak dienst
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

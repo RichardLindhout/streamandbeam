@@ -1,142 +1,310 @@
-import { useState } from "react";
-import { ArrowLeft, CalendarPlus, Cross, Ellipsis, Eye, EyeOff, Globe, Settings2, Wrench } from "lucide-react";
-import { toast } from "sonner";
-import type { ListenStatus, Service, StreamStatus, View, YouTubeCheck } from "@/lib/api";
-import { go, post } from "@/lib/api";
-import type { Problem } from "@/lib/problems";
+import { useRef, useState } from "react";
+import { CalendarDays, Ellipsis, Eye, EyeOff, ListOrdered, Settings2, Square, Type, Wrench } from "lucide-react";
+import type { Service, StreamStatus, View, YouTubeCheck } from "@/lib/api";
+import { at, go, hhmm, longDate, post, setStreamMode } from "@/lib/api";
+import { health } from "@/lib/problems";
+import { itemLabel } from "@/lib/kinds";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "./ui/select";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { Sheet, SheetContent } from "./ui/sheet";
+import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { Confirm } from "./Confirm";
+import { ServiceTiles } from "./ServiceTiles";
 
 export type Screen = "dienst" | "voorbereiden";
 
-const months = ["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
-const days = ["zo", "ma", "di", "wo", "do", "vr", "za"];
-export function serviceDate(s: Service) {
-  const d = new Date(s.date + "T12:00:00");
-  if (isNaN(+d)) return s.date;
-  const t = `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
-  return t[0].toUpperCase() + t.slice(1);
-}
+const LIGHT = {
+  ok: { word: "Alles in orde", dot: "#2E7D32" },
+  warn: { word: "Let op", dot: "#E08A00" },
+  bad: { word: "Probleem", dot: "#C62828" },
+};
 
-/** Which service is on: one dropdown to choose another. */
-function ServicePicker({ state, svc }: { state: View | null; svc?: Service }) {
-  return (
-    <Select value={state?.current || ""} onValueChange={(id) => post("/api/select?id=" + encodeURIComponent(id))}>
-      <SelectTrigger className="h-12 w-auto max-w-[440px] min-w-0 flex-1 rounded-xl border-border bg-card py-1 text-left">
-        {svc ? (
-          <span className="min-w-0 leading-tight">
-            <span className="block truncate font-serif text-[17px] font-semibold">{svc.label}{svc.predikant ? <span className="font-normal text-muted-foreground"> · {svc.predikant}</span> : null}</span>
-            <span className="block truncate text-[13px] text-muted-foreground">{serviceDate(svc)} · {svc.time} uur</span>
-          </span>
-        ) : (
-          <span className="text-muted-foreground">Kies een dienst</span>
-        )}
-      </SelectTrigger>
-      <SelectContent className="min-w-[340px]">
-        {(state?.services || []).map((s) => (
-          <SelectItem key={s.id} value={s.id}>
-            {serviceDate(s)} · {s.time} · {s.label}{s.predikant ? " · " + s.predikant : ""}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}
-
-function Row({ ok, label, value }: { ok: boolean | null; label: string; value: string }) {
-  return (
-    <div className="flex items-center gap-3 py-1.5 text-sm">
-      <span className={cn("size-2 rounded-full", ok === null ? "bg-white/20" : ok ? "bg-ok" : "bg-warn")} />
-      <span className="flex-1 text-muted-foreground">{label}</span>
-      <span className="font-semibold">{value}</span>
-    </div>
-  );
-}
-
-/** One light: green when all is well; amber or red with a short word when not. Tap for details. */
-function StatusLight({ problems, status, lis, yt }: { problems: Problem[]; status: StreamStatus; lis: ListenStatus | null; yt: YouTubeCheck | null }) {
-  const worst = problems.find((p) => p.severity === "rood") || problems[0];
-  const running = status.mode !== "stop";
+/** One light and one word. Tap for a few lines, read only. */
+function StatusLight({ status, yt, connected, alarm }: { status: StreamStatus; yt: YouTubeCheck | null; connected: boolean; alarm: boolean }) {
+  const h = health(status, yt, connected, alarm);
+  const l = LIGHT[h.level];
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
-          className={cn(
-            "flex h-12 items-center gap-2.5 rounded-xl border px-4 text-[15px] font-semibold transition",
-            !worst && "border-ok/30 bg-ok/10 text-[#c9d6a6]",
-            worst?.severity === "oranje" && "border-warn/40 bg-warn/10 text-warn",
-            worst?.severity === "rood" && "border-live/50 bg-live/15 text-[#f3a3a8]",
-          )}
-        >
-          <span className={cn("size-2.5 rounded-full", !worst ? "bg-ok shadow-[0_0_10px_var(--ok)]" : worst.severity === "rood" ? "bg-live" : "bg-warn")} />
-          <span className="max-w-[220px] truncate">{worst ? worst.title : "Alles in orde"}</span>
+        <button className="flex h-[72px] shrink-0 items-center gap-3 rounded-xl px-4 text-[22px] font-semibold transition hover:bg-accent">
+          <span className="size-5 rounded-full" style={{ background: l.dot }} />
+          {l.word}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80">
-        <div className="hymnal mb-2 text-[15px] text-primary">hoe staat het ervoor</div>
-        <Row ok={status.boards > 0} label="Borden in de kerk" value={status.boards > 0 ? `${status.boards} verbonden` : "geen"} />
-        <Row ok={running ? !status.audioWarning : null} label="Geluid van de kerk" value={!running ? "uitzending uit" : status.audioWarning ? "geen geluid" : "in orde"} />
-        <Row
-          ok={status.mode === "live" && yt?.at ? yt.audio : null}
-          label="Geluid op YouTube"
-          value={status.mode !== "live" ? "niet live" : !yt?.at ? "wordt gecontroleerd" : yt.audio ? "te horen" : "niet te horen"}
-        />
-        <Row ok={lis?.active ? true : null} label="Meeluisteren" value={lis?.active ? "aan" : "uit"} />
+      <PopoverContent align="start" className="w-auto min-w-72 p-5">
+        <div className="grid gap-3">
+          {h.lines.map((x) => (
+            <div key={x.label} className="flex items-center gap-4 text-[24px]">
+              <span className="size-4 rounded-full" style={{ background: x.ok ? LIGHT.ok.dot : x.label.startsWith("Borden") ? LIGHT.warn.dot : LIGHT.bad.dot }} />
+              <span className="flex-1">{x.label}</span>
+              <span className="font-semibold">{x.ok ? "goed" : "niet goed"}</span>
+            </div>
+          ))}
+        </div>
       </PopoverContent>
     </Popover>
   );
 }
 
-export function Header({ state, svc, status, lis, yt, problems, screen, setScreen, onNew, onSettings }: {
-  state: View | null; svc?: Service; status: StreamStatus; lis: ListenStatus | null; yt: YouTubeCheck | null; problems: Problem[];
-  screen: Screen; setScreen: (s: Screen) => void; onNew: () => void; onSettings: () => void;
-}) {
-  const [fetching, setFetching] = useState(false);
-  async function fetchSite() {
-    setFetching(true);
-    const r = await post("/api/fetch");
-    setFetching(false);
-    if (!r.ok) toast.error("Ophalen is niet gelukt. Werkt het internet?");
-  }
+/** Live: a red pill. Not live: when it will go live by itself, and the button to go live now. */
+function LiveArea({ status }: { status: StreamStatus }) {
+  const [ask, setAsk] = useState(false);
+  if (status.mode === "live")
+    return (
+      <span className="flex h-14 shrink-0 items-center gap-2.5 rounded-full bg-live px-5 text-[22px] font-bold tracking-wide text-white tabular-nums">
+        <span className="size-3 animate-pulse-dot rounded-full bg-white" /> LIVE {hhmm(at(status.since))}
+      </span>
+    );
+  const startAt = at(status.autoStartAt);
+  // Today only the time; another day also the day ("Gaat live zo 09:15").
+  const day = startAt && startAt.toDateString() !== new Date().toDateString() ? ["zo", "ma", "di", "wo", "do", "vr", "za"][startAt.getDay()] : "om";
+  const word = startAt ? `Gaat live ${day} ${hhmm(startAt)}` : status.mode === "opnemen" ? "Opname" : status.mode === "voorbeeld" ? "Voorbeeld" : "Uit";
   return (
-    <header className="flex flex-wrap items-center gap-3 border-b bg-[#0d0b09]/90 px-5 py-3 backdrop-blur">
-      <div className="flex items-center gap-3 pr-2">
-        <div className="grid size-11 place-items-center rounded-xl border border-primary/45 bg-gradient-to-b from-[#2a231b] to-[#18130f] shadow-[0_8px_24px_-12px_rgb(201_164_92/0.6)]">
-          <Cross className="size-5 fill-primary/25 text-primary" strokeWidth={1.75} />
-        </div>
-        <div className="hidden leading-tight xl:block">
-          <div className="font-serif text-[17px] font-semibold tracking-tight">Stream &amp; Beam</div>
-          <div className="text-[13px] text-muted-foreground">HHG Tholen</div>
-        </div>
-      </div>
+    <>
+      <span className="shrink-0 text-[22px] whitespace-nowrap tabular-nums">{word}</span>
+      <Button variant="outline" className="shrink-0 border-live px-6 text-[22px] text-live hover:bg-[#fbe9e7]" onClick={() => setAsk(true)}>
+        Nu live
+      </Button>
+      <Confirm open={ask} onOpenChange={setAsk} title="Live gaan?" yes="Ja, live" tone="live" onYes={() => setStreamMode("live")} />
+    </>
+  );
+}
 
-      <ServicePicker state={state} svc={svc} />
+/** A small picture of the stream; tap for the whole screen, tap again to close. */
+function PreviewThumb({ status }: { status: StreamStatus }) {
+  const [big, setBig] = useState(false);
+  const on = status.mode !== "stop";
+  return (
+    <>
+      <button
+        aria-label="Beeld"
+        onClick={() => on && setBig(true)}
+        className={cn("mon h-[90px] w-[160px] shrink-0 rounded-lg ring-2", status.mode === "live" ? "ring-live" : "ring-walnut/30", !on && "cursor-default bg-walnut/80")}
+      >
+        {on && <img src="/preview.mjpg" alt="" />}
+      </button>
+      {big && (
+        <div className="fixed inset-0 z-[60] cursor-pointer bg-black" onClick={() => setBig(false)}>
+          <div className="mon h-full w-full">
+            <img src="/preview.mjpg" alt="" />
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
-      <div className="ml-auto flex items-center gap-3">
-        <StatusLight problems={problems} status={status} lis={lis} yt={yt} />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="h-12 rounded-xl px-4 text-[15px]"><Ellipsis /> Menu</Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            {screen === "dienst" ? (
-              <DropdownMenuItem onSelect={() => setScreen("voorbereiden")}><Wrench /> Dienst voorbereiden</DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem onSelect={() => setScreen("dienst")}><ArrowLeft /> Terug naar de dienst</DropdownMenuItem>
-            )}
-            <DropdownMenuItem onSelect={onNew}><CalendarPlus /> Nieuwe dienst</DropdownMenuItem>
-            <DropdownMenuItem disabled={fetching} onSelect={fetchSite}><Globe /> {fetching ? "Bezig met ophalen…" : "Diensten ophalen van website"}</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => go({ kind: "zwart" })}>
-              {state?.black ? <><Eye /> Borden weer aan</> : <><EyeOff /> Borden zwart</>}
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={onSettings}><Settings2 /> Instellingen</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+/** All parts of the service; tap one, confirm, and the boards and stream go there. */
+function GotoSheet({ open, onOpenChange, state, svc }: { open: boolean; onOpenChange: (b: boolean) => void; state: View | null; svc?: Service }) {
+  const [ask, setAsk] = useState<number | null>(null);
+  const slides = state?.slides || [];
+  const cur = slides[state?.index ?? 0]?.item;
+  const first = (i: number) => slides.findIndex((s) => s.item === i);
+  return (
+    <>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent title="Naar onderdeel">
+          <div className="grid gap-1">
+            {(svc?.items || []).map((it, i) => (
+              <button
+                key={it.id || i}
+                disabled={first(i) < 0}
+                onClick={() => setAsk(i)}
+                className={cn(
+                  "flex min-h-[72px] items-center gap-4 rounded-xl px-5 text-left text-[26px] transition hover:bg-accent disabled:opacity-40",
+                  i === cur && "bg-[#efe3c6] font-semibold",
+                )}
+              >
+                <span className="min-w-0 flex-1 truncate">{itemLabel(it)}</span>
+                {it.ref && it.kind !== "welkom" && it.kind !== "einde" && <span className="truncate text-[22px] text-muted-foreground">{it.ref}</span>}
+              </button>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
+      <Confirm
+        open={ask !== null}
+        onOpenChange={(o) => !o && setAsk(null)}
+        title={`Naar ${itemLabel(svc?.items?.[ask ?? -1])}?`}
+        yes="Ja"
+        onYes={() => {
+          const s = ask === null ? -1 : first(ask);
+          if (s >= 0) go({ index: s });
+          onOpenChange(false);
+        }}
+      />
+    </>
+  );
+}
+
+/** Own words on the boards in church (never in the stream). */
+function FreeTextDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (b: boolean) => void }) {
+  const [t, setT] = useState({ title: "", text: "" });
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Eigen tekst op het bord</DialogTitle>
+          <DialogDescription className="sr-only">Kop en tekst</DialogDescription>
+        </DialogHeader>
+        <DialogBody>
+          <div className="grid gap-2"><Label htmlFor="ft-kop">Kop</Label><Input id="ft-kop" value={t.title} onChange={(e) => setT({ ...t, title: e.target.value })} /></div>
+          <div className="grid gap-2"><Label htmlFor="ft-tekst">Tekst</Label><Textarea id="ft-tekst" rows={4} value={t.text} onChange={(e) => setT({ ...t, text: e.target.value })} /></div>
+        </DialogBody>
+        <DialogFooter>
+          <Button
+            size="lg"
+            disabled={!t.title.trim() && !t.text.trim()}
+            onClick={async () => {
+              const r = await post("/api/board-override", { ...t, stream: false });
+              if (r.ok) onOpenChange(false);
+            }}
+          >
+            Op het bord zetten
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function OtherServiceDialog({ open, onOpenChange, state }: { open: boolean; onOpenChange: (b: boolean) => void; state: View | null }) {
+  const [ask, setAsk] = useState<Service | null>(null);
+  return (
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Andere dienst</DialogTitle>
+            <DialogDescription className="sr-only">Kies een dienst</DialogDescription>
+          </DialogHeader>
+          <DialogBody>
+            <ServiceTiles services={state?.services} active={state?.current} onPick={(s) => s.id !== state?.current && setAsk(s)} />
+          </DialogBody>
+        </DialogContent>
+      </Dialog>
+      <Confirm
+        open={ask !== null}
+        onOpenChange={(o) => !o && setAsk(null)}
+        title={ask ? `Naar ${ask.label} van ${longDate(ask).toLowerCase()}?` : ""}
+        yes="Ja"
+        onYes={async () => {
+          if (!ask) return;
+          const r = await post("/api/select?id=" + encodeURIComponent(ask.id));
+          if (r.ok) onOpenChange(false);
+        }}
+      />
+    </>
+  );
+}
+
+/** "Uitzending stoppen" in the menu: hold it for three seconds while a bar fills, then confirm. */
+function HoldToStop({ onDone }: { onDone: () => void }) {
+  const [p, setP] = useState(0);
+  const raf = useRef(0);
+  const stop = () => {
+    cancelAnimationFrame(raf.current);
+    setP(0);
+  };
+  const start = () => {
+    const t0 = performance.now();
+    const tick = () => {
+      const v = Math.min(1, (performance.now() - t0) / 3000);
+      setP(v);
+      if (v >= 1) {
+        setP(0);
+        onDone();
+        return;
+      }
+      raf.current = requestAnimationFrame(tick);
+    };
+    cancelAnimationFrame(raf.current);
+    raf.current = requestAnimationFrame(tick);
+  };
+  return (
+    <DropdownMenuItem
+      onSelect={(e) => e.preventDefault()}
+      onPointerDown={start}
+      onPointerUp={stop}
+      onPointerLeave={stop}
+      onPointerCancel={stop}
+      onContextMenu={(e) => e.preventDefault()}
+      className="relative touch-none overflow-hidden font-semibold text-live focus:bg-[#fbe9e7] [&_svg]:text-live"
+    >
+      <span className="absolute inset-y-0 left-0 bg-live/25" style={{ width: `${p * 100}%` }} />
+      <Square className="relative fill-current" />
+      <span className="relative">{p > 0 ? "Blijf drukken…" : "Uitzending stoppen"}</span>
+    </DropdownMenuItem>
+  );
+}
+
+/** The ⋯ menu of the service screen. */
+function MainMenu({ state, svc, status, setScreen, onSettings }: {
+  state: View | null; svc?: Service; status: StreamStatus; setScreen: (s: Screen) => void; onSettings: () => void;
+}) {
+  const live = status.mode === "live";
+  const [open, setOpen] = useState(false);
+  const [dlg, setDlg] = useState<"" | "goto" | "text" | "other" | "tech" | "stop">("");
+  const close = (o: boolean) => !o && setDlg("");
+  return (
+    <>
+      <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="icon" aria-label="Menu" className="shrink-0"><Ellipsis className="size-9" /></Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-[26rem]">
+          <DropdownMenuItem onSelect={() => setDlg("goto")}><ListOrdered /> Naar onderdeel…</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setDlg("text")}><Type /> Eigen tekst op het bord</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => go({ kind: "zwart" })}>
+            {state?.black ? <><Eye /> Borden weer aan</> : <><EyeOff /> Borden zwart</>}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => setScreen("voorbereiden")}><Wrench /> Dienst voorbereiden</DropdownMenuItem>
+          <DropdownMenuItem disabled={live} onSelect={() => setDlg("other")}><CalendarDays /> Andere dienst…</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setDlg("tech")}><Settings2 /> Instellingen</DropdownMenuItem>
+          {live && (
+            <>
+              <DropdownMenuSeparator />
+              <HoldToStop onDone={() => { setOpen(false); setDlg("stop"); }} />
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <GotoSheet open={dlg === "goto"} onOpenChange={close} state={state} svc={svc} />
+      <FreeTextDialog open={dlg === "text"} onOpenChange={close} />
+      <OtherServiceDialog open={dlg === "other"} onOpenChange={close} state={state} />
+      <Confirm open={dlg === "tech"} onOpenChange={close} title="Alleen voor de technicus. Doorgaan?" yes="Ja" onYes={onSettings} />
+      <Confirm
+        open={dlg === "stop"}
+        onOpenChange={close}
+        title="Uitzending stoppen?"
+        text="Kijkers zien daarna niets meer."
+        yes="Ja, stoppen"
+        tone="live"
+        onYes={() => setStreamMode("stop")}
+      />
+    </>
+  );
+}
+
+export function Header({ state, svc, status, yt, connected, alarm, setScreen, onSettings }: {
+  state: View | null; svc?: Service; status: StreamStatus; yt: YouTubeCheck | null; connected: boolean; alarm: boolean;
+  setScreen: (s: Screen) => void; onSettings: () => void;
+}) {
+  return (
+    <header className="flex h-24 shrink-0 items-center gap-4 border-b-2 border-walnut/15 bg-[#efe5cc] px-4">
+      <StatusLight status={status} yt={yt} connected={connected} alarm={alarm} />
+      <div className="min-w-0 flex-1 truncate text-center text-[22px]">
+        {svc ? `${longDate(svc)} · ${svc.label}` : "Geen dienst"}
       </div>
+      <LiveArea status={status} />
+      <PreviewThumb status={status} />
+      <MainMenu state={state} svc={svc} status={status} setScreen={setScreen} onSettings={onSettings} />
     </header>
   );
 }

@@ -1,90 +1,42 @@
-import type { StreamStatus, View, YouTubeCheck } from "./api";
+import type { Service, StreamStatus, View, YouTubeCheck } from "./api";
+import { serviceStart } from "./api";
 
-/** Something the volunteer must act on, in plain words, with what to do about it. */
-export type Problem = {
-  id: string;
-  severity: "rood" | "oranje";
-  title: string;
-  text: string;
-  steps: string[];
-  /** The technical detail, only shown inside "Wat moet ik doen?". */
-  detail?: string;
-};
+/** The number of TVs in church. */
+export const BOARDS = 2;
 
-export function problems(state: View | null, status: StreamStatus, yt: YouTubeCheck | null, connected: boolean): Problem[] {
-  const list: Problem[] = [];
+/** One line in the status light's popover. */
+export type Health = { label: string; ok: boolean };
+
+/** The status light: green, amber (only the boards) or red, with its lines. */
+export function health(status: StreamStatus, yt: YouTubeCheck | null, connected: boolean, alarm: boolean) {
+  const live = status.mode === "live";
   const running = status.mode !== "stop";
-  if (!connected) {
-    list.push({
-      id: "verbinding",
-      severity: "rood",
-      title: "Geen verbinding",
-      text: "De bediening bereikt de kerk-PC niet.",
-      steps: [
-        "Staat de kerk-PC aan?",
-        "Staat het programma Stream & Beam open op de kerk-PC?",
-        "Werkt het netwerk (wifi of netwerkkabel)?",
-        "Herlaad daarna deze pagina (vernieuwen).",
-      ],
-    });
-    return list;
-  }
-  if (running && status.audioWarning) {
-    list.push({
-      id: "geluid",
-      severity: "rood",
-      title: "Geen geluid",
-      text: "Het geluid van de kerk komt niet binnen.",
-      steps: [
-        "Staat de mengtafel aan, en staat de schuif voor de uitzending open?",
-        "Zit de USB-kabel van de geluidskaart goed in de PC?",
-        "Zet het geluid op de mengtafel even uit en weer aan.",
-        "Helpt het niet? Bel de technische contactpersoon.",
-      ],
-      detail: status.audioWarning,
-    });
-  }
-  if (status.mode === "live" && yt?.at && yt.live && !yt.audio) {
-    list.push({
-      id: "youtube-geluid",
-      severity: "rood",
-      title: "Geen geluid op YouTube",
-      text: "Kijkers thuis horen niets.",
-      steps: [
-        "Kijk naar de geluidsmeter onder het beeld: beweegt die als er gezongen of gesproken wordt?",
-        "Beweegt de meter niet: controleer de mengtafel en de USB-kabel van de geluidskaart.",
-        "Beweegt de meter wel: meld het aan de technische contactpersoon.",
-        "Na ongeveer een minuut wordt opnieuw gecontroleerd.",
-      ],
-      detail: yt.problem,
-    });
-  }
-  if (running && status.error) {
-    list.push({
-      id: "uitzending",
-      severity: "rood",
-      title: "De uitzending hapert",
-      text: "Er ging iets mis met het beeld of de verbinding met YouTube.",
-      steps: [
-        "Wacht tien tellen: het programma probeert het vaak zelf opnieuw.",
-        "Werkt het internet in de kerk?",
-        "Blijft het haperen? Bel de technische contactpersoon.",
-      ],
-      detail: status.error,
-    });
-  }
-  if (running && status.boards === 0 && state) {
-    list.push({
-      id: "borden",
-      severity: "oranje",
-      title: "Borden niet verbonden",
-      text: "De tv's in de kerk krijgen de liturgie niet.",
-      steps: [
-        "Staan de tv's aan?",
-        "Staat op de tv de pagina van het bord open?",
-        "Zitten de tv's op het wifi-netwerk van de kerk?",
-      ],
-    });
-  }
+  const lines: Health[] = [];
+  if (!connected) lines.push({ label: "Verbinding", ok: false });
+  if (live) lines.push({ label: "YouTube", ok: !status.error });
+  if (running) lines.push({ label: "Geluid", ok: !status.audioWarning && !(live && yt?.at && yt.live && !yt.audio) });
+  const boards = status.boards || 0;
+  lines.push({ label: `Borden ${Math.min(boards, 99)} van ${BOARDS}`, ok: boards >= BOARDS });
+  const bad = !connected || alarm || lines.some((l) => !l.ok && !l.label.startsWith("Borden"));
+  const level: "ok" | "warn" | "bad" = bad ? "bad" : lines.some((l) => !l.ok) ? "warn" : "ok";
+  return { level, lines };
+}
+
+/** Something the volunteer must act on now. At most one is shown, the first in this list. */
+export type Alarm = { id: string; title: string; button: string; action: "retry" | "seen" | "begin" };
+
+/** Every alarm whose condition holds now, most urgent first. Only while live, except a failed start. */
+export function alarms(state: View | null, svc: Service | undefined, status: StreamStatus, yt: YouTubeCheck | null, now = Date.now()): Alarm[] {
+  const live = status.mode === "live";
+  const list: Alarm[] = [];
+  if (status.autoStartError && !live) list.push({ id: "start", title: "Uitzending start niet", button: "Opnieuw", action: "retry" });
+  if (!live) return list;
+  if (status.error) list.push({ id: "hapert", title: "Uitzending hapert", button: "Gezien", action: "seen" });
+  if (status.audioWarning || (yt?.at && yt.live && !yt.audio)) list.push({ id: "geluid", title: "Geen geluid op YouTube", button: "Gezien", action: "seen" });
+  const slide = state?.slides?.[state.index];
+  const kind = slide ? svc?.items?.[slide.item]?.kind ?? slide.kind : undefined;
+  const start = serviceStart(svc);
+  if (kind === "welkom" && start && now >= +start + 8 * 60_000)
+    list.push({ id: "begonnen", title: "Dienst al begonnen?", button: "Begin dienst", action: "begin" });
   return list;
 }

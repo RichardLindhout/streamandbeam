@@ -1,42 +1,53 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:is(.dark *));
-
-/* Broadcast control room: near-black, crisp hairlines, one electric accent,
-   red strictly for LIVE and alarms, amber for "look here". */
+/* Parchment and walnut, antique gold only for what matters now (the current part and the
+   big button), red only for LIVE, the alarm and stopping. Big, calm type: nothing below 18px. */
 :root {
-  /* Warm walnut and parchment, antique gold for what matters, wine used sparingly;
-     red only for LIVE and alarms. */
-  --background: #110e0b;
-  --foreground: #efe6d6;
-  --card: #1a1612;
-  --card-foreground: #efe6d6;
-  --popover: #1d1915;
-  --popover-foreground: #efe6d6;
-  --primary: #c9a45c;
-  --primary-hover: #d8b673;
-  --primary-foreground: #1b150d;
-  --secondary: #221d18;
-  --secondary-foreground: #e6dccb;
-  --muted: #1d1915;
-  --muted-foreground: #a99b85;
-  --accent: #29231d;
-  --accent-foreground: #f3ebdd;
-  --destructive: #d8434e;
-  --border: #2e2822;
-  --input: #3a3229;
-  --ring: #c9a45c;
-  --wine: #7a2433;
-  --live: #e5343f;
-  --ok: #8fa35a;
-  --warn: #d9962b;
+  --background: #f4ecd8;
+  --foreground: #2b1d12;
+  --card: #fbf6ea;
+  --card-foreground: #2b1d12;
+  --popover: #fbf6ea;
+  --popover-foreground: #2b1d12;
+  --primary: #c8962e;
+  --primary-hover: #d4a43f;
+  --primary-foreground: #2b1d12;
+  --secondary: #ebe0c8;
+  --secondary-foreground: #2b1d12;
+  --muted: #ebe0c8;
+  --muted-foreground: #6b5844;
+  --done: #7a6a58;
+  --accent: #e6d9bc;
+  --accent-foreground: #2b1d12;
+  --destructive: #c62828;
+  --border: #dccdab;
+  --input: #c9b68e;
+  --ring: #c8962e;
+  --walnut: #5a3e2b;
+  --live: #c62828;
+  --ok: #2e7d32;
+  --warn: #e08a00;
   --radius: 0.75rem;
 }
 
 @theme inline {
   --font-sans: "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Source Serif 4", Georgia, serif;
-  --color-wine: var(--wine);
+  /* The smallest Tailwind sizes are raised so nothing ends up below 18px. */
+  --text-xs: 18px;
+  --text-xs--line-height: 1.35;
+  --text-sm: 18px;
+  --text-sm--line-height: 1.4;
+  --text-base: 20px;
+  --text-base--line-height: 1.45;
+  --text-lg: 22px;
+  --text-lg--line-height: 1.4;
+  --text-xl: 24px;
+  --text-xl--line-height: 1.35;
+  --text-2xl: 28px;
+  --text-2xl--line-height: 1.3;
+  --color-walnut: var(--walnut);
+  --color-done: var(--done);
   --color-primary-hover: var(--primary-hover);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -63,16 +74,14 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --animate-blink: blink 1s steps(1) infinite;
   --animate-pulse-dot: pulse-dot 1.4s ease-in-out infinite;
-  --animate-glow: glow 1.3s ease-in-out infinite;
-  --animate-alarm: alarm 2.2s ease-in-out infinite;
-  --animate-ring: ring 2.2s ease-in-out infinite;
-  @keyframes alarm { 50% { box-shadow: 0 0 0 10px var(--alarm); } }
-  @keyframes ring { 0%, 60%, 100% { transform: rotate(0); } 70% { transform: rotate(14deg); } 80% { transform: rotate(-12deg); } 90% { transform: rotate(6deg); } }
-  @keyframes blink { 50% { background-color: #8a1c24; } }
+  --animate-call: call 1.6s ease-in-out infinite;
+  --animate-hint: hint 1.8s ease-in-out infinite;
   @keyframes pulse-dot { 50% { opacity: 0.35; } }
-  @keyframes glow { 50% { box-shadow: 0 0 0 8px rgb(201 164 92 / 0.28); } }
+  /* The big button calling for attention: a soft gold halo, no movement. */
+  @keyframes call { 50% { box-shadow: 0 0 0 10px rgb(200 150 46 / 0.35), 0 10px 30px -12px rgb(90 62 43 / 0.5); } }
+  /* Meeluisteren's suggestion: a soft ring around a row. */
+  @keyframes hint { 50% { box-shadow: 0 0 0 4px rgb(200 150 46 / 0.55); } }
 }
 
 @layer base {
@@ -80,18 +89,12 @@
   html, body, #root { height: 100%; }
   body {
     @apply bg-background text-foreground antialiased;
-    font-size: 16px;
-    font-feature-settings: "tnum";
-    /* A faint warm glow from above, like light on wood. */
-    background-image:
-      radial-gradient(1400px 520px at 50% -220px, rgb(201 164 92 / 0.08), transparent 70%),
-      radial-gradient(900px 600px at 100% 120%, rgb(122 36 51 / 0.07), transparent 70%);
-    background-attachment: fixed;
+    font-size: 20px;
+    line-height: 1.4;
   }
+  .tabular-nums, time { font-variant-numeric: tabular-nums; }
   button { cursor: pointer; }
   button:disabled { cursor: default; }
-  input[type="date"]::-webkit-calendar-picker-indicator,
-  input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.6; }
 }
 
 /* slide.css (shared with the TVs) reads --accent; keep its own colours inside a slide. */
@@ -101,7 +104,7 @@
 .mon { position: relative; overflow: hidden; background: #000; }
 .mon > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 
-.scroll-thin { scrollbar-width: thin; scrollbar-color: #3d352c transparent; }
+.scroll-thin { scrollbar-width: thin; scrollbar-color: #c9b68e transparent; }
 
-/* Section labels set like the headings in a hymnal: serif small capitals, spaced out. */
-.hymnal { font-family: var(--font-serif); font-variant: small-caps; font-weight: 600; letter-spacing: 0.12em; text-transform: lowercase; }
+/* Small labels set like the headings in a hymnal: serif small capitals, spaced out. */
+.hymnal { font-family: var(--font-serif); font-variant: small-caps; font-weight: 600; letter-spacing: 0.1em; text-transform: lowercase; }

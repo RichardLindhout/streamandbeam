@@ -4,24 +4,24 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold transition-all select-none disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 active:scale-[0.98]",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-[22px] font-semibold transition-all select-none disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-6 [&_svg]:shrink-0 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 active:scale-[0.98]",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground shadow-[0_1px_0_rgb(255_255_255/0.25)_inset,0_6px_20px_-10px_rgb(201_164_92/0.6)] hover:bg-primary-hover",
-        destructive: "bg-destructive text-[#fff6ef] shadow-[0_6px_20px_-8px_rgb(255_59_74/0.8)] hover:brightness-110",
-        outline: "border border-input bg-secondary/50 hover:bg-accent hover:border-primary/50",
+        default: "bg-walnut text-[#fbf6ea] hover:bg-[#6b4a33]",
+        destructive: "bg-live text-white hover:brightness-110",
+        outline: "border-2 border-input bg-card text-foreground hover:bg-accent",
         secondary: "bg-secondary text-secondary-foreground hover:bg-accent",
-        ghost: "text-muted-foreground hover:bg-accent hover:text-foreground",
+        ghost: "text-foreground hover:bg-accent",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-10 px-4",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-12 rounded-xl px-6 text-base",
-        xl: "h-16 rounded-xl px-7 text-lg",
-        icon: "size-9",
-        "icon-sm": "size-8 rounded-md",
+        default: "h-[72px] px-6",
+        sm: "h-14 px-4 text-[18px]",
+        lg: "h-[72px] px-7 text-[24px]",
+        xl: "h-24 px-8 text-[26px]",
+        icon: "size-[72px]",
+        "icon-sm": "size-14",
       },
     },
     defaultVariants: { variant: "default", size: "default" },
