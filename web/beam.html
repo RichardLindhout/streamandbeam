@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scherm</title>
+<link rel="stylesheet" href="/slide.css">
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; cursor: none; }
+  #frame { position: relative; width: 100vw; height: 100vh; }
+  /* Small dot when the connection to the PC is lost; the last slide stays visible. */
+  #offline { position: fixed; right: 12px; bottom: 12px; width: 12px; height: 12px; border-radius: 50%; background: #c0392b; display: none; }
+</style>
+</head>
+<body>
+<div id="frame"><div class="canvas" id="canvas"></div></div>
+<div id="offline"></div>
+<script src="/slide.js"></script>
+<script>
+  // This page runs on the TVs in church. It follows the operator live and keeps the last
+  // slide on screen when the network drops, reconnecting by itself.
+  var canvas = document.getElementById("canvas");
+  var offline = document.getElementById("offline");
+  var last = null;
+  var lostSince = 0;
+
+  function draw() {
+    if (last) renderSlide(canvas, last.slides ? last.slides[last.index] : null, last.black);
+  }
+  listen(function (st) {
+    last = st;
+    draw();
+  });
+  setInterval(function () {
+    if (window.sbConnected) lostSince = 0;
+    else if (!lostSince) lostSince = Date.now();
+    offline.style.display = lostSince && Date.now() - lostSince > 10000 ? "block" : "none";
+  }, 2000);
+  window.addEventListener("resize", draw);
+
+  // Keep the TV from dimming, and go full screen on the first click/OK press.
+  function wake() {
+    if (navigator.wakeLock) navigator.wakeLock.request("screen").catch(function () {});
+  }
+  wake();
+  document.addEventListener("visibilitychange", wake);
+  document.addEventListener("click", function () {
+    var el = document.documentElement;
+    if (el.requestFullscreen) el.requestFullscreen().catch(function () {});
+  });
+</script>
+</body>
+</html>

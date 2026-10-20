@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bediening</title>
+<link rel="stylesheet" href="/slide.css">
+<style>
+  :root { --line: #dfe5e6; --muted: #6a7e82; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.4 -apple-system, "Segoe UI", Arial, sans-serif; background: #eef1f1; color: #1f2a2c; }
+  header { display: flex; gap: 12px; align-items: center; padding: 10px 16px; background: var(--teal); color: #fff; flex-wrap: wrap; }
+  header h1 { font-size: 18px; margin: 0 12px 0 0; }
+  header select { font-size: 15px; padding: 6px; border-radius: 6px; max-width: 100%; }
+  #status { font-size: 13px; opacity: .9; }
+  .tv { margin-left: auto; font-size: 13px; opacity: .9; }
+  .tv b { user-select: all; }
+  button { font: inherit; padding: 7px 12px; border-radius: 6px; border: 1px solid var(--line); background: #fff; cursor: pointer; }
+  button.primary { background: var(--warm); border-color: var(--warm); color: #fff; }
+  main { display: grid; grid-template-columns: minmax(340px, 1fr) minmax(380px, 1.3fr); gap: 16px; padding: 16px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  section { background: #fff; border-radius: 10px; padding: 14px; border: 1px solid var(--line); }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; }
+
+  /* Order editor */
+  .item { display: grid; grid-template-columns: 18px 92px 1fr 1fr auto; gap: 6px; align-items: center; padding: 5px; border-radius: 6px; border: 1px solid transparent; }
+  .item.current { border-color: var(--teal-2); background: #e6f1f2; }
+  .item.dragging { opacity: .4; }
+  .item .grip { cursor: grab; color: var(--muted); user-select: none; text-align: center; }
+  .item select, .item input, textarea, .fields input { font: inherit; padding: 5px 7px; border: 1px solid var(--line); border-radius: 5px; width: 100%; min-width: 0; }
+  .item .btns { display: flex; gap: 2px; }
+  .item .btns button { padding: 3px 7px; }
+  .kind-slotzang select { background: var(--teal); color: #fff; }
+  .add { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .fields { display: grid; gap: 6px; margin-top: 14px; }
+  .fields label { font-size: 12px; color: var(--muted); }
+
+  /* Live control */
+  .screens { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
+  .screens figure { margin: 0; }
+  .screens figcaption { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .frame { position: relative; aspect-ratio: 16/9; background: #000; border-radius: 6px; overflow: hidden; }
+  .controls { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+  .controls button { padding: 12px 16px; font-weight: 600; }
+  .controls .next { flex: 1; background: var(--teal); color: #fff; border-color: var(--teal); }
+  .controls .slot { background: var(--teal-2); color: #fff; }
+  .controls .zwart.on { background: #000; color: #fff; }
+  .slides { display: flex; flex-direction: column; gap: 2px; max-height: 40vh; overflow: auto; }
+  .slides button { text-align: left; border: 0; border-left: 4px solid transparent; border-radius: 0; padding: 5px 8px; }
+  .slides button.on { background: #e6f1f2; border-left-color: var(--teal); font-weight: 600; }
+  .slides small { color: var(--muted); }
+  .hint { font-size: 12px; color: var(--muted); }
+  section.wide { grid-column: 1 / -1; }
+  .alarm { position: sticky; top: 0; z-index: 10; padding: 16px 20px; background: #c0392b; color: #fff;
+    font-size: 20px; font-weight: 700; text-align: center; animation: alarm 1s steps(1) infinite; }
+  @keyframes alarm { 50% { background: #7b1d14; } }
+  .live { display: grid; grid-template-columns: minmax(280px, 1.2fr) 1fr; gap: 16px; }
+  @media (max-width: 900px) { .live { grid-template-columns: 1fr; } }
+  .preview img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .preview span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #aaa; }
+  .modes { display: flex; gap: 8px; flex-wrap: wrap; }
+  .modes button { padding: 10px 14px; font-weight: 600; }
+  .modes button.on { background: var(--teal); color: #fff; border-color: var(--teal); }
+  .modes .golive.on { background: #c0392b; border-color: #c0392b; }
+  .meter { height: 14px; background: #e4e8e9; border-radius: 7px; overflow: hidden; margin-top: 10px; }
+  .meter div { height: 100%; width: 0; background: #27ae60; transition: width .1s; }
+  .presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+</style>
+</head>
+<body>
+<div id="audioWarning" class="alarm" hidden></div>
+<header>
+  <h1>Stream &amp; Beam</h1>
+  <button class="primary" id="fetch">Liturgie ophalen van website</button>
+  <select id="service"></select>
+  <span id="status"></span>
+  <span id="tv" class="tv"></span>
+</header>
+<main>
+  <section>
+    <h2>Volgorde van de dienst</h2>
+    <p class="hint">Sleep of gebruik ↑↓ om de volgorde van de predikant over te nemen. Wijzigingen worden direct opgeslagen.</p>
+    <div id="items"></div>
+    <div class="add">
+      <button data-add="psalm">+ Psalm</button>
+      <button data-add="lezing">+ Schriftlezing</button>
+      <button data-add="gebed">+ Gebed</button>
+      <button data-add="preek">+ Prediking</button>
+      <button data-add="slotzang">+ Slotzang</button>
+      <button data-add="mededeling">+ Mededeling</button>
+      <button data-add="welkom">+ Welkom</button>
+    </div>
+    <div class="fields">
+      <label>Tekst van de preek<input id="textRef"></label>
+      <label>Thema<input id="theme"></label>
+      <label>Punten (één per regel)<textarea id="points" rows="3"></textarea></label>
+    </div>
+  </section>
+  <section>
+    <h2>Scherm in de kerk</h2>
+    <div class="screens">
+      <figure><figcaption>Nu op het scherm</figcaption><div class="frame"><div class="canvas" id="now"></div></div></figure>
+      <figure><figcaption>Hierna</figcaption><div class="frame"><div class="canvas" id="next"></div></div></figure>
+    </div>
+    <div class="controls">
+      <button data-go="-1">◀ Vorige</button>
+      <button class="next" data-go="1">Volgende ▶</button>
+      <button data-kind="welkom">Welkom</button>
+      <button data-kind="gebed">Gebed</button>
+      <button data-kind="preek">Preek</button>
+      <button class="slot" data-kind="slotzang">Slotzang</button>
+      <button class="zwart" data-kind="zwart">Zwart</button>
+    </div>
+    <p class="hint">Toetsen: → / spatie / PageDown = volgende, ← / PageUp = vorige, P = preek, G = gebed, S = slotzang, B = zwart. Een presentatie-clicker werkt ook.</p>
+    <div class="slides" id="slides"></div>
+  </section>
+  <section class="wide">
+    <h2>Uitzending (YouTube)</h2>
+    <div class="live">
+      <div class="frame preview"><img id="preview" alt=""><span id="nopreview">Geen beeld — klik op Voorbeeld</span></div>
+      <div>
+        <div class="modes">
+          <button data-mode="voorbeeld">Voorbeeld</button>
+          <button data-mode="opnemen">Alleen opnemen</button>
+          <button data-mode="live" class="golive">● Live op YouTube</button>
+          <button data-mode="stop">Stop</button>
+        </div>
+        <p id="streamStatus" class="hint"></p>
+        <div class="meter"><div id="meter"></div></div>
+        <p class="hint">Geluid (USB). Groen = goed, rood = te hard.</p>
+        <details>
+          <summary>Instellingen</summary>
+          <div class="fields" id="settings">
+            <label>IP-adres camera (PTZOptics, leeg = testbeeld)<input data-s="cameraIp" placeholder="192.168.1.88"></label>
+            <label>RTSP-adres camera (leeg = rtsp://IP:554/1)<input data-s="cameraRtsp"></label>
+            <label>Geluidsbron (leeg = standaard invoer, "test" = testtoon)<input data-s="audioSource" placeholder='wasapisrc device="..."'></label>
+            <label>Video-encoder<input data-s="videoEncoder"></label>
+            <label>RTMP-adres<input data-s="rtmpUrl"></label>
+            <label>YouTube-streamsleutel<input data-s="streamKey" type="password"></label>
+            <label>Map voor opnames<input data-s="recordDir"></label>
+            <label>Camerapositie overzicht / orgel / preekstoel / doopvont
+              <span class="presets"><input data-p="overzicht" type="number"><input data-p="orgel" type="number"><input data-p="preekstoel" type="number"><input data-p="doopvont" type="number"></span></label>
+            <button id="saveSettings">Instellingen opslaan</button>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+</main>
+<script src="/slide.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const KINDS = { welkom: "Welkom", psalm: "Psalm", lezing: "Lezing", gebed: "Gebed", preek: "Prediking", slotzang: "Slotzang", mededeling: "Mededeling" };
+let state = null;
+let svc = null; // the service being edited
+let dragFrom = null;
+
+function post(url, body) {
+  return fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body ?? {}) });
+}
+const go = (body) => post("/api/go", body);
+
+listen((st) => {
+  state = st;
+  const fresh = st.services.find((s) => s.id === st.current) || null;
+  // Don't overwrite the editor while the operator is typing in it.
+  if (!document.activeElement.closest("#items, .fields")) svc = fresh && structuredClone(fresh);
+  draw();
+});
+
+function draw() {
+  $("service").innerHTML = state.services.length
+    ? state.services.map((s) => `<option value="${esc(s.id)}" ${s.id === state.current ? "selected" : ""}>${esc(s.date)} ${esc(s.label)} ${esc(s.time)}</option>`).join("")
+    : `<option>Nog geen diensten — klik op "Liturgie ophalen"</option>`;
+  drawItems();
+  const slides = state.slides || [];
+  renderSlide($("now"), slides[state.index], state.black);
+  renderSlide($("next"), slides[state.index + 1], false);
+  document.querySelector(".zwart").classList.toggle("on", state.black);
+  $("slides").innerHTML = slides.map((s, i) =>
+    `<button data-index="${i}" class="${i === state.index ? "on" : ""}">${esc(s.header)} <small>${esc(s.kind === "psalm" || s.kind === "slotzang" ? s.sub : "")}</small></button>`).join("");
+  $("slides").querySelector(".on")?.scrollIntoView({ block: "nearest" });
+}
+
+function drawItems() {
+  if (!svc) { $("items").innerHTML = ""; return; }
+  const cur = state.slides?.[state.index]?.item;
+  $("items").innerHTML = svc.items.map((it, i) => `
+    <div class="item kind-${it.kind} ${i === cur ? "current" : ""}" draggable="true" data-i="${i}">
+      <span class="grip">⋮⋮</span>
+      <select data-f="kind">${Object.entries(KINDS).map(([k, v]) => `<option value="${k}" ${k === it.kind ? "selected" : ""}>${v}</option>`).join("")}</select>
+      <input data-f="label" value="${esc(it.label)}" placeholder="Opschrift">
+      ${it.kind === "mededeling"
+        ? `<input data-f="text" value="${esc(it.text)}" placeholder="Tekst">`
+        : it.kind === "welkom" || it.kind === "preek" || it.kind === "gebed" ? `<span></span>`
+        : `<input data-f="ref" value="${esc(it.ref)}" placeholder="${it.kind === "lezing" ? "Johannes 5:16-29" : "38: 15"}">`}
+      <span class="btns"><button data-move="-1">↑</button><button data-move="1">↓</button><button data-del>✕</button></span>
+    </div>`).join("");
+  $("textRef").value = svc.textRef || "";
+  $("theme").value = svc.theme || "";
+  $("points").value = (svc.points || []).join("\n");
+}
+
+let saveTimer;
+function save(now) {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => post("/api/service", svc), now ? 0 : 600);
+}
+
+$("items").addEventListener("input", (e) => {
+  const row = e.target.closest(".item");
+  const f = e.target.dataset.f;
+  if (!row || !f) return;
+  svc.items[row.dataset.i][f] = e.target.value;
+  if (f === "kind") { drawItems(); save(true); } else save();
+});
+$("items").addEventListener("click", (e) => {
+  const row = e.target.closest(".item");
+  if (!row) return;
+  const i = +row.dataset.i;
+  if (e.target.dataset.move) {
+    const j = i + +e.target.dataset.move;
+    if (j < 0 || j >= svc.items.length) return;
+    [svc.items[i], svc.items[j]] = [svc.items[j], svc.items[i]];
+  } else if (e.target.hasAttribute("data-del")) {
+    svc.items.splice(i, 1);
+  } else return;
+  drawItems();
+  save(true);
+});
+$("items").addEventListener("dragstart", (e) => { dragFrom = +e.target.closest(".item").dataset.i; e.target.classList.add("dragging"); });
+$("items").addEventListener("dragover", (e) => e.preventDefault());
+$("items").addEventListener("drop", (e) => {
+  e.preventDefault();
+  const row = e.target.closest(".item");
+  if (!row || dragFrom === null) return;
+  const [moved] = svc.items.splice(dragFrom, 1);
+  svc.items.splice(+row.dataset.i, 0, moved);
+  dragFrom = null;
+  drawItems();
+  save(true);
+});
+$("items").addEventListener("dragend", () => { dragFrom = null; drawItems(); });
+
+document.querySelector(".add").addEventListener("click", (e) => {
+  const kind = e.target.dataset.add;
+  if (!kind || !svc) return;
+  svc.items.push({ id: "i" + Date.now(), kind, label: { psalm: "Zingen", lezing: "Schriftlezing", gebed: "Gebed", preek: "Prediking", slotzang: "Slotzang", mededeling: "Mededeling", welkom: "Welkom" }[kind], ref: "", text: "" });
+  drawItems();
+  save(true);
+});
+for (const id of ["textRef", "theme", "points"]) {
+  $(id).addEventListener("input", () => {
+    svc.textRef = $("textRef").value;
+    svc.theme = $("theme").value;
+    svc.points = $("points").value.split("\n").map((s) => s.trim()).filter(Boolean);
+    save();
+  });
+}
+
+$("fetch").addEventListener("click", async () => {
+  $("fetch").disabled = true;
+  $("status").textContent = "Bezig met ophalen en psalmen laden… (eerste keer kan een minuut duren)";
+  const r = await post("/api/fetch");
+  $("status").textContent = r.ok ? "Liturgie opgehaald. Controleer de volgorde." : "Fout: " + (await r.text());
+  $("fetch").disabled = false;
+});
+$("service").addEventListener("change", (e) => post("/api/select?id=" + encodeURIComponent(e.target.value)));
+document.querySelector(".controls").addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (b?.dataset.go) go({ delta: +b.dataset.go });
+  if (b?.dataset.kind) go({ kind: b.dataset.kind });
+});
+$("slides").addEventListener("click", (e) => {
+  const b = e.target.closest("button");
+  if (b) go({ index: +b.dataset.index });
+});
+document.addEventListener("keydown", (e) => {
+  if (e.target.closest("input, textarea, select")) return;
+  const keys = { ArrowRight: { delta: 1 }, " ": { delta: 1 }, PageDown: { delta: 1 }, ArrowLeft: { delta: -1 }, PageUp: { delta: -1 },
+    p: { kind: "preek" }, g: { kind: "gebed" }, s: { kind: "slotzang" }, b: { kind: "zwart" }, ".": { kind: "zwart" } };
+  const k = keys[e.key];
+  if (k) { e.preventDefault(); go(k); }
+});
+window.addEventListener("resize", () => state && draw());
+
+// Uitzending
+let streamMode = "stop";
+async function pollStream() {
+  try {
+    const st = await (await fetch("/api/stream")).json();
+    streamMode = st.mode;
+    document.querySelectorAll("[data-mode]").forEach((b) => b.classList.toggle("on", b.dataset.mode === st.mode && st.mode !== "stop"));
+    const label = { stop: "Uit", voorbeeld: "Alleen voorbeeld", opnemen: "Opnemen", live: "LIVE op YouTube + opnemen" }[st.mode];
+    $("streamStatus").textContent = label + (st.recording ? " → " + st.recording : "") + (st.error ? " — fout: " + st.error : "");
+    $("audioWarning").hidden = !st.audioWarning;
+    $("audioWarning").textContent = "⚠ " + st.audioWarning;
+    document.title = st.audioWarning ? "⚠ GEEN GELUID — Bediening" : "Bediening";
+    const pct = Math.max(0, Math.min(100, (st.audioDb + 60) / 60 * 100));
+    $("meter").style.width = pct + "%";
+    $("meter").style.background = st.audioDb > -3 ? "#c0392b" : st.audioDb > -12 ? "#e6a700" : "#27ae60";
+  } catch (e) {}
+}
+setInterval(pollStream, 300);
+setInterval(() => {
+  if (streamMode === "stop") { $("preview").style.display = "none"; $("nopreview").style.display = ""; return; }
+  const img = new Image();
+  img.onload = () => { $("preview").src = img.src; $("preview").style.display = ""; $("nopreview").style.display = "none"; };
+  img.src = "/preview.jpg?t=" + Date.now();
+}, 400);
+document.querySelector(".modes").addEventListener("click", async (e) => {
+  const mode = e.target.dataset.mode;
+  if (!mode) return;
+  if (mode === "live" && !confirm("Live gaan op YouTube?")) return;
+  if (mode === "stop" && streamMode === "live" && !confirm("Uitzending stoppen?")) return;
+  $("streamStatus").textContent = "Bezig…";
+  const r = await post("/api/stream", { mode });
+  if (!r.ok) $("streamStatus").textContent = "Fout: " + (await r.text());
+});
+let settings = null;
+fetch("/api/settings").then((r) => r.json()).then((s) => {
+  settings = s;
+  document.querySelectorAll("[data-s]").forEach((el) => (el.value = s[el.dataset.s] ?? ""));
+  document.querySelectorAll("[data-p]").forEach((el) => (el.value = s.presets[el.dataset.p]));
+});
+$("saveSettings").addEventListener("click", async () => {
+  document.querySelectorAll("[data-s]").forEach((el) => (settings[el.dataset.s] = el.value));
+  document.querySelectorAll("[data-p]").forEach((el) => (settings.presets[el.dataset.p] = +el.value));
+  const r = await post("/api/settings", settings);
+  $("saveSettings").textContent = r.ok ? "Opgeslagen ✓ (geldt bij de volgende start)" : "Opslaan mislukt";
+  setTimeout(() => ($("saveSettings").textContent = "Instellingen opslaan"), 2500);
+});
+fetch("/api/info").then((r) => r.json()).then((i) => { $("tv").innerHTML = `TV's openen: <b>${esc(i.screenUrl)}</b>`; });
+</script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+/* The church screens: black, white text, large letters. The slide is drawn on a fixed
+   1920x1080 canvas and scaled to fit its frame. */
+:root {
+  --teal: #004b58;
+  --teal-2: #07697a;
+  --accent: #7fc4cf;
+  --warm: #d9cfc4;
+}
+
+.canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  transform-origin: 0 0;
+  overflow: hidden;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  background: #000;
+  color: #fff;
+}
+
+.canvas .bar {
+  position: absolute;
+  top: 0;
+  left: 110px;
+  right: 110px;
+  height: 150px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-bottom: 18px;
+  border-bottom: 3px solid #333;
+}
+.canvas .bar h1 { font-size: 72px; font-weight: 700; margin: 0; color: var(--accent); }
+.canvas .bar span { font-size: 44px; color: #999; }
+
+.canvas .body {
+  position: absolute;
+  top: 150px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 50px 110px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.fit { font-size: 84px; line-height: 1.32; }
+
+/* Psalm verse */
+.psalm .fit, .slotzang .fit { text-align: center; }
+.psalm .fit div, .slotzang .fit div { white-space: nowrap; }
+
+/* Reading */
+.lezing .fit p { margin: 0 0 .35em; }
+.lezing sup { font-size: .5em; color: var(--accent); font-weight: 700; margin-right: .25em; }
+
+/* Sermon */
+.preek .body { justify-content: flex-start; }
+.preek .verse { font-style: italic; color: #ccc; margin-bottom: .6em; }
+.preek .theme { font-weight: 700; color: var(--accent); }
+.preek ol { margin: .3em 0 0 1.2em; padding: 0; }
+
+/* Slotzang: its own screen, with a coloured frame so everyone sees it is the last psalm */
+.canvas.slotzang { box-shadow: inset 0 0 0 18px var(--teal-2); }
+.slotzang .announce {
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.slotzang .announce small { font-size: 90px; letter-spacing: 12px; text-transform: uppercase; color: var(--warm); }
+.slotzang .announce strong { font-size: 200px; margin-top: 20px; }
+
+/* Welcome */
+.welkom .head { padding: 110px 110px 40px; }
+.welkom .head h1 { font-size: 92px; margin: 0; }
+.welkom .head p { font-size: 50px; margin: 18px 0 0; color: var(--warm); }
+.welkom ul {
+  list-style: none;
+  columns: 2;
+  column-gap: 80px;
+  font-size: 58px;
+  line-height: 1.5;
+  border-top: 3px solid #333;
+  margin: 0 110px;
+  padding: 40px 0 0;
+}
+
+.canvas.mededeling .body { text-align: center; }
+
+/* During prayer the church screens stay black. */
+.canvas.black > *, .canvas.gebed > * { display: none; }
