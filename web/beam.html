@@ -22,13 +22,23 @@
   var canvas = document.getElementById("canvas");
   var offline = document.getElementById("offline");
   var last = null;
+  // ?draai=0|90|270: how far to turn the picture for a TV that stands upright.
+  var turn = (location.search.match(/draai=(\d+)/) || [])[1];
+
+  // The boards hang upright.
+  function layout() {
+    var landscape = window.innerWidth > window.innerHeight;
+    // Upright board on a TV that still sends a landscape picture: turn it, 90° unless told otherwise.
+    var rotate = turn !== undefined ? +turn : landscape ? 90 : 0;
+    return { portrait: true, rotate: rotate };
+  }
   var lostSince = 0;
 
   function draw() {
     // The boards have their own version of each slide (see Show::board_slides).
     var boards = last && (last.boards || last.slides);
     // Text the operator put on the boards directly goes over everything else.
-    if (last) renderSlide(canvas, last.overrideBoard || (boards ? boards[last.index] : null), last.black);
+    if (last) renderSlide(canvas, last.overrideBoard || (boards ? boards[last.index] : null), last.black, layout());
   }
   listen(function (st) {
     last = st;

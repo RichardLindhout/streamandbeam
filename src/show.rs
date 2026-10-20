@@ -108,10 +108,6 @@ struct Saved {
     index: usize,
     /// Collecte purposes of the last service, used for the next one.
     collecte: String,
-    /// Show every text on the boards in church. Off (the default) the boards show only
-    /// the liturgy, the theme and the last psalm, as the church wants; the stream always
-    /// gets the full texts.
-    board_full: bool,
 }
 
 #[derive(Debug, Clone, Default, Serialize)]
@@ -123,9 +119,9 @@ pub struct View {
     pub black: bool,
     /// The slides: what the stream follows and the operator steps through.
     pub slides: Vec<Slide>,
-    /// What the boards in church show for each slide.
+    /// What the boards in church show for each slide: the liturgy, the theme and the
+    /// last psalm, as the church wants (the stream gets the full texts).
     pub boards: Vec<Slide>,
-    pub board_full: bool,
     /// Text the operator put on the boards directly, over whatever the service shows.
     pub override_board: Option<Slide>,
     /// Whether that text also goes into the stream.
@@ -155,7 +151,6 @@ impl Show {
             current: saved.current,
             index: saved.index,
             collecte: saved.collecte,
-            board_full: saved.board_full,
             ..Default::default()
         };
         let (tx, _) = watch::channel(view.clone());
@@ -290,18 +285,9 @@ impl Show {
         self.publish(&st);
     }
 
-    pub async fn set_board_full(&self, full: bool) {
-        let mut st = self.state.lock().await;
-        st.board_full = full;
-        self.changed(&mut st);
-    }
-
     fn changed(&self, st: &mut View) {
         st.slides = st.service().map(build_slides).unwrap_or_default();
-        st.boards = match st.service() {
-            Some(svc) if !st.board_full => board_slides(svc, &st.slides),
-            _ => st.slides.clone(),
-        };
+        st.boards = st.service().map(|svc| board_slides(svc, &st.slides)).unwrap_or_default();
         st.index = st.index.min(st.slides.len().saturating_sub(1));
         self.publish(st);
     }
@@ -312,7 +298,6 @@ impl Show {
             current: st.current.clone(),
             index: st.index,
             collecte: st.collecte.clone(),
-            board_full: st.board_full,
         };
         if let Err(e) = write_json(&self.path, &saved) {
             eprintln!("opslaan mislukt: {e}");

@@ -112,3 +112,15 @@
 
 /* During prayer the church screens stay black. */
 .canvas.black > *, .canvas.gebed > * { display: none; }
+
+/* Boards that hang upright: 1080 x 1920. */
+.canvas.portrait .bar { left: 70px; right: 70px; height: 190px; }
+.canvas.portrait .bar h1 { font-size: 64px; }
+.canvas.portrait .body { top: 190px; padding: 60px 70px; }
+.canvas.portrait.welkom .head, .canvas.portrait.einde .head { padding: 150px 70px 50px; }
+.canvas.portrait.welkom .head h1, .canvas.portrait.einde .head h1 { font-size: 96px; }
+.canvas.portrait.welkom .head p, .canvas.portrait.einde .head p { font-size: 46px; line-height: 1.35; }
+.canvas.portrait.welkom ul, .canvas.portrait.einde ul { columns: 1; margin: 0 70px; font-size: 66px; line-height: 1.6; }
+.canvas.portrait.einde .footer { left: 70px; bottom: 110px; }
+.canvas.portrait .slotzang .announce small, .canvas.portrait.slotzang .announce small { font-size: 70px; }
+.canvas.portrait.slotzang .announce strong { font-size: 150px; text-align: center; }

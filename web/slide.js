@@ -45,17 +45,26 @@ function slideHTML(s) {
 }
 
 // renderSlide draws a slide into a .canvas element and scales it to its parent.
-function renderSlide(canvas, slide, black) {
-  canvas.className = "canvas " + (slide ? slide.kind : "") + (black ? " black" : "");
+// layout: { portrait: board hangs upright (1080x1920), rotate: 0/90/270 degrees for a
+// TV that stands upright but still sends a landscape picture }.
+function renderSlide(canvas, slide, black, layout) {
+  layout = layout || {};
+  canvas.className = "canvas " + (layout.portrait ? "portrait " : "") + (slide ? slide.kind : "") + (black ? " black" : "");
   canvas.innerHTML = slideHTML(slide);
-  scaleCanvas(canvas);
+  scaleCanvas(canvas, layout);
   fitText(canvas);
 }
 
-function scaleCanvas(canvas) {
-  const box = canvas.parentElement.getBoundingClientRect();
-  const k = Math.min(box.width / 1920, box.height / 1080);
-  canvas.style.transform = `translate(${(box.width - 1920 * k) / 2}px, ${(box.height - 1080 * k) / 2}px) scale(${k})`;
+function scaleCanvas(canvas, layout) {
+  layout = layout || {};
+  var w = layout.portrait ? 1080 : 1920, h = layout.portrait ? 1920 : 1080;
+  var rot = layout.rotate || 0;
+  var box = canvas.parentElement.getBoundingClientRect();
+  var turned = rot === 90 || rot === 270;
+  var k = Math.min((turned ? box.height : box.width) / w, (turned ? box.width : box.height) / h);
+  canvas.style.width = w + "px";
+  canvas.style.height = h + "px";
+  canvas.style.transform = "translate(" + box.width / 2 + "px," + box.height / 2 + "px) rotate(" + rot + "deg) scale(" + k + ") translate(" + (-w / 2) + "px," + (-h / 2) + "px)";
 }
 
 // fitText shrinks the text until it fits the slide body.
@@ -66,7 +75,7 @@ function fitText(canvas) {
   let size = 84;
   fit.style.fontSize = size + "px";
   const room = () => body.clientHeight - 100;
-  while (size > 28 && (fit.scrollHeight > room() || fit.scrollWidth > body.clientWidth - 220)) {
+  while (size > 28 && (fit.scrollHeight > room() || fit.scrollWidth > fit.clientWidth + 1)) {
     size -= 2;
     fit.style.fontSize = size + "px";
   }
