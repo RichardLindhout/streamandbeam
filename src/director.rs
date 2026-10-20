@@ -2,7 +2,7 @@
 //! moves the camera, plays the short intros the church's stream has (organ before a
 //! psalm, the theme before the sermon), and can start and stop the stream by itself.
 
-use crate::render::{Renderer, Scene};
+use crate::render::{Body, Photo, Renderer, Scene};
 use crate::show::{Show, View, long_date};
 use crate::stream::{Engine, Mode, Settings, recall_preset};
 use crate::texts::{read_json, write_json};
@@ -86,10 +86,10 @@ impl Director {
     }
 
     /// Runs for the lifetime of the program.
-    pub async fn run(self: Arc<Self>, show: Arc<Show>, photo: Option<Vec<u8>>) {
+    pub async fn run(self: Arc<Self>, show: Arc<Show>) {
         tokio::spawn(self.clone().autopilot(show.clone()));
         let qr_link = self.settings().qr_link;
-        let renderer = Arc::new(Mutex::new(Renderer::new(photo.as_deref(), &qr_link)));
+        let renderer = Arc::new(Mutex::new(Renderer::with_builtin_images(&qr_link)));
         let mut rx = show.subscribe();
         let mut last_scene = None;
         // Camera and preset last sent, so a newly entered camera IP also gets the position.
@@ -187,12 +187,15 @@ fn scene_for(view: &View, shown: Duration, s: &Settings) -> (Scene, Position, Op
         return (Scene::Camera, Position::Overzicht, None);
     };
     let svc = view.service();
-    let panel = |paragraphs: Vec<String>, footer: &str, qr: bool| Scene::Panel {
-        title: slide.header.clone(),
+    let panel = |label: &str, title: &str, paragraphs: Vec<String>, style: Body, footer: &str, qr: bool| Scene::Panel {
+        label: label.to_string(),
+        title: title.to_string(),
         paragraphs,
+        style,
         footer: footer.to_string(),
         qr,
     };
+    let bar = |label: &str, text: &str| Scene::Bar { label: label.to_string(), text: text.to_string() };
     let intro = Duration::from_secs(s.intro_seconds);
     let theme = Duration::from_secs(s.theme_seconds);
     match slide.kind.as_str() {
@@ -201,43 +204,53 @@ fn scene_for(view: &View, shown: Duration, s: &Settings) -> (Scene, Position, Op
             let sub = svc
                 .map(|s| [s.label.as_str(), s.predikant.as_str()].iter().filter(|x| !x.is_empty()).copied().collect::<Vec<_>>().join(" · "))
                 .unwrap_or_default();
-            (Scene::Holding { title, sub, line: String::new(), qr: true }, Position::Overzicht, None)
+            (Scene::Holding { photo: Photo::Inside, label: "Welkom".into(), title, sub, qr: true }, Position::Overzicht, None)
         }
         "einde" => {
-            let scene = Scene::Holding {
-                title: "www.hhgtholen.nl".into(),
-                sub: "Hersteld Hervormde Gemeente Tholen".into(),
-                line: slide.sub.clone(),
-                qr: true,
+            // svc.next is "Zondag 25 oktober om 9.30 uur · ds. K. Klopstra".
+            let next = svc.map(|s| s.next.clone()).unwrap_or_default();
+            let (title, sub) = next.split_once(" · ").map(|(a, b)| (a.to_string(), b.to_string())).unwrap_or((next.clone(), String::new()));
+            let scene = if title.is_empty() {
+                Scene::Holding { photo: Photo::Outside, label: String::new(), title: "Hersteld Hervormde Gemeente Tholen".into(), sub: "www.hhgtholen.nl".into(), qr: true }
+            } else {
+                Scene::Holding { photo: Photo::Outside, label: "Volgende dienst".into(), title, sub, qr: true }
             };
             (scene, Position::Overzicht, None)
         }
-        "psalm" | "slotzang" if slide.lines.is_empty() => {
-            (Scene::Bar { text: format!("{}: {}", slide.header, slide.sub) }, Position::Orgel, None)
-        }
+        "psalm" | "slotzang" if slide.lines.is_empty() => (bar(&slide.header, &slide.sub), Position::Orgel, None),
         "psalm" | "slotzang" => {
             // The first verse of a psalm starts with the organ playing it in.
             let prev = view.index.checked_sub(1).and_then(|i| view.slides.get(i));
             let first_verse = prev.is_none_or(|p| p.item != slide.item || p.lines.is_empty());
             if first_verse && shown < intro {
-                (Scene::Bar { text: slide.header.clone() }, Position::Orgel, Some(intro))
+                (bar(&slide.sub, &slide.header), Position::Orgel, Some(intro))
             } else {
-                (panel(slide.lines.clone(), "", false), Position::Orgel, None)
+                (panel(&slide.sub, &slide.header, slide.lines.clone(), Body::Lines, "", false), Position::Orgel, None)
             }
         }
         "lezing" => {
-            let verses = slide.verses.iter().map(|v| format!("{}  {}", v.number, v.text)).collect();
-            (panel(verses, "", false), Position::Preekstoel, None)
+            let verses = if slide.verses.is_empty() {
+                slide.lines.clone()
+            } else {
+                slide.verses.iter().map(|v| format!("{} {}", v.number, v.text)).collect()
+            };
+            let style = if slide.verses.is_empty() { Body::Prose } else { Body::Verses };
+            (panel(&slide.sub, &slide.header, verses, style, "", false), Position::Preekstoel, None)
         }
-        "catechismus" => (panel(slide.lines.clone(), &slide.footer, false), Position::Preekstoel, None),
-        "collecte" => (panel(slide.lines.clone(), "", true), Position::Orgel, None),
-        "gebed" => (Scene::Bar { text: slide.header.clone() }, Position::Doopvont, None),
-        "mededeling" => (panel(slide.lines.clone(), "", false), Position::Preekstoel, None),
+        "catechismus" => {
+            // lines: "Vraag 57: Wat troost …", "Antwoord: Dat niet alleen …"
+            let (title, question) = slide.lines.first().and_then(|q| q.split_once(": ")).unwrap_or(("", ""));
+            let mut paragraphs = vec![question.to_string()];
+            paragraphs.extend(slide.lines.iter().skip(1).map(|l| l.trim_start_matches("Antwoord: ").to_string()));
+            let title = if title.is_empty() { slide.header.as_str() } else { title };
+            (panel(&slide.header, title, paragraphs, Body::Question, &slide.footer, false), Position::Preekstoel, None)
+        }
+        "collecte" => (panel("", &slide.header, slide.lines.clone(), Body::Lines, "", true), Position::Orgel, None),
+        "gebed" => (bar("", &slide.header), Position::Doopvont, None),
+        "mededeling" => (panel("", &slide.header, slide.lines.clone(), Body::Prose, "", false), Position::Preekstoel, None),
         "preek" if !slide.theme.is_empty() && shown < theme => {
-            let mut lines = vec![slide.theme.clone()];
-            lines.extend(slide.points.iter().enumerate().map(|(i, p)| format!("{}. {p}", i + 1)));
-            let scene = Scene::Panel { title: "Thema".into(), paragraphs: lines, footer: String::new(), qr: false };
-            (scene, Position::Preekstoel, Some(theme))
+            let points = slide.points.iter().enumerate().map(|(i, p)| format!("{}. {p}", i + 1)).collect();
+            (panel("Thema", &slide.theme, points, Body::Lines, "", false), Position::Preekstoel, Some(theme))
         }
         // During the sermon viewers see the predikant.
         _ => (Scene::Camera, Position::Preekstoel, None),

@@ -5,33 +5,38 @@ function esc(s) {
   return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 }
 
+// Text for the screens: escaped, with a typographic apostrophe (’t instead of 't).
+function typo(s) {
+  return esc(String(s == null ? "" : s).replace(/'/g, "\u2019"));
+}
+
 function slideHTML(s) {
   if (!s) return "";
-  const bar = `<div class="bar"><h1>${esc(s.header)}</h1><span>${esc(s.sub)}</span></div>`;
+  const bar = `<div class="bar"><h1>${typo(s.header)}</h1><span>${typo(s.sub)}</span></div>`;
   switch (s.kind) {
     case "welkom":
     case "einde":
-      return `<div class="head"><h1>${esc(s.header)}</h1><p>${esc(s.sub)}</p></div>
-        <ul>${(s.list || []).concat(s.lines || []).map((l) => `<li>${esc(l)}</li>`).join("")}</ul>
-        <p class="footer">${esc(s.footer)}</p>`;
+      return `<div class="head"><h1>${typo(s.header)}</h1><p>${typo(s.sub)}</p></div>
+        <ul>${(s.list || []).concat(s.lines || []).map((l) => `<li>${typo(l)}</li>`).join("")}</ul>
+        <p class="footer">${typo(s.footer)}</p>`;
     case "catechismus":
-      return bar + `<div class="body"><div class="fit">${(s.lines || []).map((l) => `<p>${esc(l)}</p>`).join("")}</div></div>`;
+      return bar + `<div class="body"><div class="fit">${(s.lines || []).map((l) => `<p>${typo(l)}</p>`).join("")}</div></div>`;
     case "slotzang":
       if (!s.lines || !s.lines.length) {
-        return `<div class="announce"><small>${esc(s.header)}</small><strong>${esc(s.sub)}</strong></div>`;
+        return `<div class="announce"><small>${typo(s.header)}</small><strong>${typo(s.sub)}</strong></div>`;
       }
     // fall through: verse slides of the slotzang look like a psalm, on the dark screen
     case "psalm":
-      return bar + `<div class="body"><div class="fit">${(s.lines || []).map((l) => `<div>${esc(l)}</div>`).join("")}</div></div>`;
+      return bar + `<div class="body"><div class="fit">${(s.lines || []).map((l) => `<div>${typo(l)}</div>`).join("")}</div></div>`;
     case "lezing":
-      return bar + `<div class="body"><div class="fit">${(s.verses || []).map((v) => `<p><sup>${v.verse}</sup>${esc(v.text)}</p>`).join("")}${(s.lines || []).map(esc).join("<br>")}</div></div>`;
+      return bar + `<div class="body"><div class="fit">${(s.verses || []).map((v) => `<p><sup>${v.verse}</sup>${typo(v.text)}</p>`).join("")}${(s.lines || []).map(esc).join("<br>")}</div></div>`;
     case "preek": {
-      const verse = (s.verses || []).map((v) => esc(v.text)).join(" ");
-      const points = (s.points || []).map((p) => `<li>${esc(p)}</li>`).join("");
+      const verse = (s.verses || []).map((v) => typo(v.text)).join(" ");
+      const points = (s.points || []).map((p) => `<li>${typo(p)}</li>`).join("");
       return bar + `<div class="body"><div class="fit">
         ${verse ? `<div class="verse">${verse}</div>` : ""}
-        ${(s.lines || []).map((l) => `<div>${esc(l)}</div>`).join("")}
-        ${s.theme ? `<div class="theme">${esc(s.theme)}</div>` : ""}
+        ${(s.lines || []).map((l) => `<div>${typo(l)}</div>`).join("")}
+        ${s.theme ? `<div class="theme">${typo(s.theme)}</div>` : ""}
         ${points ? `<ol>${points}</ol>` : ""}</div></div>`;
     }
     default:

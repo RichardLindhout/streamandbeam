@@ -20,6 +20,18 @@ use tokio_stream::{StreamExt, wrappers::WatchStream};
 #[folder = "web/"]
 struct Assets;
 
+/// The fonts of the board and the stream, served to the TVs (no internet needed).
+#[derive(Embed)]
+#[folder = "assets/fonts/"]
+struct Fonts;
+
+async fn font(Path(file): Path<String>) -> Response {
+    match Fonts::get(&file) {
+        Some(f) => ([(header::CONTENT_TYPE, "font/ttf"), (header::CACHE_CONTROL, "max-age=31536000")], f.data).into_response(),
+        None => StatusCode::NOT_FOUND.into_response(),
+    }
+}
+
 #[derive(Clone)]
 struct App {
     show: Arc<Show>,
@@ -34,6 +46,7 @@ pub fn router(show: Arc<Show>, director: Arc<Director>, listener: Arc<crate::lis
         .route("/", get(|| asset("index.html")))
         .route("/beam", get(|| asset("beam.html")))
         .route("/{file}", get(|Path(file): Path<String>| asset(file)))
+        .route("/fonts/{file}", get(font))
         .route("/api/state", get(state))
         .route("/api/info", get(info))
         .route("/api/fetch", post(fetch))
@@ -64,6 +77,7 @@ pub fn public_router(show: Arc<Show>, director: Arc<Director>, listener: Arc<cra
         .route("/beam", get(|| asset("beam.html")))
         .route("/slide.js", get(|| asset("slide.js")))
         .route("/slide.css", get(|| asset("slide.css")))
+        .route("/fonts/{file}", get(font))
         .route("/events", get(events))
         .route("/api/state", get(state))
         .route("/api/stream", get(stream_status))

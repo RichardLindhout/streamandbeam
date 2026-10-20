@@ -2,7 +2,9 @@
 //! one computer, automatically:
 //!
 //! - an RTSP server like the PTZOptics camera (`rtsp://127.0.0.1:8554/1`), playing a
-//!   recording of an earlier service (or a test picture),
+//!   recording of an earlier service (or a test picture). With `--posities DIR` it plays
+//!   a different shot per camera position (DIR/preekstoel.mp4, orgel.mp4, doopvont.mp4)
+//!   and switches when a position is called, like the real camera turning,
 //! - the same recording's sound as a separate stream (`/geluid`), standing in for the
 //!   USB sound input, and a silent one (`/stilte`) to test the "no sound" warning,
 //! - the camera's HTTP interface, logging which positions are called (`/log`),
@@ -31,16 +33,20 @@ const KERKDIENSTEN: &str = r#"<!doctype html>
 
 fn main() -> anyhow::Result<()> {
     let mut file = None;
+    let mut positions: Option<String> = None;
+    let mut sound: Option<String> = None;
     let mut rtsp_port = "8554".to_string();
     let mut http_port = 8095u16;
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
         match arg.as_str() {
             "--bestand" => file = args.next(),
+            "--posities" => positions = args.next(),
+            "--geluid" => sound = args.next(),
             "--rtsp-poort" => rtsp_port = args.next().unwrap_or(rtsp_port),
             "--http-poort" => http_port = args.next().and_then(|p| p.parse().ok()).unwrap_or(http_port),
             _ => {
-                eprintln!("nepcamera [--bestand dienst.mp4] [--rtsp-poort 8554] [--http-poort 8095]");
+                eprintln!("nepcamera [--bestand dienst.mp4] [--posities map] [--geluid preek.m4a] [--rtsp-poort 8554] [--http-poort 8095]");
                 std::process::exit(2);
             }
         }
@@ -79,8 +85,41 @@ fn main() -> anyhow::Result<()> {
             format!("{audio} ! opusenc ! rtpopuspay name=pay0 pt=97"),
         ),
     };
-    mount("/1", video_only);
-    mount("/geluid", audio_only);
+    // The shot on screen per camera position: 1 overzicht and 3 preekstoel show the
+    // pulpit, 2 the organ, 4 the font. The selector is set when the first viewer connects.
+    let selector: Arc<Mutex<Option<gst::Element>>> = Arc::default();
+    if let Some(dir) = &positions {
+        let shot = |name: &str, pad: usize| {
+            format!(
+                "filesrc location=\"{dir}/{name}.mp4\" ! decodebin ! videoconvert ! videoscale ! videorate \
+                 ! video/x-raw,width=1920,height=1080,framerate=25/1 ! queue ! sel.sink_{pad} "
+            )
+        };
+        let launch = format!(
+            "input-selector name=sel ! videoconvert ! x264enc tune=zerolatency speed-preset=ultrafast key-int-max=25 \
+             ! rtph264pay name=pay0 pt=96 {}{}{}",
+            shot("preekstoel", 0),
+            shot("orgel", 1),
+            shot("doopvont", 2)
+        );
+        let factory = RTSPMediaFactory::new();
+        factory.set_launch(&format!("( {launch} )"));
+        factory.set_shared(true);
+        let sel = selector.clone();
+        factory.connect_media_configure(move |_, media| {
+            if let Ok(bin) = media.element().downcast::<gst::Bin>() {
+                *sel.lock().unwrap() = bin.by_name("sel");
+            }
+        });
+        mounts.add_factory("/1", factory);
+    } else {
+        mount("/1", video_only);
+    }
+    match &sound {
+        // A separate sound file (e.g. only the sermon) for the "USB" input.
+        Some(f) => mount("/geluid", format!("filesrc location=\"{f}\" ! decodebin ! audioconvert ! audioresample ! opusenc ! rtpopuspay name=pay0 pt=97")),
+        None => mount("/geluid", audio_only),
+    }
     mount("/stilte", "audiotestsrc is-live=true wave=silence ! opusenc ! rtpopuspay name=pay0 pt=97".into());
     server.attach(None)?;
 
@@ -95,9 +134,19 @@ fn main() -> anyhow::Result<()> {
                     get(move |RawQuery(q): RawQuery| async move {
                         // ptzcmd&poscall&N
                         let q = q.unwrap_or_default();
-                        if let Some(n) = q.strip_prefix("ptzcmd&poscall&").and_then(|n| n.parse().ok()) {
+                        if let Some(n) = q.strip_prefix("ptzcmd&poscall&").and_then(|n| n.parse::<u32>().ok()) {
                             println!("camera → positie {n}");
                             calls.lock().unwrap().push(n);
+                            let pad = match n {
+                                2 => "sink_1",
+                                4 => "sink_2",
+                                _ => "sink_0",
+                            };
+                            if let Some(sel) = selector.lock().unwrap().as_ref()
+                                && let Some(p) = sel.static_pad(pad)
+                            {
+                                sel.set_property("active-pad", &p);
+                            }
                         }
                         "OK"
                     }),

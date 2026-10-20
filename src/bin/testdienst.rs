@@ -63,6 +63,13 @@ async fn main() -> Result<()> {
     cam.args(["--rtsp-poort", "18554", "--http-poort", "18095"]);
     if Path::new("testdata/dienst.mp4").exists() {
         cam.args(["--bestand", "testdata/dienst.mp4"]);
+        if Path::new("testdata/preek-geluid.m4a").exists() {
+            cam.args(["--geluid", "testdata/preek-geluid.m4a"]);
+        }
+        if Path::new("testdata/orgel.mp4").exists() {
+            // A different shot per camera position, so switching can be seen.
+            cam.args(["--posities", "testdata"]);
+        }
     } else {
         println!("  (testdata/dienst.mp4 ontbreekt: nepcamera gebruikt een testbeeld)");
     }
@@ -86,7 +93,7 @@ async fn main() -> Result<()> {
     }
     let api_key_ok = std::env::var("ANTHROPIC_API_KEY").is_ok();
     let mut app = Command::new(bin_dir.join("streamandbeam"));
-    app.args(["--poort", "18080", "--liturgie-url", &format!("http://{CAMERA_HTTP}/kerkdiensten"), "--data"])
+    app.args(["--poort", "18080", "--publiek-poort", "18090", "--liturgie-url", &format!("http://{CAMERA_HTTP}/kerkdiensten"), "--data"])
         .arg(out.join("data"));
     if !api_key_ok {
         app.arg("--oude-spelling");
@@ -228,6 +235,28 @@ async fn main() -> Result<()> {
             Err(e) => r.check(false, format!("{what}: {e:#}")),
         }
     }
+    println!("\n6b. Geluid zoals het aankomt");
+    let received = if real_youtube { PathBuf::from(&recording) } else { youtube.clone() };
+    // Compare with the same stretch of the original: the chain should not make the
+    // sound softer or louder, leave gaps, or make speech unintelligible.
+    let source = PathBuf::from(if Path::new("testdata/preek-geluid.m4a").exists() { "testdata/preek-geluid.m4a" } else { "testdata/dienst.mp4" });
+    match (audio_report(&received), audio_report_part(&source, probe(&received).map(|(_, d)| d).unwrap_or(30.0))) {
+        (Ok(a), Ok(orig)) => {
+            let diff = a.mean_db - orig.mean_db;
+            r.check(diff.abs() <= 3.0, format!("geluidsniveau gelijk aan het origineel: {:.1} dB ontvangen, {:.1} dB origineel ({diff:+.1} dB), piek {:.0} dB", a.mean_db, orig.mean_db, a.max_db));
+            r.check(a.gaps.is_empty(), format!("geen gaten in het geluid{}", if a.gaps.is_empty() { String::new() } else { format!(" (stiltes op {})", a.gaps.join(", ")) }));
+            let len = a.duration.min(30.0);
+            match (transcribe(&received, (a.duration - len).max(0.0) / 2.0, len), transcribe(&source, 0.0, len)) {
+                (Ok(heard), Ok(original)) => {
+                    let (h, o) = (heard.split_whitespace().count(), original.split_whitespace().count());
+                    r.check(o > 0 && h * 10 >= o * 6, format!("verstaanbaar: {h} woorden herkend in het ontvangen geluid (origineel {o}) — \"{}…\"", heard.chars().take(80).collect::<String>()));
+                }
+                (Err(e), _) | (_, Err(e)) => r.check(false, format!("verstaanbaarheid niet te meten: {e:#}")),
+            }
+        }
+        (Err(e), _) | (_, Err(e)) => r.check(false, format!("geluid niet te meten: {e:#}")),
+    }
+
     let sheet = out.join("overzicht.jpg");
     let tiles = Command::new("ffmpeg")
         .args(["-loglevel", "error", "-y", "-i"])
@@ -279,6 +308,70 @@ fn expected_presets(slides: &[Value]) -> Vec<u32> {
         }
     }
     out
+}
+
+struct Audio {
+    mean_db: f64,
+    max_db: f64,
+    duration: f64,
+    /// Silences longer than 4 seconds, as "12.0 s".
+    gaps: Vec<String>,
+}
+
+fn audio_report(file: &Path) -> Result<Audio> {
+    audio_report_part(file, 0.0)
+}
+
+/// Loudness and silences of the sound in a media file (ffmpeg volumedetect +
+/// silencedetect), optionally only the first `secs` seconds.
+fn audio_report_part(file: &Path, secs: f64) -> Result<Audio> {
+    let mut cmd = Command::new("ffmpeg");
+    cmd.args(["-hide_banner", "-nostats"]);
+    if secs > 0.0 {
+        cmd.args(["-t", &format!("{secs:.1}")]);
+    }
+    let out = cmd
+        .arg("-i")
+        .arg(file)
+        .args(["-af", "volumedetect,silencedetect=noise=-50dB:d=4", "-f", "null", "-"])
+        .output()?;
+    let log = String::from_utf8_lossy(&out.stderr);
+    let num = |key: &str| -> Option<f64> {
+        log.lines().find_map(|l| l.split_once(key).and_then(|(_, v)| v.trim().split_whitespace().next()?.parse().ok()))
+    };
+    let gaps = log
+        .lines()
+        .filter_map(|l| l.split_once("silence_start: ").map(|(_, v)| v.trim().to_string()))
+        .map(|t| format!("{t} s"))
+        .collect();
+    Ok(Audio {
+        mean_db: num("mean_volume:").context("geen geluid gevonden")?,
+        max_db: num("max_volume:").unwrap_or(-100.0),
+        duration: probe(file).map(|(_, d)| d).unwrap_or(0.0),
+        gaps,
+    })
+}
+
+/// Transcribes part of the received sound with Whisper, to check it is still speech.
+fn transcribe(file: &Path, start: f64, secs: f64) -> Result<String> {
+    let pcm = Command::new("ffmpeg")
+        .args(["-loglevel", "error", "-ss", &format!("{:.1}", start.max(0.0)), "-t", &format!("{secs}"), "-i"])
+        .arg(file)
+        .args(["-ac", "1", "-ar", "16000", "-f", "f32le", "-"])
+        .output()?
+        .stdout;
+    let samples: Vec<f32> = pcm.chunks_exact(4).map(|b| f32::from_le_bytes([b[0], b[1], b[2], b[3]])).collect();
+    let ctx = whisper_rs::WhisperContext::new_with_params("modellen/ggml-small-q5_1.bin", Default::default())
+        .context("Whisper-model ontbreekt (start eerst streamandbeam met meeluisteren aan)")?;
+    let mut state = ctx.create_state()?;
+    let mut params = whisper_rs::FullParams::new(whisper_rs::SamplingStrategy::Greedy { best_of: 1 });
+    params.set_language(Some("nl"));
+    params.set_print_progress(false);
+    params.set_print_realtime(false);
+    params.set_print_special(false);
+    params.set_print_timestamps(false);
+    state.full(params, &samples)?;
+    Ok(state.as_iter().map(|s| s.to_string()).collect::<Vec<_>>().join(" ").trim().to_string())
 }
 
 /// Codecs and duration of a media file.

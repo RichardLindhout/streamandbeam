@@ -89,10 +89,7 @@ async fn main() -> anyhow::Result<()> {
     }
     let d = director.clone();
     tokio::spawn(listener.clone().suggest_loop(show.clone(), move || d.settings().autopilot));
-    let photo = std::fs::read(opts.data_dir.join("kerk.jpg"))
-        .ok()
-        .or_else(|| Some(include_bytes!("../assets/images/kerk.jpg").to_vec()));
-    tokio::spawn(director.clone().run(show.clone(), photo));
+    tokio::spawn(director.clone().run(show.clone()));
     if std::env::var("ANTHROPIC_API_KEY").is_err() {
         eprintln!("let op: ANTHROPIC_API_KEY is niet gezet; liturgie ophalen van de website werkt dan niet");
     }
