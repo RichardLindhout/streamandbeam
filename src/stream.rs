@@ -54,6 +54,9 @@ pub struct Settings {
     pub youtube_test: bool,
     /// Listening along: "uit", "suggestie" (button blinks) or "automatisch".
     pub autopilot: String,
+    /// The YouTube channel (id) whose live stream is checked for sound and shown on the
+    /// watch page.
+    pub youtube_channel: String,
 }
 
 /// PTZOptics camera positions (preset numbers as saved in the camera).
@@ -93,6 +96,7 @@ impl Default for Settings {
             youtube_privacy: "public".into(),
             youtube_test: false,
             autopilot: "suggestie".into(),
+            youtube_channel: "UCv0FTJ5pf3aXF7fhVYLwe2g".into(),
         }
     }
 }

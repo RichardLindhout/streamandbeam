@@ -16,6 +16,7 @@ mod stream;
 mod texts;
 mod web;
 mod youtube;
+mod ytcheck;
 
 use std::path::PathBuf;
 
@@ -90,6 +91,9 @@ async fn main() -> anyhow::Result<()> {
     }
     let d = director.clone();
     tokio::spawn(listener.clone().suggest_loop(show.clone(), move || d.settings().autopilot));
+    let check = ytcheck::YouTubeCheck::new();
+    let (d1, d2) = (director.clone(), director.clone());
+    tokio::spawn(check.clone().run(move || d1.settings().youtube_channel, move || d2.engine.status().mode == stream::Mode::Live));
     tokio::spawn(director.clone().run(show.clone()));
     if std::env::var("ANTHROPIC_API_KEY").is_err() {
         eprintln!("let op: ANTHROPIC_API_KEY is niet gezet; liturgie ophalen van de website werkt dan niet");
@@ -100,12 +104,12 @@ async fn main() -> anyhow::Result<()> {
     println!("Schermen (TV's):    {base}/beam");
     if opts.public_port > 0 {
         // Only reachable from this computer; the Cloudflare tunnel brings it to the internet.
-        let public = web::public_router(show.clone(), director.clone(), listener.clone(), format!("{base}/beam"), opts.port);
+        let public = web::public_router(show.clone(), director.clone(), listener.clone(), check.clone(), format!("{base}/beam"), opts.port);
         let tcp = tokio::net::TcpListener::bind(("127.0.0.1", opts.public_port)).await?;
         println!("Meekijken (alleen-kijken): http://localhost:{}", opts.public_port);
         tokio::spawn(async move { axum::serve(tcp, public).await });
     }
     let tcp = tokio::net::TcpListener::bind(("0.0.0.0", opts.port)).await?;
-    axum::serve(tcp, web::router(show, director, listener, format!("{base}/beam"), opts.port)).await?;
+    axum::serve(tcp, web::router(show, director, listener, check, format!("{base}/beam"), opts.port)).await?;
     Ok(())
 }

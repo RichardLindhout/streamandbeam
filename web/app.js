@@ -43,7 +43,7 @@ function StreamMonitor({ mode, onClick }) {
   </div>`;
 }
 
-function Header({ state, status, mode, setMode, onNew, onFetch, fetching, listen }) {
+function Header({ state, status, mode, setMode, onNew, onFetch, fetching, listen, yt }) {
   const svcs = state?.services || [];
   const live = status.mode === "live";
   return html`<header class="top">
@@ -64,6 +64,8 @@ function Header({ state, status, mode, setMode, onNew, onFetch, fetching, listen
       <span class=${"pill" + (live ? " live" : "")}><span class=${"dot " + (live ? "live" : status.mode && status.mode !== "stop" ? "ok" : "")}></span>
         ${live ? html`<b>LIVE</b> ${clock(status.since)}` : status.mode === "opnemen" ? html`<b>Opname</b> ${clock(status.since)}` : status.mode === "voorbeeld" ? "Voorbeeld" : "Niet live"}</span>
       <span class="pill"><span class=${"dot " + (status.mode === "stop" ? "" : status.audioWarning ? "warn" : "ok")}></span>Geluid</span>
+      ${status.mode === "live" ? html`<span class=${"pill" + (yt?.at && !yt.audio ? " live" : "")} title=${yt?.problem || "Wat kijkers op YouTube horen, elke minuut gemeten"}>
+        <span class=${"dot " + (!yt?.at ? "" : yt.audio ? "ok" : "live")}></span>YouTube-geluid ${yt?.at ? (yt.audio ? html`<b>✓</b>` : html`<b>⚠</b>`) : "…"}</span>` : null}
       ${listen?.active ? html`<span class="pill"><span class="dot ok"></span>Meeluisteren</span>` : null}
     </div>
   </header>`;
@@ -258,6 +260,7 @@ function App() {
   const [state, setState] = useState(null);
   const [status, setStatus] = useState({ mode: "stop" });
   const [lis, setLis] = useState(null);
+  const [yt, setYt] = useState(null);
   const [mode, setMode] = useState(() => localStorage.getItem("modus") || "dienst");
   const [modal, setModal] = useState(null);
   const [fetching, setFetching] = useState(false);
@@ -271,7 +274,8 @@ function App() {
       try { setStatus(await (await fetch("/api/stream")).json()); setConnected(true); } catch { setConnected(false); }
     }, 700);
     const t2 = setInterval(async () => { try { setLis(await (await fetch("/api/listen")).json()); } catch {} }, 1500);
-    return () => { clearInterval(t1); clearInterval(t2); };
+    const t3 = setInterval(async () => { try { setYt(await (await fetch("/api/youtube-check")).json()); } catch {} }, 10000);
+    return () => { clearInterval(t1); clearInterval(t2); clearInterval(t3); };
   }, []);
   useEffect(() => localStorage.setItem("modus", mode), [mode]);
   useEffect(() => {
@@ -301,10 +305,11 @@ function App() {
   return html`
     ${!connected && html`<div class="alarm grey">Geen verbinding met de kerk-PC — controleer of het programma draait en het netwerk werkt</div>`}
     ${status.audioWarning && html`<div class="alarm">⚠ ${status.audioWarning}</div>`}
+    ${status.mode === "live" && yt?.at && yt.live && !yt.audio && html`<div class="alarm">⚠ Op YouTube is geen geluid te horen — ${yt.problem}</div>`}
     ${state?.overrideBoard && html`<div class="alarm grey" style="background:#7a5a12">Het bord toont nu je vrije tekst
       <button class="btn" style="margin-left:12px" onClick=${() => post("/api/board-override", { clear: true })}>Terug naar normaal</button></div>`}
     ${state?.black && html`<div class="alarm grey">De borden zijn ZWART <button class="btn" style="margin-left:12px" onClick=${() => go({ kind: "zwart" })}>Weer aan</button></div>`}
-    <${Header} state=${state} status=${status} mode=${mode} setMode=${setMode} listen=${lis}
+    <${Header} state=${state} status=${status} mode=${mode} setMode=${setMode} listen=${lis} yt=${yt}
       onNew=${() => setModal("nieuw")} fetching=${fetching}
       onFetch=${async () => { setFetching(true); const r = await post("/api/fetch"); setFetching(false); if (!r.ok) alert("Ophalen mislukt: " + (await r.text())); }} />
     <main class="grid">

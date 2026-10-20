@@ -39,11 +39,19 @@ struct App {
     show: Arc<Show>,
     director: Arc<Director>,
     listener: Arc<crate::listen::Listener>,
+    check: Arc<crate::ytcheck::YouTubeCheck>,
     screen_url: String,
     port: u16,
 }
 
-pub fn router(show: Arc<Show>, director: Arc<Director>, listener: Arc<crate::listen::Listener>, screen_url: String, port: u16) -> Router {
+pub fn router(
+    show: Arc<Show>,
+    director: Arc<Director>,
+    listener: Arc<crate::listen::Listener>,
+    check: Arc<crate::ytcheck::YouTubeCheck>,
+    screen_url: String,
+    port: u16,
+) -> Router {
     Router::new()
         .route("/", get(|| asset("index.html")))
         .route("/beam", get(|| asset("beam.html")))
@@ -72,17 +80,26 @@ pub fn router(show: Arc<Show>, director: Arc<Director>, listener: Arc<crate::lis
         .route("/vendor/{file}", get(|Path(file): Path<String>| asset(format!("vendor/{file}"))))
         .route("/preview.mjpg", get(preview_mjpeg))
         .route("/api/thumb", get(thumb))
-        .with_state(App { boards: Arc::default(), show, director, listener, screen_url, port })
+        .route("/api/youtube-check", get(youtube_check))
+        .with_state(App { boards: Arc::default(), show, director, listener, check, screen_url, port })
 }
 
 /// The read-only side for the internet (via a Cloudflare tunnel): the watch page, the board,
 /// the stream preview and status. No buttons, no settings, nothing that changes anything.
-pub fn public_router(show: Arc<Show>, director: Arc<Director>, listener: Arc<crate::listen::Listener>, screen_url: String, port: u16) -> Router {
+pub fn public_router(
+    show: Arc<Show>,
+    director: Arc<Director>,
+    listener: Arc<crate::listen::Listener>,
+    check: Arc<crate::ytcheck::YouTubeCheck>,
+    screen_url: String,
+    port: u16,
+) -> Router {
     Router::new()
         .route("/", get(|| asset("kijk.html")))
         .route("/beam", get(|| asset("beam.html")))
         .route("/slide.js", get(|| asset("slide.js")))
         .route("/slide.css", get(|| asset("slide.css")))
+        .route("/app.css", get(|| asset("app.css")))
         .route("/hout.jpg", get(|| asset("hout.jpg")))
         .route("/fonts/{file}", get(font))
         .route("/events", get(events))
@@ -92,7 +109,8 @@ pub fn public_router(show: Arc<Show>, director: Arc<Director>, listener: Arc<cra
         .route("/api/listen", get(listen_status))
         .route("/preview.jpg", get(preview))
         .route("/preview.mjpg", get(preview_mjpeg))
-        .with_state(App { boards: Arc::default(), show, director, listener, screen_url, port })
+        .route("/api/youtube-check", get(youtube_check))
+        .with_state(App { boards: Arc::default(), show, director, listener, check, screen_url, port })
 }
 
 async fn asset(path: impl AsRef<str>) -> Response {
@@ -369,4 +387,12 @@ async fn board_override(State(app): State<App>, Json(o): Json<Override>) -> Stat
     });
     app.show.set_override(slide, o.stream).await;
     StatusCode::NO_CONTENT
+}
+
+/// What viewers get on YouTube: live or not, and whether there is sound.
+async fn youtube_check(State(app): State<App>) -> impl IntoResponse {
+    let mut v = serde_json::to_value(app.check.status()).unwrap_or_default();
+    v["channel"] = app.director.settings().youtube_channel.into();
+    v["streaming"] = (app.director.engine.status().mode == crate::stream::Mode::Live).into();
+    Json(v)
 }
