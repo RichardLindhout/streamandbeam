@@ -56,6 +56,23 @@ pub fn router(show: Arc<Show>, director: Arc<Director>, listener: Arc<crate::lis
         .with_state(App { show, director, listener, screen_url, port })
 }
 
+/// The read-only side for the internet (via a Cloudflare tunnel): the watch page, the board,
+/// the stream preview and status. No buttons, no settings, nothing that changes anything.
+pub fn public_router(show: Arc<Show>, director: Arc<Director>, listener: Arc<crate::listen::Listener>, screen_url: String, port: u16) -> Router {
+    Router::new()
+        .route("/", get(|| asset("kijk.html")))
+        .route("/beam", get(|| asset("beam.html")))
+        .route("/slide.js", get(|| asset("slide.js")))
+        .route("/slide.css", get(|| asset("slide.css")))
+        .route("/events", get(events))
+        .route("/api/state", get(state))
+        .route("/api/stream", get(stream_status))
+        .route("/api/youtube", get(youtube_status))
+        .route("/api/listen", get(listen_status))
+        .route("/preview.jpg", get(preview))
+        .with_state(App { show, director, listener, screen_url, port })
+}
+
 async fn asset(path: impl AsRef<str>) -> Response {
     let path = path.as_ref();
     match Assets::get(path) {

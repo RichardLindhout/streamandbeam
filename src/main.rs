@@ -22,6 +22,8 @@ struct Options {
     port: u16,
     data_dir: PathBuf,
     liturgy_url: String,
+    /// Port for the read-only watch page (for a Cloudflare tunnel); 0 = off.
+    public_port: u16,
     command: Option<String>,
 }
 
@@ -30,6 +32,7 @@ fn parse_args() -> Options {
         port: 8080,
         data_dir: "data".into(),
         liturgy_url: extract::LITURGY_URL.into(),
+        public_port: 8090,
         command: None,
     };
     let mut args = std::env::args().skip(1);
@@ -38,9 +41,11 @@ fn parse_args() -> Options {
             "--poort" | "--port" => opts.port = args.next().and_then(|p| p.parse().ok()).unwrap_or(8080),
             "--data" => opts.data_dir = args.next().unwrap_or_default().into(),
             "--liturgie-url" => opts.liturgy_url = args.next().unwrap_or_default(),
+            "--publiek-poort" => opts.public_port = args.next().and_then(|p| p.parse().ok()).unwrap_or(0),
             "-h" | "--help" => {
                 println!(
-                    "streamandbeam [--poort 8080] [--data data] [--liturgie-url URL] [fetch|scenes]\n\n  \
+                    "streamandbeam [--poort 8080] [--publiek-poort 8090] [--data data] [--liturgie-url URL] [fetch|scenes]\n\n  \
+                     --publiek-poort  alleen-kijken-pagina (bord + uitzending) voor internet; 0 = uit\n  \
                      fetch            laat zien wat Claude van de website leest\n  \
                      scenes           schrijf voorbeelden van de uitzendbeelden naar data/scenes"
                 );
@@ -95,6 +100,13 @@ async fn main() -> anyhow::Result<()> {
     let base = format!("http://{}:{}", lan_ip(), opts.port);
     println!("Bediening:          {base}");
     println!("Schermen (TV's):    {base}/beam");
+    if opts.public_port > 0 {
+        // Only reachable from this computer; the Cloudflare tunnel brings it to the internet.
+        let public = web::public_router(show.clone(), director.clone(), listener.clone(), format!("{base}/beam"), opts.port);
+        let tcp = tokio::net::TcpListener::bind(("127.0.0.1", opts.public_port)).await?;
+        println!("Meekijken (alleen-kijken): http://localhost:{}", opts.public_port);
+        tokio::spawn(async move { axum::serve(tcp, public).await });
+    }
     let tcp = tokio::net::TcpListener::bind(("0.0.0.0", opts.port)).await?;
     axum::serve(tcp, web::router(show, director, listener, format!("{base}/beam"), opts.port)).await?;
     Ok(())

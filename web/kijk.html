@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HHG Tholen — meekijken</title>
+<link rel="stylesheet" href="/slide.css">
+<style>
+  :root { --line: #dfe5e6; --muted: #6a7e82; }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; font: 15px/1.45 -apple-system, "Segoe UI", Arial, sans-serif; background: #eef1f1; color: #1f2a2c; }
+  header { background: var(--teal); color: #fff; padding: 14px 16px; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+  header h1 { font-size: 18px; margin: 0; }
+  header span { opacity: .85; font-size: 14px; }
+  .badge { margin-left: auto; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.15); font-size: 13px; font-weight: 700; }
+  .badge.live { background: #c0392b; }
+  main { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 14px; max-width: 1600px; margin: 0 auto; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  section { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; }
+  .frame { position: relative; aspect-ratio: 16/9; background: #000; border-radius: 8px; overflow: hidden; }
+  .frame img, .frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; object-fit: contain; }
+  .frame .empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #999; text-align: center; padding: 16px; }
+  .info { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+  .meter { height: 8px; background: #e4e8e9; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+  .meter div { height: 100%; width: 0; background: #27ae60; transition: width .15s; }
+  .heard { font-style: italic; }
+  .wide { grid-column: 1 / -1; }
+  ol.order { margin: 0; padding-left: 22px; columns: 2; column-gap: 32px; }
+  @media (max-width: 700px) { ol.order { columns: 1; } }
+  ol.order li { padding: 2px 0; }
+  ol.order li.now { font-weight: 700; color: var(--teal); }
+  a { color: var(--teal-2); }
+</style>
+</head>
+<body>
+<header>
+  <h1>HHG Tholen</h1>
+  <span id="service">—</span>
+  <span id="badge" class="badge">uit</span>
+</header>
+<main>
+  <section>
+    <h2>Bord in de kerk</h2>
+    <div class="frame"><div class="canvas" id="board"></div></div>
+    <p class="info" id="now"></p>
+  </section>
+  <section>
+    <h2>Uitzending</h2>
+    <div class="frame">
+      <img id="preview" alt="" hidden>
+      <iframe id="yt" hidden allow="autoplay; encrypted-media" allowfullscreen></iframe>
+      <div class="empty" id="noStream">De uitzending staat uit.</div>
+    </div>
+    <div class="meter"><div id="meter"></div></div>
+    <p class="info" id="streamInfo"></p>
+    <p class="info heard" id="heard"></p>
+  </section>
+  <section class="wide">
+    <h2>Volgorde van de dienst</h2>
+    <ol class="order" id="order"></ol>
+  </section>
+</main>
+<script src="/slide.js"></script>
+<script>
+  // Read-only page for watching along: the board in church, the stream and the order.
+  var $ = function (id) { return document.getElementById(id); };
+  var state = null;
+  var mode = "stop";
+  var showYouTube = location.search.indexOf("youtube") >= 0;
+
+  listen(function (st) {
+    state = st;
+    var slide = st.slides ? st.slides[st.index] : null;
+    renderSlide($("board"), slide, st.black);
+    var svc = (st.services || []).filter(function (s) { return s.id === st.current; })[0];
+    $("service").textContent = svc ? [svc.label, svc.date, svc.time, svc.predikant].filter(Boolean).join(" · ") : "geen dienst gekozen";
+    $("now").textContent = slide ? "Nu: " + slide.header + (slide.sub ? " — " + slide.sub : "") : "";
+    $("order").innerHTML = svc ? svc.items.map(function (it, i) {
+      return '<li class="' + (slide && slide.item === i ? "now" : "") + '">' + esc(it.label) + (it.ref ? " — " + esc(it.ref) : "") + "</li>";
+    }).join("") : "";
+  });
+  window.addEventListener("resize", function () { if (state) renderSlide($("board"), state.slides[state.index], state.black); });
+
+  function poll() {
+    fetch("/api/stream").then(function (r) { return r.json(); }).then(function (st) {
+      mode = st.mode;
+      var label = { stop: "uit", voorbeeld: "voorbeeld", opnemen: "opname", live: "● LIVE" }[st.mode];
+      $("badge").textContent = label;
+      $("badge").className = "badge" + (st.mode === "live" ? " live" : "");
+      var pct = Math.max(0, Math.min(100, (st.audioDb + 60) / 60 * 100));
+      $("meter").style.width = (st.mode === "stop" ? 0 : pct) + "%";
+      $("streamInfo").textContent = st.audioWarning ? "⚠ " + st.audioWarning : st.error ? "Fout: " + st.error : "";
+    }).catch(function () {});
+    fetch("/api/youtube").then(function (r) { return r.json(); }).then(function (yt) {
+      var b = yt.broadcast;
+      if (b && showYouTube) {
+        var src = "https://www.youtube.com/embed/" + b.id + "?autoplay=1&mute=1";
+        if ($("yt").src !== src) $("yt").src = src;
+      }
+      $("yt").hidden = !(b && showYouTube);
+      if (b) $("streamInfo").innerHTML = 'YouTube: <a href="' + esc(b.watchUrl) + '" target="_blank">' + esc(b.title) + "</a> (" + esc(yt.status || "") + ")" +
+        (showYouTube ? "" : ' · <a href="?youtube">toon de YouTube-speler</a>');
+    }).catch(function () {});
+    fetch("/api/listen").then(function (r) { return r.json(); }).then(function (l) {
+      $("heard").textContent = l.heard ? "Gehoord: " + l.heard : "";
+    }).catch(function () {});
+  }
+  setInterval(poll, 1500);
+  poll();
+
+  // The stream as it leaves this computer, a few frames per second.
+  setInterval(function () {
+    var on = mode !== "stop";
+    $("noStream").hidden = on || !$("yt").hidden;
+    if (!on || !$("yt").hidden) { $("preview").hidden = true; return; }
+    var img = new Image();
+    img.onload = function () { $("preview").src = img.src; $("preview").hidden = false; };
+    img.src = "/preview.jpg?t=" + Date.now();
+  }, 500);
+</script>
+</body>
+</html>
