@@ -94,7 +94,9 @@ async fn asset(path: impl AsRef<str>) -> Response {
     match Assets::get(path) {
         Some(file) => {
             let mime = mime_guess::from_path(path).first_or_octet_stream();
-            ([(header::CONTENT_TYPE, mime.as_ref())], file.data).into_response()
+            // Always the latest version: no copies in the browser or at Cloudflare, so a
+            // change to the boards shows up on every screen right away.
+            ([(header::CONTENT_TYPE, mime.as_ref()), (header::CACHE_CONTROL, "no-cache")], file.data).into_response()
         }
         None => StatusCode::NOT_FOUND.into_response(),
     }

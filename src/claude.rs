@@ -58,30 +58,42 @@ pub struct RawItem {
     pub tot: u32,
     pub vragen: Vec<u32>,
     pub zondag: u32,
+    pub document: String,
+    pub artikelen: Vec<u32>,
     pub tekst: String,
     pub herkend: bool,
     pub reden: String,
 }
 
-pub const KINDS: [&str; 12] =
-    ["welkom", "psalm", "slotzang", "nazang", "lied", "lezing", "catechismus", "gebed", "collecte", "preek", "mededeling", "einde"];
+pub const KINDS: [&str; 14] = [
+    "welkom", "psalm", "slotzang", "nazang", "lied", "lezing", "catechismus", "belijdenis", "formulier", "gebed", "collecte", "preek",
+    "mededeling", "einde",
+];
+
+/// Documents for soort belijdenis and formulier.
+pub const DOCS: [&str; 14] = [
+    "", "ngb", "dl", "apostolicum", "nicea", "athanasius", "doop-kinderen", "doop-volwassenen", "heilig-avondmaal", "belijdenis",
+    "bevestiging-ouderling-diaken", "bevestiging-predikant", "huwelijk", "christelijke-ban",
+];
 
 pub fn item_schema() -> Value {
     let int = |d: &str| json!({"type": "integer", "description": d});
     json!({
         "type": "object", "additionalProperties": false,
-        "required": ["soort", "opschrift", "psalm", "verzen", "boek", "hoofdstuk", "van", "tot", "vragen", "zondag", "tekst", "herkend", "reden"],
+        "required": ["soort", "opschrift", "psalm", "verzen", "boek", "hoofdstuk", "van", "tot", "vragen", "zondag", "document", "artikelen", "tekst", "herkend", "reden"],
         "properties": {
             "soort": {"type": "string", "enum": KINDS},
             "opschrift": {"type": "string", "description": "Short label, e.g. Voorzang, Zingen, Schriftlezing, Gebed, Dankgebed, Slotzang"},
             "psalm": int("Psalm number 1-150, or 151-160 for the gezangen listed below; 0 if not a psalm"),
             "verzen": {"type": "array", "items": {"type": "integer"}, "description": "Verse numbers, ranges expanded (5-6 → [5,6])"},
             "boek": int("Bible book number from the list below; 0 if not a reading"),
-            "hoofdstuk": int("Chapter; 0 if not a reading"),
+            "hoofdstuk": int("Chapter of a reading, or the Dordtse Leerregels hoofdstuk (1-5); else 0"),
             "van": int("First verse; 1 for a whole chapter"),
             "tot": int("Last verse; 999 for a whole chapter"),
             "vragen": {"type": "array", "items": {"type": "integer"}, "description": "Heidelberg Catechism question numbers"},
             "zondag": int("Heidelberg Catechism Lord's Day (zondag) when given instead of questions, else 0"),
+            "document": {"type": "string", "enum": DOCS, "description": "For soort belijdenis or formulier: which document; else empty"},
+            "artikelen": {"type": "array", "items": {"type": "integer"}, "description": "NGB articles, or DL articles within hoofdstuk; empty = all"},
             "tekst": {"type": "string", "description": "Free text for a mededeling, or the collecte purposes one per line"},
             "herkend": {"type": "boolean", "description": "false when you are not sure what is meant"},
             "reden": {"type": "string", "description": "When herkend is false: why, in Dutch. Else empty."},
@@ -102,7 +114,10 @@ pub const RULES: &str = r#"Rules for items:
 - A song that is not one of the psalms or gezangen listed below (a hymn, a children's song, "lied: Hoe groot zijt Gij") is soort "lied" with its title as opschrift.
 - A reading ("Joh. 5: 16-29", "1 Korinthe 6 vers 15 t/m 20") is soort "lezing" with boek/hoofdstuk/van/tot.
 - "HC 57", "vraag en antwoord 57", "Heidelbergse Catechismus zondag 22" is soort "catechismus" with vragen or zondag.
+- Nederlandse Geloofsbelijdenis ("NGB art. 14", "geloofsbelijdenis artikel 14") is soort "belijdenis", document "ngb", artikelen [14]. Dordtse Leerregels ("DL I, 1-3", "Dordtse Leerregels hoofdstuk 1 artikel 1") is document "dl" with hoofdstuk and artikelen. A creed read aloud: document "apostolicum" (apostolische geloofsbelijdenis, twaalf artikelen gelezen), "nicea" or "athanasius".
+- A liturgical form is soort "formulier" with document: doop-kinderen (doopformulier), doop-volwassenen, heilig-avondmaal (avondmaalsformulier), belijdenis (openbare geloofsbelijdenis afleggen), bevestiging-ouderling-diaken, bevestiging-predikant, huwelijk, christelijke-ban.
 - gebed, dankgebed, collecte, preek/prediking, welkom, einde are their own soort.
+- Other named parts of a service without a text of their own (levensloop, in memoriam, condoleance, woord van de familie, votum, zegen, uitdragen, afscheid) are soort "mededeling" with that name as opschrift and empty tekst.
 - Anything that is an announcement is soort "mededeling" with the text as typed.
 - If you are not sure, still give your best guess but set herkend false and explain in reden. Never invent verses that were not mentioned."#;
 
@@ -140,6 +155,20 @@ impl RawItem {
                     problems.push(e.to_string());
                 }
                 item.passage = Some(r);
+            }
+            "belijdenis" => {
+                item.doc = self.document.clone();
+                item.chapter = self.hoofdstuk;
+                item.articles = self.artikelen.clone();
+                if crate::confessions::confession(&item.doc, item.chapter, &item.articles).is_empty() {
+                    problems.push("deze belijdenistekst bestaat niet of is nog niet beschikbaar".into());
+                }
+            }
+            "formulier" => {
+                item.doc = self.document.clone();
+                if crate::confessions::form(&item.doc).is_none() {
+                    problems.push("dit formulier is nog niet beschikbaar".into());
+                }
             }
             "catechismus" => {
                 item.questions = self.vragen.clone();

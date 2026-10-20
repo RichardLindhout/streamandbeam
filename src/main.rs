@@ -5,6 +5,7 @@
 mod books;
 mod catechism;
 mod claude;
+mod confessions;
 mod director;
 mod extract;
 mod kerktijden;

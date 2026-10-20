@@ -252,7 +252,10 @@ fn scene_for(view: &View, shown: Duration, s: &Settings) -> (Scene, Position, Op
         }
         "collecte" => (panel("", &slide.header, slide.lines.clone(), Body::Lines, "", true), Position::Orgel, None),
         "gebed" => (bar("", &slide.header), Position::Doopvont, None),
+        // A named part without text (levensloop, zegen, …): only its name on a card.
+        "mededeling" if slide.lines.iter().all(|l| l.trim().is_empty()) => (bar("", &slide.header), Position::Preekstoel, None),
         "mededeling" => (panel("", &slide.header, slide.lines.clone(), Body::Prose, "", false), Position::Preekstoel, None),
+        "belijdenis" | "formulier" => (panel(&slide.sub, &slide.header, slide.lines.clone(), Body::Prose, "", false), Position::Preekstoel, None),
         "lied" if slide.lines.is_empty() => (bar("Lied", &slide.header), Position::Orgel, None),
         "lied" => (panel("Lied", &slide.header, slide.lines.clone(), Body::Lines, "", false), Position::Orgel, None),
         "preek" if !slide.theme.is_empty() && shown < theme => {

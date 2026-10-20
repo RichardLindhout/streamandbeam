@@ -13,7 +13,8 @@ use tokio::sync::{Mutex, watch};
 /// (Claude maps what is typed or on the website onto them), so nothing is parsed later.
 /// Kinds: welkom, psalm, slotzang, nazang (song after the service), lied (a song not in
 /// the psalm book, e.g. on a children's singing day), lezing, catechismus, gebed,
-/// collecte, preek, mededeling, einde.
+/// collecte, preek, belijdenis (NGB, DL, a creed), formulier (baptism, Lord's Supper, …),
+/// mededeling (also a named part without text: levensloop, condoleance, zegen), einde.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Item {
@@ -25,6 +26,11 @@ pub struct Item {
     pub passage: Option<BibleRef>,
     pub questions: Vec<u32>,
     pub zondag: u32,
+    /// For a belijdenis: ngb, dl, apostolicum, nicea, athanasius; for a formulier its id.
+    pub doc: String,
+    /// NGB articles, or DL articles within `chapter`.
+    pub articles: Vec<u32>,
+    pub chapter: u32,
     pub text: String, // free text for a mededeling or the collecte purposes
     /// Readable reference, e.g. "Psalm 42 : 5" (made from the numbers above).
     #[serde(rename = "ref")]
@@ -57,6 +63,8 @@ impl Item {
             }
             "catechismus" => format!("zondag {}", self.zondag),
             "lied" => self.label.clone(),
+            "belijdenis" => crate::confessions::short(&self.doc, self.chapter, &self.articles),
+            "formulier" => crate::confessions::form(&self.doc).map(|f| f.kort.clone()).unwrap_or_default(),
             _ => String::new(),
         };
     }
@@ -78,6 +86,7 @@ impl Item {
                 if zondag > 0 { format!("Zondag {zondag}") } else { String::new() }
             }
             "lied" | "nazang" => self.label.clone(),
+            "belijdenis" => crate::confessions::short(&self.doc, self.chapter, &self.articles),
             _ => String::new(),
         }
     }
@@ -562,6 +571,27 @@ fn build_slides(svc: &Service) -> Vec<Slide> {
             }),
             "gebed" => add(Slide { header: it.label.clone(), ..Default::default() }),
             "mededeling" => add(Slide { header: it.label.clone(), lines: it.text.lines().map(String::from).collect(), ..Default::default() }),
+            "belijdenis" => {
+                let pieces = crate::confessions::confession(&it.doc, it.chapter, &it.articles);
+                if pieces.is_empty() {
+                    add(problem("Deze tekst is (nog) niet beschikbaar"));
+                }
+                for p in pieces {
+                    for page in paginate_paragraphs(&p.paragraphs, 650) {
+                        add(Slide { header: p.header.clone(), sub: p.sub.clone(), lines: page, ..Default::default() });
+                    }
+                }
+            }
+            "formulier" => match crate::confessions::form(&it.doc) {
+                Some(f) => {
+                    for part in &f.delen {
+                        for page in paginate_paragraphs(&part.tekst, 650) {
+                            add(Slide { header: f.kort.clone(), sub: part.kop.clone(), lines: page, ..Default::default() });
+                        }
+                    }
+                }
+                None => add(problem("Dit formulier is (nog) niet beschikbaar")),
+            },
             "einde" => add(Slide {
                 header: "Hersteld Hervormde Gemeente Tholen".into(),
                 sub: if svc.next.is_empty() { String::new() } else { format!("Volgende dienst: {}", svc.next) },
@@ -612,7 +642,7 @@ fn board_rows(svc: &Service) -> Vec<String> {
     for (i, it) in svc.items.iter().enumerate() {
         match it.kind.as_str() {
             "catechismus" => zondag = it.short(),
-            "psalm" | "slotzang" | "nazang" | "lezing" | "lied" => {
+            "psalm" | "slotzang" | "nazang" | "lezing" | "lied" | "belijdenis" => {
                 let line = it.short();
                 if !line.is_empty() {
                     rows.push(line);
@@ -658,6 +688,26 @@ fn board_slides(svc: &Service, slides: &[Slide]) -> Vec<Slide> {
             _ => Slide { item: sl.item, kind: "bord".into(), list: rows.clone(), ..Default::default() },
         })
         .collect()
+}
+
+/// Splits paragraphs into slides of roughly max_chars characters (a long paragraph stays
+/// whole on its own slide; the text sizes itself to fit).
+fn paginate_paragraphs(paragraphs: &[String], max_chars: usize) -> Vec<Vec<String>> {
+    let mut pages: Vec<Vec<String>> = Vec::new();
+    let mut size = 0;
+    for p in paragraphs {
+        match pages.last_mut() {
+            Some(page) if size + p.len() <= max_chars => {
+                size += p.len();
+                page.push(p.clone());
+            }
+            _ => {
+                size = p.len();
+                pages.push(vec![p.clone()]);
+            }
+        }
+    }
+    pages
 }
 
 /// Splits a reading into slides of roughly max_chars characters.

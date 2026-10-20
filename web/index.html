@@ -119,17 +119,26 @@
       <div class="newsvc">
         <input id="newDate" type="date">
         <input id="newTime" type="time" value="09:30">
-        <select id="newLabel"><option>Morgendienst</option><option>Middagdienst</option><option>Avonddienst</option><option>Bidstond</option><option>Dankdag</option></select>
+        <input id="newLabel" list="serviceKinds" value="Morgendienst" placeholder="Soort dienst">
+        <datalist id="serviceKinds">
+          <option>Morgendienst</option><option>Middagdienst</option><option>Avonddienst</option>
+          <option>Rouwdienst</option><option>Huwelijksdienst</option><option>Bevestigingsdienst</option>
+          <option>Doopdienst</option><option>Voorbereiding Heilig Avondmaal</option><option>Heilig Avondmaal</option>
+          <option>Dankzegging Heilig Avondmaal</option><option>Bidstond</option><option>Dankdag</option>
+          <option>Kerstfeest</option><option>Oudejaarsavond</option><option>Nieuwjaarsmorgen</option>
+          <option>Goede Vrijdag</option><option>Pasen</option><option>Hemelvaart</option><option>Pinksteren</option>
+          <option>Kinderzangdienst</option>
+        </datalist>
         <button id="newMake">Maak</button>
       </div>
-      <p class="hint">Daarna typ je hieronder wat er in de dienst komt.</p>
+      <p class="hint">Daarna typ je hieronder wat er in de dienst komt, in elke volgorde — ook bij een rouw- of huwelijksdienst.</p>
     </div>
     <div id="websiteProblems"></div>
     <div class="typer">
-      <input id="typer" placeholder="Typ wat er komt, bijv.  ps 42:5, gebed, joh 3:16-21, HC 57, collecte" autocomplete="off">
+      <input id="typer" placeholder="Typ wat er komt, bijv.  ps 42:5, gebed, joh 3:16-21, HC 57, NGB art. 14, doopformulier, levensloop" autocomplete="off">
       <button id="typerGo">Voeg toe</button>
     </div>
-    <p class="hint" id="typerStatus">Komma's scheiden onderdelen. Enter voegt toe na het aangeklikte onderdeel.</p>
+    <p class="hint" id="typerStatus">Komma's scheiden onderdelen; alles mag (ook "lied: …", "in memoriam", "zegen"). Enter voegt toe na het aangeklikte onderdeel.</p>
     <div class="items" id="items"></div>
     <details id="preekDetails">
       <summary>Preek: predikant, tekst en thema</summary>
