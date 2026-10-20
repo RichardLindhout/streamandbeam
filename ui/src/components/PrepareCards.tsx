@@ -60,7 +60,7 @@ export function SermonCard({ svc }: { svc: Service }) {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Annuleer</AlertDialogCancel>
-                <AlertDialogAction className="bg-live text-white" onClick={() => post("/api/delete-service?id=" + encodeURIComponent(svc.id))}>Verwijderen</AlertDialogAction>
+                <AlertDialogAction className="bg-live text-[#fff6ef]" onClick={() => post("/api/delete-service?id=" + encodeURIComponent(svc.id))}>Verwijderen</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
@@ -121,7 +121,7 @@ export function StreamCard({ status, onSettings }: { status: StreamStatus; onSet
               size="lg"
               onClick={() => choose(m)}
               className={cn(
-                status.mode === m && (m === "live" ? "border-live bg-live text-white hover:bg-live" : "border-primary bg-primary/15 text-foreground"),
+                status.mode === m && (m === "live" ? "border-live bg-live text-[#fff6ef] hover:bg-live" : "border-primary bg-primary/15 text-foreground"),
               )}
             >
               {icon} {label}

@@ -21,10 +21,10 @@ export function Strip({ state, svc }: { state: View; svc?: Service }) {
             onClick={() => go({ index: i })}
             className={cn(
               "group w-40 shrink-0 snap-start overflow-hidden rounded-lg bg-card text-left transition",
-              now ? "ring-[3px] ring-primary" : i === state.index + 1 ? "ring-1 ring-white/30" : "ring-1 ring-white/[0.07] hover:ring-white/30",
+              now ? "ring-[3px] ring-primary" : i === state.index + 1 ? "ring-1 ring-primary/40" : "ring-1 ring-[#2e2822] hover:ring-primary/40",
             )}
           >
-            <div className="relative aspect-video bg-[#10161d]">
+            <div className="relative aspect-video bg-[#1a1612]">
               <img loading="lazy" className="size-full object-cover" src={`/api/thumb?index=${i}&k=${hash(state.current + JSON.stringify(s))}`} alt="" />
               <span className="absolute top-1 left-1 rounded bg-black/70 px-1.5 text-[10px] font-bold text-white/80 tabular-nums">{i + 1}</span>
             </div>

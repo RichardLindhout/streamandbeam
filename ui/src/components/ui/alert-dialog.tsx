@@ -25,7 +25,7 @@ function AlertDialogFooter({ className, ...props }: React.ComponentProps<"div">)
   return <div className={cn("grid grid-cols-2 gap-3", className)} {...props} />;
 }
 function AlertDialogTitle({ className, ...props }: React.ComponentProps<typeof P.Title>) {
-  return <P.Title className={cn("text-xl font-bold tracking-tight", className)} {...props} />;
+  return <P.Title className={cn("font-serif text-2xl font-semibold tracking-tight", className)} {...props} />;
 }
 function AlertDialogDescription({ className, ...props }: React.ComponentProps<typeof P.Description>) {
   return <P.Description className={cn("text-[15px] leading-relaxed text-muted-foreground", className)} {...props} />;

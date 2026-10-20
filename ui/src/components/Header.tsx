@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CalendarPlus, Ear, Globe, LoaderCircle, MonitorPlay, Radio, Tv, Volume2, Wrench, SquarePlay as Youtube } from "lucide-react";
+import { CalendarPlus, Ear, Globe, LoaderCircle, MonitorPlay, Cross, Tv, Volume2, Wrench, SquarePlay as Youtube } from "lucide-react";
 import { toast } from "sonner";
 import { post } from "@/lib/api";
 import { Button } from "./ui/button";
@@ -57,7 +57,7 @@ function ServicePicker({ state, svc, onNew }: { state: View | null; svc?: Servic
         <SelectTrigger className="h-12 min-w-0 flex-1 xl:max-w-[420px] rounded-xl border-border bg-card py-1 text-left">
           {svc ? (
             <span className="min-w-0 leading-tight">
-              <span className="block truncate text-[15px] font-semibold">{svc.label}{svc.predikant ? <span className="font-normal text-muted-foreground"> · {svc.predikant}</span> : null}</span>
+              <span className="block truncate font-serif text-[16px] font-semibold">{svc.label}{svc.predikant ? <span className="font-normal text-muted-foreground"> · {svc.predikant}</span> : null}</span>
               <span className="block truncate text-xs text-muted-foreground">{serviceDate(svc)} · {svc.time} uur</span>
             </span>
           ) : (
@@ -88,13 +88,13 @@ export function Header({ state, svc, status, lis, yt, screen, setScreen, onNew }
 }) {
   const live = status.mode === "live";
   return (
-    <header className="flex flex-wrap items-center gap-x-5 gap-y-3 border-b bg-[#05070a]/90 px-5 py-3 backdrop-blur">
+    <header className="flex flex-wrap items-center gap-x-5 gap-y-3 border-b bg-[#0d0b09]/90 px-5 py-3 backdrop-blur">
       <div className="flex items-center gap-3">
-        <div className="grid size-10 place-items-center rounded-xl bg-gradient-to-br from-[#3d9bff] to-[#1257d6] shadow-[0_8px_24px_-8px_rgb(47_140_255/0.8)]">
-          <Radio className="size-5 text-white" strokeWidth={2.4} />
+        <div className="grid size-10 place-items-center rounded-xl border border-primary/45 bg-gradient-to-b from-[#2a231b] to-[#18130f] shadow-[0_8px_24px_-12px_rgb(201_164_92/0.6)]">
+          <Cross className="size-5 fill-primary/25 text-primary" strokeWidth={1.75} />
         </div>
         <div className="hidden leading-tight xl:block">
-          <div className="text-[15px] font-bold tracking-tight">Stream &amp; Beam</div>
+          <div className="font-serif text-[16px] font-semibold tracking-tight">Stream &amp; Beam</div>
           <div className="text-xs text-muted-foreground">HHG Tholen</div>
         </div>
       </div>
@@ -119,10 +119,10 @@ export function Header({ state, svc, status, lis, yt, screen, setScreen, onNew }
         <div
           className={cn(
             "flex h-10 items-center gap-2 rounded-lg px-3 font-mono text-[13px] font-bold tracking-wider",
-            live ? "bg-live text-white shadow-[0_0_24px_-6px_var(--live)]" : status.mode === "opnemen" ? "bg-live/15 text-[#ff8a95] ring-1 ring-live/40" : "border bg-card/80 text-muted-foreground",
+            live ? "bg-live text-[#fff6ef] shadow-[0_0_24px_-6px_var(--live)]" : status.mode === "opnemen" ? "bg-live/15 text-[#f0a0a4] ring-1 ring-live/40" : "border bg-card/80 text-muted-foreground",
           )}
         >
-          <span className={cn("size-2 rounded-full", live ? "animate-pulse-dot bg-white" : status.mode === "opnemen" ? "bg-live" : status.mode === "voorbeeld" ? "bg-ok" : "bg-white/20")} />
+          <span className={cn("size-2 rounded-full", live ? "animate-pulse-dot bg-[#fff6ef]" : status.mode === "opnemen" ? "bg-live" : status.mode === "voorbeeld" ? "bg-ok" : "bg-white/20")} />
           {live ? <>LIVE {clock(status.since)}</> : status.mode === "opnemen" ? <>OPNAME {clock(status.since)}</> : status.mode === "voorbeeld" ? "VOORBEELD" : "NIET LIVE"}
         </div>
       </div>
@@ -137,7 +137,7 @@ export function Header({ state, svc, status, lis, yt, screen, setScreen, onNew }
             onClick={() => setScreen(k)}
             className={cn(
               "flex h-9 items-center gap-2 rounded-lg px-4 text-sm font-semibold transition [&_svg]:size-4",
-              screen === k ? "bg-foreground text-background shadow" : "text-muted-foreground hover:text-foreground",
+              screen === k ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground",
             )}
           >
             {icon}

@@ -32,7 +32,7 @@ export function ConfirmMode({ mode, open, onOpenChange }: { mode: Mode | null; o
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Annuleer</AlertDialogCancel>
-          <AlertDialogAction className={live ? "bg-live text-white" : "bg-foreground text-background"} onClick={() => mode && setStreamMode(mode)}>
+          <AlertDialogAction className={live ? "bg-live text-[#fff6ef] hover:bg-live" : "bg-foreground text-background"} onClick={() => mode && setStreamMode(mode)}>
             {live ? "Ja, ga live" : "Ja, stop"}
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -52,21 +52,21 @@ export function LiveButton({ status }: { status: StreamStatus }) {
           onClick={() => setAsk("stop")}
           className="group flex h-20 w-full items-center gap-4 rounded-2xl border-2 border-live bg-live/10 px-5 text-left transition hover:bg-live/20"
         >
-          <span className="grid size-11 place-items-center rounded-xl bg-live text-white"><Square className="size-5 fill-current" /></span>
+          <span className="grid size-11 place-items-center rounded-xl bg-live text-[#fff6ef]"><Square className="size-5 fill-current" /></span>
           <span className="leading-tight">
-            <span className="block text-lg font-bold">Stop uitzending</span>
+            <span className="block font-serif text-xl font-semibold">Stop uitzending</span>
             <span className="font-mono text-sm text-[#ff9aa4]">live sinds {clock(status.since)}</span>
           </span>
         </button>
       ) : (
         <button
           onClick={() => setAsk("live")}
-          className="flex h-20 w-full items-center gap-4 rounded-2xl bg-gradient-to-b from-[#ff4656] to-[#d81a2c] px-5 text-left text-white shadow-[0_14px_36px_-12px_rgb(255_45_63/0.85),inset_0_1px_0_rgb(255_255_255/0.25)] transition hover:brightness-110 active:scale-[0.99]"
+          className="flex h-20 w-full items-center gap-4 rounded-2xl bg-gradient-to-b from-[#e2414b] to-[#b5212c] px-5 text-left text-[#fff6ef] shadow-[0_14px_36px_-14px_rgb(229_52_63/0.8),inset_0_1px_0_rgb(255_255_255/0.2)] transition hover:brightness-110 active:scale-[0.99]"
         >
-          <span className="grid size-11 place-items-center rounded-xl bg-white/20"><Radio className="size-6" /></span>
+          <span className="grid size-11 place-items-center rounded-xl bg-black/15"><Radio className="size-6" /></span>
           <span className="leading-tight">
-            <span className="block text-lg font-bold">Ga live</span>
-            <span className="text-sm whitespace-nowrap text-white/80">naar YouTube</span>
+            <span className="block font-serif text-xl font-semibold">Ga live</span>
+            <span className="text-sm whitespace-nowrap text-[#fff6ef]/80">naar YouTube</span>
           </span>
         </button>
       )}

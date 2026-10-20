@@ -50,19 +50,19 @@ function Order({ state, svc }: { state: View | null; svc?: Service }) {
                 }}
                 className={cn(
                   "relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition",
-                  now ? "bg-primary text-white shadow-[0_8px_24px_-12px_var(--primary)]" : "hover:bg-accent",
-                  next && "bg-white/[0.04] ring-1 ring-white/15 ring-inset",
+                  now ? "bg-primary text-primary-foreground shadow-[0_8px_24px_-12px_var(--primary)]" : "hover:bg-accent",
+                  next && "bg-primary/[0.06] ring-1 ring-primary/30 ring-inset",
                 )}
               >
-                <span className={cn("grid size-8 shrink-0 place-items-center rounded-lg", now ? "bg-white/20" : "bg-secondary text-muted-foreground")}>
+                <span className={cn("grid size-8 shrink-0 place-items-center rounded-lg", now ? "bg-black/15" : "bg-secondary text-muted-foreground")}>
                   <KindIcon kind={it.kind} className="size-4" />
                 </span>
                 <span className={cn("min-w-0 flex-1 leading-tight", past && "opacity-45")}>
                   <span className="block truncate text-[15px] font-semibold">{it.label}</span>
-                  {it.ref && <span className={cn("block truncate text-[13px]", now ? "text-white/80" : "text-muted-foreground")}>{it.ref}</span>}
+                  {it.ref && <span className={cn("block truncate text-[13px]", now ? "text-primary-foreground/75" : "text-muted-foreground")}>{it.ref}</span>}
                 </span>
-                {now && <span className="text-[10px] font-black tracking-widest">NU</span>}
-                {next && <span className="text-[10px] font-bold tracking-widest text-muted-foreground">HIERNA</span>}
+                {now && <span className="hymnal text-[13px]">nu</span>}
+                {next && <span className="hymnal text-[13px] text-primary/80">hierna</span>}
                 {it.problem && <CircleAlert className="size-4 shrink-0 text-warn" />}
               </button>
             );
@@ -82,11 +82,11 @@ function NowAndGo({ state, svc, lis }: { state: View | null; svc?: Service; lis:
     <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
       <div className="flex min-w-0 items-center gap-4 rounded-2xl border bg-card px-5 py-4">
         <div className="min-w-0 flex-1">
-          <div className="mb-1 flex items-center gap-2 text-[11px] font-black tracking-[0.16em] text-primary">
-            <span className="size-1.5 rounded-full bg-primary" /> NU
+          <div className="mb-1 flex items-center gap-2 text-primary">
+            <span className="size-1.5 rounded-full bg-primary" /> <span className="hymnal text-[14px]">nu</span>
             {state && <span className="font-semibold tracking-normal text-muted-foreground">· scherm {state.index + 1} van {state.slides.length}</span>}
           </div>
-          <div className="truncate text-[26px] leading-tight font-bold tracking-tight">{slide?.header || label || "—"}</div>
+          <div className="truncate font-serif text-[28px] leading-tight font-semibold tracking-tight">{slide?.header || label || "—"}</div>
           <div className="truncate text-[15px] text-muted-foreground">{[...new Set([slide?.sub, label !== slide?.header ? label : ""].filter(Boolean))].join(" · ") || " "}</div>
         </div>
       </div>
@@ -101,18 +101,18 @@ function NowAndGo({ state, svc, lis }: { state: View | null; svc?: Service; lis:
         <button
           onClick={() => (suggestion ? post("/api/listen/accept") : go({ delta: 1 }))}
           className={cn(
-            "flex min-w-0 items-center gap-4 rounded-2xl px-6 py-4 text-left text-white transition hover:brightness-110 active:scale-[0.99]",
+            "flex min-w-0 items-center gap-4 rounded-2xl px-6 py-4 text-left transition hover:brightness-110 active:scale-[0.99]",
             suggestion
-              ? "animate-glow bg-gradient-to-b from-[#ffbf3c] to-[#e08e00] text-black"
-              : "bg-gradient-to-b from-[#3b95ff] to-[#1663e0] shadow-[0_18px_40px_-14px_rgb(47_140_255/0.9),inset_0_1px_0_rgb(255_255_255/0.25)]",
+              ? "animate-glow border border-primary/60 bg-gradient-to-b from-[#8e2a3b] to-[#661c2a] text-[#f6ead2]"
+              : "bg-gradient-to-b from-[#d9b56c] to-[#b48a3e] text-primary-foreground shadow-[0_18px_40px_-16px_rgb(201_164_92/0.75),inset_0_1px_0_rgb(255_255_255/0.35)]",
           )}
         >
           <span className="min-w-0 flex-1">
-            <span className={cn("block text-[11px] font-black tracking-[0.16em]", suggestion ? "text-black/70" : "text-white/70")}>
-              {suggestion ? "VOLGENS HET GEHOORDE" : "HIERNA"}
+            <span className={cn("hymnal block text-[14px]", suggestion ? "text-[#e9cf98]" : "text-primary-foreground/70")}>
+              {suggestion ? "volgens het gehoorde" : "hierna"}
             </span>
-            <span className="block text-[28px] leading-none font-black tracking-tight">{suggestion ? "Ga naar" : "Volgende"}</span>
-            <span className={cn("mt-1 block truncate text-[14px]", suggestion ? "text-black/80" : "text-white/85")}>
+            <span className="block font-serif text-[32px] leading-none font-semibold tracking-tight">{suggestion ? "Ga naar" : "Volgende"}</span>
+            <span className={cn("mt-1 block truncate text-[14px]", suggestion ? "text-[#f6ead2]/85" : "text-primary-foreground/80")}>
               {suggestion ? `${suggestion.label} — “${suggestion.reason}”` : next ? `${next.header}${next.sub ? " · " + next.sub : ""}` : "einde van de dienst"}
             </span>
           </span>

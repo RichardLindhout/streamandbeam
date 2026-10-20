@@ -22,7 +22,7 @@ function QuickJumps({ state }: { state: View | null }) {
         <Button
           variant="outline"
           size="lg"
-          className={cn("col-span-2 sm:col-span-4", state?.black && "border-warn bg-warn text-black hover:bg-warn/90")}
+          className={cn("col-span-2 sm:col-span-4", state?.black && "border-primary bg-primary text-primary-foreground hover:bg-primary-hover")}
           onClick={() => go({ kind: "zwart" })}
         >
           {state?.black ? <><Eye /> Borden weer aan</> : <><EyeOff /> Borden zwart</>}
@@ -38,7 +38,7 @@ export function Voorbereiden({ state, svc, status }: { state: View | null; svc?:
     <main className="mx-auto grid w-full max-w-[1500px] flex-1 content-start gap-5 p-5">
       <div className="flex flex-wrap items-end justify-between gap-3 px-1">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Voorbereiden</h1>
+          <h1 className="font-serif text-3xl font-semibold tracking-tight">Voorbereiden</h1>
           <p className="text-sm text-muted-foreground">Volgorde, teksten, preek en uitzending. Tijdens de dienst ga je terug naar “Dienst”.</p>
         </div>
         <Button variant="outline" size="lg" onClick={() => setSettings(true)}><Settings2 /> Instellingen</Button>

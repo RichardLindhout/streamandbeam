@@ -10,9 +10,9 @@ function Bar({ tone, icon, children, action }: { tone: "red" | "grey" | "amber";
     <div
       className={cn(
         "flex min-h-14 items-center justify-center gap-3 px-5 py-2.5 text-center text-[17px] font-bold [&_svg]:size-6",
-        tone === "red" && "animate-blink bg-live text-white",
-        tone === "grey" && "bg-[#2a323d] text-white",
-        tone === "amber" && "bg-warn text-black",
+        tone === "red" && "animate-blink bg-live text-[#fff6ef]",
+        tone === "grey" && "bg-[#3a3129] text-[#efe6d6]",
+        tone === "amber" && "bg-warn text-[#1b150d]",
       )}
     >
       {icon}
@@ -35,7 +35,7 @@ export function Alarms({ state, status, yt, connected }: { state: View | null; s
         <Bar
           tone="amber"
           icon={<Type />}
-          action={<Button size="sm" variant="secondary" className="ml-2 bg-black/85 text-white hover:bg-black" onClick={() => post("/api/board-override", { clear: true })}>Terug naar normaal</Button>}
+          action={<Button size="sm" variant="secondary" className="ml-2 bg-[#1b150d] text-[#efe6d6] hover:bg-black" onClick={() => post("/api/board-override", { clear: true })}>Terug naar normaal</Button>}
         >
           Het bord toont nu je vrije tekst
         </Bar>

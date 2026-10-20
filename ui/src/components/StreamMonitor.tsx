@@ -6,11 +6,11 @@ import { cn } from "@/lib/utils";
 export function StreamMonitor({ mode, className, big }: { mode: Mode; className?: string; big?: boolean }) {
   const on = mode !== "stop";
   return (
-    <div className={cn("mon aspect-video rounded-xl ring-1 ring-white/10", mode === "live" && "ring-2 ring-live shadow-[0_0_40px_-10px_var(--live)]", className)}>
+    <div className={cn("mon aspect-video rounded-xl ring-1 ring-[#3a3229]", mode === "live" && "ring-2 ring-live shadow-[0_0_40px_-10px_var(--live)]", className)}>
       {on ? (
         <img src="/preview.mjpg" alt="" />
       ) : (
-        <div className="absolute inset-0 grid place-items-center bg-[repeating-linear-gradient(135deg,#0b0f14_0_14px,#0d1218_14px_28px)] p-4 text-center">
+        <div className="absolute inset-0 grid place-items-center bg-[repeating-linear-gradient(135deg,#15110e_0_14px,#18140f_14px_28px)] p-4 text-center">
           <div className="grid justify-items-center gap-2 text-muted-foreground">
             <VideoOff className={big ? "size-10" : "size-7"} strokeWidth={1.5} />
             <div className={cn("font-semibold text-foreground/80", big ? "text-lg" : "text-sm")}>Uitzending staat uit</div>
@@ -20,11 +20,11 @@ export function StreamMonitor({ mode, className, big }: { mode: Mode; className?
       )}
       <div className="absolute top-2.5 left-2.5 flex gap-1.5">
         {mode === "live" ? (
-          <span className="flex items-center gap-1.5 rounded-md bg-live px-2 py-1 text-[11px] font-black tracking-widest text-white">
+          <span className="flex items-center gap-1.5 rounded-md bg-live px-2 py-1 text-[11px] font-black tracking-widest text-[#fff6ef]">
             <span className="size-1.5 animate-pulse-dot rounded-full bg-white" /> LIVE
           </span>
         ) : (
-          <span className="rounded-md bg-black/70 px-2 py-1 text-[11px] font-bold tracking-widest text-white/80 uppercase backdrop-blur">
+          <span className="rounded-md bg-black/70 px-2 py-1 text-[11px] font-bold tracking-widest text-[#efe6d6]/85 uppercase backdrop-blur">
             {mode === "opnemen" ? "● Opname" : mode === "voorbeeld" ? "Voorbeeld" : "Uitzending"}
           </span>
         )}

@@ -170,7 +170,7 @@ export function OrderEditor({ svc, state }: { svc: Service; state: View }) {
                 onClick={() => setAfter(i)}
               >
                 <span className="w-6 text-right text-xs font-semibold text-muted-foreground tabular-nums">{i + 1}</span>
-                <span className={cn("grid size-8 shrink-0 place-items-center rounded-lg", i === cur ? "bg-primary text-white" : "bg-secondary text-muted-foreground")}>
+                <span className={cn("grid size-8 shrink-0 place-items-center rounded-lg", i === cur ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground")}>
                   <KindIcon kind={it.kind} className="size-4" />
                 </span>
                 <span className="min-w-0 flex-1 leading-tight">
@@ -178,7 +178,7 @@ export function OrderEditor({ svc, state }: { svc: Service; state: View }) {
                     <span className="truncate text-[15px] font-semibold">{it.label}</span>
                     {it.ref && <span className="truncate text-sm text-muted-foreground">{it.ref}</span>}
                     {it.custom?.length ? <span className="rounded bg-primary/15 px-1.5 text-[10px] font-bold text-primary">AANGEPAST</span> : null}
-                    {i === cur && <span className="rounded bg-primary px-1.5 text-[10px] font-black text-white">NU</span>}
+                    {i === cur && <span className="rounded bg-primary px-1.5 text-[10px] font-black text-primary-foreground">NU</span>}
                   </span>
                   {it.problem && <span className="mt-0.5 flex items-center gap-1 text-xs text-warn"><CircleAlert className="size-3.5" /> {it.problem}</span>}
                 </span>

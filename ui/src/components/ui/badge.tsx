@@ -7,7 +7,7 @@ const badgeVariants = cva("inline-flex items-center gap-1.5 rounded-md border px
     variant: {
       default: "border-transparent bg-primary text-primary-foreground",
       secondary: "border-transparent bg-secondary text-muted-foreground",
-      live: "border-transparent bg-live text-white",
+      live: "border-transparent bg-live text-[#fff6ef]",
       warn: "border-warn/40 bg-warn/15 text-warn",
       outline: "border-input text-muted-foreground",
     },

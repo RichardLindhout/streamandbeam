@@ -29,19 +29,19 @@ function Tile({ label, on, missing, onClick, children, extra }: {
         onClick={onClick}
         className={cn(
           "group relative rounded-xl transition disabled:cursor-default",
-          on ? "ring-[4px] ring-primary shadow-[0_0_36px_-6px_var(--primary)]" : "ring-1 ring-white/10 hover:ring-2 hover:ring-white/40",
+          on ? "ring-[4px] ring-primary shadow-[0_0_40px_-8px_var(--primary)]" : "ring-1 ring-[#3a3229] hover:ring-2 hover:ring-primary/50",
         )}
       >
         <div className={cn("overflow-hidden rounded-xl transition", !on && "opacity-45 saturate-50 group-hover:opacity-90", missing && "!opacity-20")}>{children}</div>
         {on && (
-          <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-md bg-primary px-2 py-0.5 text-[10px] font-black tracking-[0.12em] whitespace-nowrap text-white shadow-lg">
+          <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 hymnal rounded-md bg-primary px-2.5 py-0.5 text-[12px] whitespace-nowrap text-primary-foreground shadow-lg">
             OP HET BORD
           </span>
         )}
         {missing && <span className="absolute inset-0 grid place-items-center px-2 text-center text-[11px] font-semibold text-muted-foreground">niet in deze dienst</span>}
       </button>
       {extra}
-      <div className={cn("truncate text-center text-xs font-semibold", on ? "text-foreground" : "text-muted-foreground")}>{label}</div>
+      <div className={cn("hymnal truncate text-center text-[14px]", on ? "text-primary" : "text-muted-foreground")}>{label}</div>
     </div>
   );
 }
@@ -71,7 +71,7 @@ export function BoardTiles({ state }: { state: View | null }) {
               type="button"
               title="Vrije tekst weghalen"
               onClick={() => post("/api/board-override", { clear: true })}
-              className="absolute -top-2.5 -right-2.5 z-10 grid size-8 place-items-center rounded-full bg-warn text-black shadow-lg hover:brightness-110"
+              className="absolute -top-2.5 -right-2.5 z-10 grid size-8 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg hover:brightness-110"
             >
               <X className="size-4" strokeWidth={3} />
             </button>
