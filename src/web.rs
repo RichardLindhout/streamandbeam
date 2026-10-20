@@ -63,6 +63,8 @@ pub fn router(
         .route("/api/info", get(info))
         .route("/api/fetch", post(fetch))
         .route("/api/service", post(save_service))
+        .route("/api/website", post(website_choice))
+        .route("/api/tonen", post(show_changes))
         .route("/api/new-service", post(new_service))
         .route("/api/delete-service", post(delete_service))
         .route("/api/quick", post(quick))
@@ -148,24 +150,80 @@ fn is_live(app: &App) -> bool {
     app.director.engine.status().mode == Mode::Live
 }
 
-/// Refused while live, so the stream cannot be thrown off by accident.
 fn conflict(msg: &str) -> Response {
     (StatusCode::CONFLICT, msg.to_string()).into_response()
 }
 
-async fn fetch(State(app): State<App>) -> Response {
-    if is_live(&app) {
-        return conflict("Je bent live");
+/// `?bevestigd=1`: the operator confirmed an action that changes what viewers see.
+#[derive(Deserialize, Default)]
+struct Confirmed {
+    #[serde(default)]
+    bevestigd: Option<String>,
+}
+
+impl Confirmed {
+    fn yes(&self) -> bool {
+        matches!(self.bevestigd.as_deref(), Some("1" | "true" | "ja"))
     }
-    match app.show.fetch().await {
+}
+
+/// While live, an action that changes what viewers see first needs a confirmation: the
+/// answer is 409 with the question (e.g. "Een andere dienst kiezen?") and the header
+/// `X-Bevestigen`, and the console asks and sends it again with `?bevestigd=1`.
+fn needs_confirmation(app: &App, confirmed: bool, what: &str) -> Option<Response> {
+    (is_live(app) && !confirmed).then(|| (StatusCode::CONFLICT, [("X-Bevestigen", "1")], what.to_string()).into_response())
+}
+
+async fn fetch(State(app): State<App>, Query(c): Query<Confirmed>) -> Response {
+    if let Some(r) = needs_confirmation(&app, c.yes(), "Diensten opnieuw van de website ophalen?") {
+        return r;
+    }
+    let live = || is_live(&app);
+    match app.show.fetch(live).await {
         Ok(()) => Json(app.show.view()).into_response(),
         Err(e) => (StatusCode::BAD_GATEWAY, format!("{e:#}")).into_response(),
     }
 }
 
-async fn save_service(State(app): State<App>, Json(svc): Json<Service>) -> impl IntoResponse {
-    app.show.save_service(svc).await;
-    Json(app.show.view())
+#[derive(Deserialize, Default)]
+struct SaveQuery {
+    /// "1": also put the change on the screens now (else they keep what they show).
+    #[serde(default)]
+    tonen: Option<String>,
+}
+
+async fn save_service(State(app): State<App>, Query(q): Query<SaveQuery>, Query(c): Query<Confirmed>, Json(svc): Json<Service>) -> Response {
+    let show_now = q.tonen.as_deref() == Some("1");
+    if show_now
+        && svc.id == app.show.view().current
+        && let Some(r) = needs_confirmation(&app, c.yes(), "De wijziging nu op het scherm zetten?")
+    {
+        return r;
+    }
+    app.show.save_service(svc, show_now).await;
+    Json(app.show.view()).into_response()
+}
+
+/// Puts the changed version of what is on screen on the screens.
+async fn show_changes(State(app): State<App>, Query(c): Query<Confirmed>) -> Response {
+    if let Some(r) = needs_confirmation(&app, c.yes(), "De wijziging nu op het scherm zetten?") {
+        return r;
+    }
+    app.show.show_changes().await;
+    StatusCode::NO_CONTENT.into_response()
+}
+
+#[derive(Deserialize)]
+struct WebsiteChoice {
+    id: String,
+    /// true = take over the website's version, false = ignore it.
+    take: bool,
+}
+
+/// The website changed an edited service: take its version over or ignore it.
+async fn website_choice(State(app): State<App>, Json(c): Json<WebsiteChoice>) -> StatusCode {
+    app.show.website_choice(&c.id, c.take).await;
+    StatusCode::NO_CONTENT
 }
 
 #[derive(Deserialize)]
@@ -175,18 +233,23 @@ struct NewService {
     label: String,
 }
 
-async fn new_service(State(app): State<App>, Json(n): Json<NewService>) -> Response {
+async fn new_service(State(app): State<App>, Query(c): Query<Confirmed>, Json(n): Json<NewService>) -> Response {
     let id = format!("{} {}", n.date, n.time);
     if app.show.view().services.iter().any(|s| s.id == id) {
         return conflict("Er is al een dienst op dat moment");
+    }
+    if let Some(r) = needs_confirmation(&app, c.yes(), "Een nieuwe dienst maken en op het scherm zetten?") {
+        return r;
     }
     app.show.new_service(n.date, n.time, n.label).await;
     Json(app.show.view()).into_response()
 }
 
-async fn delete_service(State(app): State<App>, Query(q): Query<SelectQuery>) -> Response {
-    if is_live(&app) && app.show.view().current == q.id {
-        return conflict("Deze dienst is live");
+async fn delete_service(State(app): State<App>, Query(q): Query<SelectQuery>, Query(c): Query<Confirmed>) -> Response {
+    if app.show.view().current == q.id
+        && let Some(r) = needs_confirmation(&app, c.yes(), "De dienst die nu live is verwijderen?")
+    {
+        return r;
     }
     app.show.delete_service(&q.id).await;
     StatusCode::NO_CONTENT.into_response()
@@ -210,9 +273,11 @@ struct SelectQuery {
     id: String,
 }
 
-async fn select(State(app): State<App>, Query(q): Query<SelectQuery>) -> Response {
-    if is_live(&app) {
-        return conflict("Je bent live");
+async fn select(State(app): State<App>, Query(q): Query<SelectQuery>, Query(c): Query<Confirmed>) -> Response {
+    if q.id != app.show.view().current
+        && let Some(r) = needs_confirmation(&app, c.yes(), "Een andere dienst kiezen?")
+    {
+        return r;
     }
     app.show.select(q.id).await;
     StatusCode::NO_CONTENT.into_response()
@@ -327,11 +392,22 @@ async fn stream_later(State(app): State<App>) -> Response {
 #[derive(Deserialize)]
 struct ModeRequest {
     mode: Mode,
+    /// Stopping while live was confirmed (also possible as `?bevestigd=1`).
+    #[serde(default)]
+    bevestigd: bool,
 }
 
-async fn stream_mode(State(app): State<App>, Json(req): Json<ModeRequest>) -> Response {
-    if is_live(&app) && matches!(req.mode, Mode::Voorbeeld | Mode::Opnemen) {
-        return conflict("Eerst stoppen");
+async fn stream_mode(State(app): State<App>, Query(c): Query<Confirmed>, Json(req): Json<ModeRequest>) -> Response {
+    let what = match req.mode {
+        Mode::Voorbeeld => "Uitzending stoppen en alleen voorbeeld tonen?",
+        Mode::Opnemen => "Uitzending stoppen en alleen opnemen?",
+        // Stopping is confirmed in the console itself (and the testdienst stops directly).
+        Mode::Stop | Mode::Live => "",
+    };
+    if !what.is_empty()
+        && let Some(r) = needs_confirmation(&app, c.yes() || req.bevestigd, what)
+    {
+        return r;
     }
     match app.director.set_mode(&app.show, req.mode).await {
         Ok(()) => Json(app.director.engine.status()).into_response(),

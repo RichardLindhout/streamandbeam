@@ -112,10 +112,105 @@ pub struct Service {
     /// The YouTube broadcast made for this service.
     pub youtube_id: String,
     pub items: Vec<Item>,
+    /// The operator's own text for the boards; what is not set is made automatically.
+    pub board_custom: BoardCustom,
+    /// The operator changed this service: fetching the website no longer replaces it.
+    pub edited: bool,
+    /// What the website gave the last time (see `website_signature`).
+    pub website_sig: String,
+    /// The website has a different version than when this service was edited; it is kept in
+    /// `website` until the operator takes it over or ignores it.
+    pub website_changed: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub website: Option<WebsiteVersion>,
+}
+
+/// The website's version of an edited service, waiting for the operator.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct WebsiteVersion {
+    pub label: String,
+    pub text: Item,
+    pub theme: String,
+    pub points: Vec<String>,
+    pub problems: Vec<String>,
+    pub items: Vec<Item>,
+    /// The liturgy in one line, to show the operator what changed.
+    pub summary: String,
+}
+
+impl WebsiteVersion {
+    fn of(svc: &Service) -> WebsiteVersion {
+        WebsiteVersion {
+            label: svc.label.clone(),
+            text: svc.text.clone(),
+            theme: svc.theme.clone(),
+            points: svc.points.clone(),
+            problems: svc.problems.clone(),
+            items: svc.items.clone(),
+            summary: liturgy(svc).into_iter().map(|(_, l)| l).collect::<Vec<_>>().join(" · "),
+        }
+    }
+}
+
+/// A fingerprint of what the website says about a service (parts, references, text and
+/// theme), to notice when it changes. Not the collecte text: that comes from the operator.
+fn website_signature(svc: &Service) -> String {
+    let mut text = format!("{}|{}|{}|{}", svc.label, svc.text.reference, svc.theme, svc.points.join("/"));
+    for it in &svc.items {
+        text.push_str(&format!("|{}:{}:{}", it.kind, it.label, it.reference));
+    }
+    // FNV-1a: the same on every computer and every version of the program.
+    let hash = text.bytes().fold(0xcbf29ce484222325u64, |h, b| (h ^ b as u64).wrapping_mul(0x100000001b3));
+    format!("{hash:016x}")
+}
+
+/// A service just read from the website, merged with what is already there: the operator's
+/// own details are kept, and an edited (or protected) service is not replaced; then the
+/// website's version waits beside it when it differs from last time.
+fn merge_fetched(old: Option<&Service>, mut new: Service, protect: bool) -> Service {
+    new.website_sig = website_signature(&new);
+    let Some(old) = old else { return new };
+    new.predikant = old.predikant.clone();
+    new.youtube_id = old.youtube_id.clone();
+    new.board_custom = old.board_custom.clone();
+    if !(old.edited || protect) {
+        return new;
+    }
+    let mut kept = old.clone();
+    if old.website_sig != new.website_sig {
+        kept.website = Some(WebsiteVersion::of(&new));
+        kept.website_changed = true;
+        kept.website_sig = new.website_sig.clone();
+    }
+    kept
+}
+
+/// The operator's own version of a church board. None = automatic.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct BoardCustom {
+    /// The psalm board, one line per ledge ("" = an empty ledge).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub liturgie: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub thema: Option<BoardTheme>,
+    /// What the slotzang board shows, e.g. "Ps 134:3".
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub slotzang: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct BoardTheme {
+    /// The sermon text, e.g. "Joh.3:16".
+    pub tekst: String,
+    pub thema: String,
+    pub punten: Vec<String>,
 }
 
 /// What a screen shows.
-#[derive(Debug, Clone, Default, Serialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize)]
 pub struct Slide {
     pub item: usize,
     pub kind: String,
@@ -139,6 +234,7 @@ struct Saved {
     index: usize,
     /// Collecte purposes of the last service, used for the next one.
     collecte: String,
+    last_fetched: i64,
 }
 
 #[derive(Debug, Clone, Default, Serialize)]
@@ -159,6 +255,18 @@ pub struct View {
     pub override_stream: bool,
     /// Version of the board background (file time in ms); 0 = the standard wood.
     pub board_background: u64,
+    /// When the website was last read successfully (Unix seconds; 0 = never).
+    pub last_fetched: i64,
+    /// Why the last reading of the website failed; empty when it worked.
+    pub fetch_error: String,
+    /// The screens still show the slide as it was before the service was changed (see `hold`).
+    pub held: bool,
+    /// While held: the new version of the board on screen, for the console to edit.
+    pub fresh_board: Option<Slide>,
+    /// After a change to the service, what the screens showed stays (slide index, stream
+    /// slide, board slide) until the operator moves on or chooses to show the change.
+    #[serde(skip)]
+    hold: Option<(usize, Slide, Slide)>,
     #[serde(skip)]
     collecte: String,
 }
@@ -184,6 +292,7 @@ impl Show {
             current: saved.current,
             index: saved.index,
             collecte: saved.collecte,
+            last_fetched: saved.last_fetched,
             ..Default::default()
         };
         let mut view = view;
@@ -222,12 +331,29 @@ impl Show {
         self.tx.borrow().clone()
     }
 
-    /// Reads the liturgy from the website and adds/replaces the services.
-    pub async fn fetch(&self) -> anyhow::Result<()> {
+    /// Reads the liturgy from the website and adds/replaces the services; remembers when
+    /// that last worked and why it failed. `live` says whether the stream is live: then the
+    /// service on screen is not replaced either.
+    pub async fn fetch(&self, live: impl Fn() -> bool) -> anyhow::Result<()> {
+        let result = self.fetch_services(live).await;
+        let mut st = self.state.lock().await;
+        match &result {
+            Ok(()) => {
+                st.last_fetched = Local::now().timestamp();
+                st.fetch_error.clear();
+            }
+            Err(e) => st.fetch_error = format!("{e:#}"),
+        }
+        self.publish(&st);
+        result
+    }
+
+    async fn fetch_services(&self, live: impl Fn() -> bool) -> anyhow::Result<()> {
         let ex = crate::extract::extract_liturgy(&self.liturgy_url).await?;
         let mut st = self.state.lock().await;
+        let live = live();
         for e in ex.diensten {
-            let mut svc = Service {
+            let svc = Service {
                 id: format!("{} {}", e.datum, e.tijd),
                 date: e.datum.clone(),
                 label: e.dienst.clone(),
@@ -239,11 +365,9 @@ impl Show {
                 items: default_items(&e, &st.collecte),
                 ..Default::default()
             };
-            // Keep what the operator already filled in for this service.
-            if let Some(old) = st.services.iter().find(|s| s.id == svc.id) {
-                svc.predikant = old.predikant.clone();
-                svc.youtube_id = old.youtube_id.clone();
-            }
+            // The service on screen is not replaced while live or once it has begun.
+            let protect = st.current == svc.id && (live || st.index > 0);
+            let svc = merge_fetched(st.services.iter().find(|s| s.id == svc.id), svc, protect);
             upsert(&mut st.services, svc);
         }
         enrich_from_kerktijden(&mut st.services).await;
@@ -269,6 +393,7 @@ impl Show {
         let svc = Service { id: format!("{date} {time}"), date, time, label, items, ..Default::default() };
         st.current = svc.id.clone();
         st.index = 0;
+        st.hold = None;
         upsert(&mut st.services, svc);
         enrich_from_kerktijden(&mut st.services).await;
         self.changed(&mut st);
@@ -280,22 +405,66 @@ impl Show {
         if st.current == id {
             st.current = upcoming(&st.services);
             st.index = 0;
+            st.hold = None;
         }
         self.changed(&mut st);
     }
 
-    pub async fn save_service(&self, mut svc: Service) {
+    /// The operator's version of a service; from now on the website does not replace it.
+    /// The screens keep what they show unless `show_now`.
+    pub async fn save_service(&self, mut svc: Service, show_now: bool) {
         let mut st = self.state.lock().await;
         for it in &mut svc.items {
             it.refresh();
         }
         svc.text.refresh();
+        svc.edited = true;
         if let Some(c) = svc.items.iter().find(|i| i.kind == "collecte") {
             st.collecte = c.text.clone();
         }
-        // Editing the service on screen keeps the same part (and slide in it) on screen, even
-        // when parts are added or removed before it.
-        let keep = if st.current == svc.id { on_screen(&st) } else { None };
+        self.store(&mut st, svc, show_now);
+    }
+
+    /// Puts the changed version of what is on screen on the screens.
+    pub async fn show_changes(&self) {
+        let mut st = self.state.lock().await;
+        if st.hold.take().is_some() {
+            self.changed(&mut st);
+        }
+    }
+
+    /// The website's newer version of an edited service: take it over, or ignore it.
+    pub async fn website_choice(&self, id: &str, take: bool) {
+        let mut st = self.state.lock().await;
+        let Some(mut svc) = st.services.iter().find(|s| s.id == id).cloned() else { return };
+        if let (true, Some(w)) = (take, svc.website.take()) {
+            svc.label = w.label;
+            svc.text = w.text;
+            svc.theme = w.theme;
+            svc.points = w.points;
+            svc.problems = w.problems;
+            svc.items = w.items;
+            svc.edited = false;
+        }
+        svc.website = None;
+        svc.website_changed = false;
+        self.store(&mut st, svc, false);
+    }
+
+    /// Stores a service. Changing the service on screen keeps the same part (and slide in
+    /// it) on screen, even when parts are added or removed before it.
+    /// What the screens show stays the same (also the boards, whose liturgy can change by an
+    /// edit elsewhere in the service) until the operator moves on, unless `show_now`.
+    fn store(&self, st: &mut View, svc: Service, show_now: bool) {
+        let keep = if st.current == svc.id { on_screen(st) } else { None };
+        let before = if st.current == svc.id && !show_now {
+            st.slides.get(st.index).cloned().zip(Some(st.boards.get(st.index).cloned().unwrap_or_default()))
+        } else {
+            None
+        };
+        if show_now {
+            st.hold = None;
+        }
         upsert(&mut st.services, svc);
         if let Some((id, offset)) = keep {
             st.slides = st.service().map(build_slides).unwrap_or_default();
@@ -307,7 +476,10 @@ impl Show {
                 }
             }
         }
-        self.changed(&mut st);
+        if let Some((slide, board)) = before {
+            st.hold = Some((st.index, slide, board));
+        }
+        self.changed(st);
     }
 
     pub async fn set_youtube_id(&self, service: &str, broadcast: &str) {
@@ -323,6 +495,7 @@ impl Show {
         st.current = id;
         st.index = 0;
         st.black = false;
+        st.hold = None;
         self.changed(&mut st);
     }
 
@@ -339,6 +512,11 @@ impl Show {
             };
             st.index = target.clamp(0, st.slides.len().saturating_sub(1) as i64) as usize;
             st.black = false;
+            // Moving on shows the service as it is now.
+            if st.hold.take().is_some() {
+                self.changed(&mut st);
+                return;
+            }
         }
         self.publish(&st);
     }
@@ -356,6 +534,7 @@ impl Show {
         st.slides = st.service().map(build_slides).unwrap_or_default();
         st.boards = st.service().map(|svc| board_slides(svc, &st.slides)).unwrap_or_default();
         st.index = st.index.min(st.slides.len().saturating_sub(1));
+        apply_hold(st);
         self.publish(st);
     }
 
@@ -365,6 +544,7 @@ impl Show {
             current: st.current.clone(),
             index: st.index,
             collecte: st.collecte.clone(),
+            last_fetched: st.last_fetched,
         };
         if let Err(e) = write_json(&self.path, &saved) {
             eprintln!("opslaan mislukt: {e}");
@@ -395,6 +575,31 @@ async fn enrich_from_kerktijden(services: &mut [Service]) {
             svc.next = if next.preacher.is_empty() { when } else { format!("{when} · {}", next.preacher) };
         }
     }
+}
+
+/// Keeps the held slide and board on the screens (see `View::hold`), as long as the index is
+/// the same and they differ from the new version; otherwise the hold ends.
+fn apply_hold(st: &mut View) {
+    let i = st.index;
+    st.fresh_board = None;
+    let Some((at, slide, board)) = st.hold.as_mut() else {
+        st.held = false;
+        return;
+    };
+    let ok = *at == i && i < st.slides.len() && i < st.boards.len();
+    if ok {
+        // The part may have moved in the list; the screens show the same text.
+        slide.item = st.slides[i].item;
+        board.item = st.boards[i].item;
+    }
+    if !ok || (st.slides[i] == *slide && st.boards[i] == *board) {
+        st.hold = None;
+        st.held = false;
+        return;
+    }
+    st.slides[i] = slide.clone();
+    st.fresh_board = Some(std::mem::replace(&mut st.boards[i], board.clone()));
+    st.held = true;
 }
 
 /// The part on screen (its id, never empty) and which of its slides.
@@ -745,7 +950,8 @@ fn board_rows(svc: &Service) -> Vec<String> {
 /// sermon, and the last psalm (and any song after the service). Not every text, so
 /// people keep using their own Bible and psalter.
 fn board_slides(svc: &Service, slides: &[Slide]) -> Vec<Slide> {
-    let rows = board_rows(svc);
+    let custom = &svc.board_custom;
+    let rows = custom.liturgie.clone().unwrap_or_else(|| board_rows(svc));
     let mut out: Vec<Slide> = Vec::with_capacity(slides.len());
     for sl in slides {
         let board = match sl.kind.as_str() {
@@ -754,17 +960,23 @@ fn board_slides(svc: &Service, slides: &[Slide]) -> Vec<Slide> {
                 item: sl.item,
                 kind: "slotzang".into(),
                 header: if sl.kind == "nazang" { "Na de dienst".into() } else { "Slotzang".into() },
-                sub: svc.items.get(sl.item).map(|i| i.short()).unwrap_or_default(),
+                sub: match &custom.slotzang {
+                    Some(own) if sl.kind == "slotzang" => own.clone(),
+                    _ => svc.items.get(sl.item).map(|i| i.short()).unwrap_or_default(),
+                },
                 ..Default::default()
             },
             // During the sermon: the text and the theme with its points.
-            "preek" => Slide {
-                item: sl.item,
-                kind: "thema".into(),
-                sub: if svc.text.kind == "catechismus" { svc.text.short() } else { svc.text.passage.map(|p| p.short()).unwrap_or_default() },
-                theme: sl.theme.clone(),
-                points: sl.points.clone(),
-                ..Default::default()
+            "preek" => match &custom.thema {
+                Some(own) => Slide { item: sl.item, kind: "thema".into(), sub: own.tekst.clone(), theme: own.thema.clone(), points: own.punten.clone(), ..Default::default() },
+                None => Slide {
+                    item: sl.item,
+                    kind: "thema".into(),
+                    sub: if svc.text.kind == "catechismus" { svc.text.short() } else { svc.text.passage.map(|p| p.short()).unwrap_or_default() },
+                    theme: sl.theme.clone(),
+                    points: sl.points.clone(),
+                    ..Default::default()
+                },
             },
             // The blessing: the boards keep what they showed (the slotzang stays up).
             "zegen" if !out.is_empty() => Slide { item: sl.item, ..out[out.len() - 1].clone() },
@@ -853,6 +1065,117 @@ mod tests {
         // Once only.
         migrate(&mut services);
         assert_eq!(services[0].items.len(), 5);
+    }
+
+    fn psalm(id: &str, label: &str, n: u32, verses: &[u32]) -> Item {
+        let mut it = Item { id: id.into(), kind: "psalm".into(), label: label.into(), psalm: n, verses: verses.to_vec(), ..Default::default() };
+        it.refresh();
+        it
+    }
+
+    fn service() -> Service {
+        Service {
+            id: "2026-10-18 09:30".into(),
+            date: "2026-10-18".into(),
+            time: "09:30".into(),
+            items: vec![item("i1", "welkom", "Startscherm"), psalm("i2", "Voorzang", 1, &[1, 2]), item("i3", "gebed", "Gebed"), psalm("i4", "Zingen", 2, &[1]), item("i5", "einde", "Aftiteling")],
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn own_boards_replace_the_automatic_ones() {
+        let mut svc = service();
+        svc.items.insert(4, Item { kind: "preek".into(), label: "Prediking".into(), ..Default::default() });
+        svc.items.insert(5, Item { psalm: 3, verses: vec![1], kind: "slotzang".into(), label: "Slotzang".into(), ..Default::default() });
+        let slides = build_slides(&svc);
+        let auto = board_slides(&svc, &slides);
+        assert_eq!(auto[0].list, ["Ps 1:1,2", "Ps 2:1", "Ps 3:1"]);
+        svc.board_custom = BoardCustom {
+            liturgie: Some(vec!["Ps 84:3".into(), "".into(), "Zondag 5".into()]),
+            thema: Some(BoardTheme { tekst: "Joh.3:16".into(), thema: "Gods liefde".into(), punten: vec!["groot".into()] }),
+            slotzang: Some("Ps 134:3".into()),
+        };
+        let own = board_slides(&svc, &slides);
+        assert_eq!(own[0].list, ["Ps 84:3", "", "Zondag 5"]);
+        let thema = own.iter().find(|b| b.kind == "thema").unwrap();
+        assert_eq!((thema.sub.as_str(), thema.theme.as_str(), thema.points.len()), ("Joh.3:16", "Gods liefde", 1));
+        assert!(own.iter().any(|b| b.kind == "slotzang" && b.sub == "Ps 134:3"));
+    }
+
+    #[test]
+    fn fetching_keeps_an_edited_service_and_offers_the_website_version() {
+        let site = service();
+        // Not edited: replaced, operator details kept.
+        let mut old = service();
+        old.predikant = "ds. A".into();
+        old.items.pop();
+        let merged = merge_fetched(Some(&old), site.clone(), false);
+        assert_eq!(merged.items.len(), 5);
+        assert_eq!(merged.predikant, "ds. A");
+        assert!(!merged.website_changed);
+        // Edited, website unchanged since: nothing to do.
+        let mut edited = merged.clone();
+        edited.edited = true;
+        edited.items.remove(2);
+        let again = merge_fetched(Some(&edited), site.clone(), false);
+        assert_eq!(again.items.len(), 4);
+        assert!(!again.website_changed && again.website.is_none());
+        // Edited, website changed: kept, the website version waits.
+        let mut site2 = service();
+        site2.items[1] = psalm("i2", "Voorzang", 84, &[3]);
+        let changed = merge_fetched(Some(&edited), site2, false);
+        assert_eq!(changed.items.len(), 4);
+        assert!(changed.website_changed);
+        assert!(changed.website.as_ref().unwrap().summary.contains("Psalm 84"));
+        // A protected service (on screen) is not replaced either.
+        let protected = merge_fetched(Some(&old), site, true);
+        assert_eq!(protected.items.len(), 4);
+    }
+
+    async fn show_with(svc: Service) -> Arc<Show> {
+        let dir = std::env::temp_dir().join(format!("sb-test-{}-{}", std::process::id(), rand_suffix()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let show = Show::new(dir.join("liturgie.json"), String::new()).await;
+        let id = svc.id.clone();
+        show.save_service(svc, false).await;
+        show.select(id).await;
+        show
+    }
+
+    fn rand_suffix() -> u128 {
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
+    }
+
+    #[tokio::test]
+    async fn editing_keeps_the_screens_as_they_are() {
+        let show = show_with(service()).await;
+        // On "Zingen" (psalm 2, verse 1).
+        let at = show.view().slides.iter().position(|s| s.header.contains(": 1") && s.sub == "Zingen").unwrap();
+        show.go(Some(at), 0, "").await;
+        let screen = show.view().slides[at].clone();
+        let board = show.view().boards[at].clone();
+        // A part added before it: the same slide stays on screen, at its new place.
+        let mut svc = show.view().service().unwrap().clone();
+        svc.items.insert(2, psalm("i9", "Zingen", 3, &[1]));
+        show.save_service(svc, false).await;
+        let v = show.view();
+        assert_eq!(v.slides[v.index].header, screen.header);
+        assert_eq!(v.slides[v.index].item, 4);
+        // The board's liturgy would now have psalm 3 too, but the TVs keep what they showed.
+        assert_eq!(v.boards[v.index].list, board.list);
+        assert!(v.held);
+        assert_eq!(v.fresh_board.as_ref().unwrap().list.len(), board.list.len() + 1);
+        // The part on screen changed: still the old text until "show now" or moving on.
+        let mut svc = v.service().unwrap().clone();
+        svc.items[4] = psalm("i4", "Zingen", 5, &[1]);
+        show.save_service(svc, false).await;
+        assert_eq!(show.view().slides[show.view().index].header, screen.header);
+        show.show_changes().await;
+        let v = show.view();
+        assert!(!v.held);
+        assert!(v.slides[v.index].header.starts_with("Psalm 5"), "{}", v.slides[v.index].header);
+        assert_eq!(v.boards[v.index].list.len(), 3);
     }
 
     #[test]
