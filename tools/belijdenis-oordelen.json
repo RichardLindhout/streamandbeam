@@ -1,0 +1,375 @@
+{
+ "correcties": [
+  {
+   "doc": "ngb",
+   "plaats": 24,
+   "oud": "de mensen zou verkouden",
+   "nieuw": "de mensen zou doen verkouden",
+   "reden": "weglating in primaire bron; Gihonbron, online-bijbel.nl en kerkboek 1774 ('soude doen verkouden') hebben 'doen'"
+  },
+  {
+   "doc": "ngb",
+   "plaats": 24,
+   "oud": "van het lijden en sterven onzen Zaligmaker",
+   "nieuw": "van het lijden en sterven van onzen Zaligmaker",
+   "reden": "ongrammaticaal in primaire bron; Gihonbron en online-bijbel.nl: 'van onzen Zaligmaker' (1774: 'onses Saligmakers')"
+  },
+  {
+   "doc": "dl",
+   "plaats": "1-v-8",
+   "oud": "en hebt derzelve den kinderkens",
+   "nieuw": "en hebt dezelve den kinderkens",
+   "reden": "tikfout in primaire bron; citaat Matth. 11:25 (Statenvertaling: 'en hebt dezelve den kinderkens geopenbaard')"
+  },
+  {
+   "doc": "dl",
+   "plaats": "3-v-5",
+   "oud": "de middelen, die tot de bekering nodig zijn",
+   "nieuw": "de middelen, die tot de kennis van Christus, tot het geloof en tot de bekering nodig zijn",
+   "reden": "weglating in primaire bron; controlebron en online-bijbel.nl hebben de volledige opsomming (Latijn: ad Christi revelationem, ad fidem et resipiscentiam)"
+  },
+  {
+   "doc": "dl",
+   "plaats": "3-v-6",
+   "oud": "om tot hetzelve komen",
+   "nieuw": "om tot hetzelve te komen",
+   "reden": "weglating van 'te' in primaire bron (controle: 'om daartoe te komen')"
+  },
+  {
+   "doc": "dl",
+   "plaats": "3-v-7",
+   "oud": "Pelagiaans en in strijdig",
+   "nieuw": "Pelagiaans en strijdig",
+   "reden": "tikfout in primaire bron ('in strijdig'); controlebron en online-bijbel.nl: 'en strijdig tegen'"
+  },
+  {
+   "doc": "dl",
+   "plaats": "3-v-9",
+   "oud": "Insgelijks: Wat onderscheidt u?",
+   "nieuw": "Insgelijks: Wie onderscheidt u?",
+   "reden": "tikfout in primaire bron; citaat 1 Kor. 4:7 (Statenvertaling: 'Want wie onderscheidt u?'), ook controlebron"
+  },
+  {
+   "doc": "dl",
+   "plaats": "5-v-7",
+   "oud": "Want Christus Zelf, stelt",
+   "nieuw": "Want Christus Zelf stelt",
+   "reden": "komma bleef over na het weghalen van de verwijzing 'Matth. 13:20 en Luk. 8:13 en vervolgens'"
+  },
+  {
+   "doc": "form:doop-kinderen",
+   "plaats": "",
+   "oud": "vrolijk dragen moge,",
+   "nieuw": "vrolijk dragen mogen,",
+   "reden": "tikfout (meervoud: 'opdat zij hun kruis ... dragen mogen'); kerkboek 1774: 'vrolick dragen mogen'"
+  },
+  {
+   "doc": "form:doop-kinderen",
+   "plaats": "",
+   "oud": "des Goddelijke Woords",
+   "nieuw": "des Goddelijken Woords",
+   "reden": "verbuigingsfout in primaire bron; doopformulier volwassenen (zelfde site) en 1774: 'des Goddelijken Woords'"
+  },
+  {
+   "doc": "form:doop-kinderen",
+   "plaats": "",
+   "oud": "zij christelijke en godzaliglijk",
+   "nieuw": "zij christelijk en godzaliglijk",
+   "reden": "tikfout; controlebron 'christelijk', 1774 'Christelick ende Godtsaliglick'"
+  },
+  {
+   "doc": "form:doop-kinderen",
+   "plaats": "",
+   "oud": "N, ik doop u",
+   "nieuw": "N., ik doop u",
+   "reden": "'N.' is een afkorting (zo ook elders in de formulieren en in de controlebron)"
+  },
+  {
+   "doc": "form:doop-volwassenen",
+   "plaats": "",
+   "oud": "in de Naam Gods",
+   "nieuw": "in den Naam Gods",
+   "reden": "inconsequent in primaire bron (in dezelfde alinea 'in den Naam des Vaders'); controlebron en 1774: 'den'"
+  },
+  {
+   "doc": "form:doop-volwassenen",
+   "plaats": "",
+   "oud": "en des Heilige Geestes",
+   "nieuw": "en des Heiligen Geestes",
+   "reden": "verbuigingsfout in primaire bron; controlebron en doopformulier kinderen: 'des Heiligen Geestes'"
+  },
+  {
+   "doc": "form:doop-volwassenen",
+   "plaats": "",
+   "oud": "En als wij in de Naam des Zoons",
+   "nieuw": "En als wij in den Naam des Zoons",
+   "reden": "inconsequent in primaire bron; controlebron, doopformulier kinderen en 1774: 'in den Naam des Zoons'"
+  },
+  {
+   "doc": "form:doop-volwassenen",
+   "plaats": "",
+   "oud": "liefhebben en van ganser harte",
+   "nieuw": "liefhebben van ganser harte",
+   "reden": "overtollig 'en' in primaire bron; controlebron en doopformulier kinderen zonder 'en'"
+  },
+  {
+   "doc": "form:doop-volwassenen",
+   "plaats": "",
+   "oud": "waarachtig mens. Die Zijn",
+   "nieuw": "waarachtig mens, Die Zijn",
+   "reden": "punt midden in de vraag; controlebron en 1774 ('waerachtigh mensche, die sijn') lopen door"
+  },
+  {
+   "doc": "form:doop-volwassenen",
+   "plaats": "",
+   "oud": "met het Heiligen Doopsel",
+   "nieuw": "met het Heilige Doopsel",
+   "reden": "verbuigingsfout ('het Heiligen'); 1774: 'met het heylige Doopsel', controlebron 'het Heilig Doopsel'"
+  },
+  {
+   "doc": "form:doop-volwassenen",
+   "plaats": "",
+   "oud": "in de enigen waarachtigen God",
+   "nieuw": "in den enigen waarachtigen God",
+   "reden": "verbuigingsfout ('de enigen'); controlebron 'den enigen waarachtigen God'"
+  },
+  {
+   "doc": "form:doop-volwassenen",
+   "plaats": "",
+   "oud": "nog in den hemel noch op den aarde",
+   "nieuw": "noch in den hemel noch op de aarde",
+   "reden": "tikfouten in primaire bron ('nog', 'den aarde'); controlebron: 'noch in den hemel noch op de aarde'"
+  },
+  {
+   "doc": "form:doop-volwassenen",
+   "plaats": "",
+   "oud": "onder onzen enige Leraar",
+   "nieuw": "onder onzen enigen Leraar",
+   "reden": "verbuigingsfout; doopformulier kinderen en controlebron: 'onzen enigen Leraar'"
+  },
+  {
+   "doc": "form:heilig-avondmaal",
+   "plaats": "",
+   "oud": "hetgeen ik u ook overgegeven heb",
+   "nieuw": "hetgeen ik ook u overgegeven heb",
+   "reden": "citaat 1 Kor. 11:23; Statenvertaling en controlebron: 'hetgeen ik ook u overgegeven heb'"
+  },
+  {
+   "doc": "form:heilig-avondmaal",
+   "plaats": "",
+   "oud": "aan lichaam en ziel verzorgen",
+   "nieuw": "aan lichaam en ziel verzorgende",
+   "reden": "fout in primaire bron (parallel met 'toerekenende'); controlebron en 1774: 'versorgende'"
+  },
+  {
+   "doc": "form:heilig-avondmaal",
+   "plaats": "",
+   "oud": "Onze Vader, die in de hemelen zijt",
+   "nieuw": "Onze Vader, Die in de hemelen zijt",
+   "reden": "gelijkgetrokken met het eerste Onze Vader in hetzelfde formulier en alle andere formulieren"
+  },
+  {
+   "doc": "form:heilig-avondmaal",
+   "plaats": "",
+   "oud": "vergeven onze schuldenaren",
+   "nieuw": "vergeven onzen schuldenaren",
+   "reden": "Onze Vader (Statenvertaling Matth. 6:12, eerste Onze Vader in dit formulier, controlebron): 'onzen schuldenaren'"
+  },
+  {
+   "doc": "form:heilig-avondmaal",
+   "plaats": "",
+   "oud": "verlos ons van de boze",
+   "nieuw": "verlos ons van den boze",
+   "reden": "Onze Vader (Statenvertaling Matth. 6:13, eerste Onze Vader in dit formulier, controlebron): 'van den boze'"
+  },
+  {
+   "doc": "form:bevestiging-predikant",
+   "plaats": "",
+   "oud": "Wat nu dit heilig ambt medebrengende",
+   "nieuw": "Wat nu dit heilig ambt is medebrengende",
+   "reden": "weglating van 'is' in primaire bron; kerkboek 1774: 'Wat nu dit heyligh Ampt is medebrengende' (controlebron: 'medebrengt')"
+  },
+  {
+   "doc": "form:bevestiging-predikant",
+   "plaats": "",
+   "oud": "hier ter plaatste",
+   "nieuw": "hier ter plaatse",
+   "reden": "tikfout; controlebron 'ter plaatse'"
+  },
+  {
+   "doc": "form:huwelijk",
+   "plaats": "",
+   "oud": "dat wie zijn vrouw",
+   "nieuw": "dat zo wie zijn vrouw",
+   "reden": "citaat Matth. 19:9; Statenvertaling en controlebron: 'dat zo wie zijn vrouw verlaat'"
+  },
+  {
+   "doc": "form:wederopneming-in-de-gemeente",
+   "plaats": "",
+   "oud": "Diensvolgens",
+   "nieuw": "Dienvolgens",
+   "reden": "tikfout; controlebron 'Dienvolgens', 1774 'Dienvolgende'"
+  },
+  {
+   "doc": "athanasius",
+   "plaats": "",
+   "oud": "niet door vermening der zelfstandigheid",
+   "nieuw": "niet door vermenging der zelfstandigheid",
+   "reden": "tikfout in primaire bron ('vermening'); 1774: 'door de vermenginge der substantie'"
+  },
+  {
+   "doc": "athanasius",
+   "plaats": "",
+   "oud": "de Eénheid in de Drieheid en de Drieheid in de Eénheid",
+   "nieuw": "de Eenheid in de Drieheid en de Drieheid in de Eenheid",
+   "reden": "typografie gelijkgetrokken met zin 3 ('de Drieheid in de Eenheid')"
+  },
+  {
+   "doc": "athanasius",
+   "plaats": "",
+   "oud": "De Zoon is van de Vader alleen",
+   "nieuw": "De Zoon is van den Vader alleen",
+   "reden": "gelijkgetrokken met de rest van de tekst ('Den Vader gelijk', Nicea 'uit den Vader'); 1774: 'van den Vader alleen'"
+  },
+  {
+   "doc": "athanasius",
+   "plaats": "",
+   "oud": "De Heilige Geest is van de Vader en de Zoon",
+   "nieuw": "De Heilige Geest is van den Vader en den Zoon",
+   "reden": "idem; 1774: 'van den Vader ende den Sone'"
+  }
+ ],
+ "oordelen": [
+  {
+   "doc": "ngb",
+   "plaats": 1,
+   "a": "aller goeden",
+   "b": "van alle goed",
+   "oordeel": "versieverschil; primaire lezing is de oude (1774: 'fonteyne aller goeden'), behouden"
+  },
+  {
+   "doc": "ngb",
+   "plaats": 4,
+   "a": "Filippensen",
+   "b": "Filippenzen",
+   "oordeel": "spellingvariant (oude spelling van de namen), primaire lezing behouden"
+  },
+  {
+   "doc": "ngb",
+   "plaats": 4,
+   "a": "Kolossensen",
+   "b": "Kolossenzen",
+   "oordeel": "spellingvariant (oude spelling van de namen), primaire lezing behouden"
+  },
+  {
+   "doc": "ngb",
+   "plaats": 4,
+   "a": "Thessalonicensen",
+   "b": "Thessalonicenzen",
+   "oordeel": "spellingvariant (oude spelling van de namen), primaire lezing behouden"
+  },
+  {
+   "doc": "ngb",
+   "plaats": 21,
+   "a": "",
+   "b": "Jezus",
+   "oordeel": "versieverschil; primaire lezing = 1774 ('dan Christum ende dien gekruyst'), behouden"
+  },
+  {
+   "doc": "ngb",
+   "plaats": 9,
+   "a": "formule",
+   "b": "forme",
+   "oordeel": "versieverschil ('forme' = vaste bewoording; primaire uitgave moderniseert), behouden"
+  },
+  {
+   "doc": "ngb",
+   "plaats": 26,
+   "a": "voorspreker",
+   "b": "advocaat",
+   "oordeel": "versieverschil (primaire uitgave vervangt het leenwoord), behouden"
+  },
+  {
+   "doc": "ngb",
+   "plaats": 26,
+   "a": "Voorspreker",
+   "b": "een Advocaat",
+   "oordeel": "versieverschil (primaire uitgave vervangt het leenwoord), behouden"
+  },
+  {
+   "doc": "dl",
+   "plaats": "1-p-5",
+   "a": "schuld",
+   "b": "onschuld",
+   "oordeel": "controlebron: tikfout ('De oorzaak of schuld van dat ongeloof'); primaire lezing behouden"
+  },
+  {
+   "doc": "dl",
+   "plaats": "1-v-1",
+   "a": "en onberispelijk",
+   "b": "",
+   "oordeel": "controlebron: verkort citaat (Ef. 1:4 Statenvertaling 'heilig en onberispelijk'); primaire lezing behouden"
+  },
+  {
+   "doc": "dl",
+   "plaats": "2-v-7",
+   "a": "zette",
+   "b": "zet",
+   "oordeel": "controlebron: afwijkend citaat (Joh. 15:13 Statenvertaling 'zette'); primaire lezing behouden"
+  },
+  {
+   "doc": "dl",
+   "plaats": "3-v-8",
+   "a": "goedigheid",
+   "b": "goedheid",
+   "oordeel": "controlebron: afwijkend citaat (2 Thess. 1:11 Statenvertaling 'goedigheid'); primaire lezing behouden"
+  },
+  {
+   "doc": "dl",
+   "plaats": "5-v-3",
+   "a": "God bevestigt Zijn liefde jegens ons",
+   "b": "",
+   "oordeel": "controlebron: weglating (Rom. 5:8); primaire lezing behouden"
+  },
+  {
+   "doc": "form:doop-kinderen",
+   "plaats": "",
+   "a": "jonge",
+   "b": "",
+   "oordeel": "versieverschil; primaire lezing = 1774 ('de jonge kinderen'), behouden"
+  },
+  {
+   "doc": "form:doop-kinderen",
+   "plaats": "",
+   "a": "bij",
+   "b": "in",
+   "oordeel": "versieverschil; primaire lezing = 1774 ('dat hy by ons woonen'), behouden"
+  },
+  {
+   "doc": "form:doop-kinderen",
+   "plaats": "",
+   "a": "der genade",
+   "b": "",
+   "oordeel": "versieverschil; primaire lezing = 1774 ('verbont der genade met Godt'), behouden"
+  },
+  {
+   "doc": "form:doop-kinderen",
+   "plaats": "",
+   "a": "deze gedoopte kinderen",
+   "b": "dit kind",
+   "oordeel": "versieverschil (meervoud/enkelvoud); primaire lezing = 1774 ('dese gedoopte kinderen'), behouden"
+  }
+ ],
+ "creed_notities": [
+  "Nicea: de uitgave van 1774 geeft de oudere, kortere tekst (zonder 'die Heere is en levend maakt' en",
+  "  'die van den Vader en den Zoon uitgaat'); een woordvergelijking is dus niet zinvol. Volgorde en inhoud",
+  "  van de vier alinea's komen overeen; geen tikfouten gevonden bij handmatig nalezen. Niet onafhankelijk",
+  "  gecontroleerd in dezelfde bewoording.",
+  "Athanasius: alle 44 genummerde zinnen staan in dezelfde volgorde in 1774 (_0182, ook 44 zinnen) en",
+  "  komen inhoudelijk zin voor zin overeen. Gevonden en verbeterd: zin 36 'vermening' -> 'vermenging';",
+  "  zin 22/23 'van de Vader' -> 'van den Vader (en den Zoon)'; zin 27 'Eénheid' -> 'Eenheid'.",
+  "  Overige verschillen met 1774 zijn hertaling (bv. zin 2 'eeuwig verloren gaan' / 'eeuwiglick verderven').",
+  "Apostolicum: tekst als proza in drie alinea's (Vader / Zoon / Geest); woordelijk gelijk aan HC vraag 23",
+  "  (catechismus.json) op de nummering na."
+ ]
+}

@@ -17,3 +17,22 @@ catechismus.json
   Heidelberger Catechismus, tekst van de Nationale Synode van Dordrecht, uit de uitgave van
   Stichting De Gihonbron (2017); 129 vragen in 52 zondagen. Voetnoten en
   bijbelverwijzingen weggelaten. Vraag 57 vergeleken met de livestream van 18 okt. 2026.
+
+belijdenissen.json
+  Nederlandse Geloofsbelijdenis (37 artikelen, 99 alinea's) van nederlandse-geloofsbelijdenis.nl
+  (originele versie), gecontroleerd tegen de Gihonbron-uitgave (theologienet.nl). Dordtse Leerregels
+  van dordtse-leerregels.nl: hoofdstuk 1 (18 art., 9 verw.), 2 (9/7), III/IV als hoofdstuk 3 (17/9),
+  5 (15/9), gecontroleerd tegen de theologienet-pdf. Apostolicum (als proza, 3 alinea's), Nicea en
+  Athanasius (44 zinnen) van online-bijbel.nl; Apostolicum gelijk aan HC vraag 23, Nicea/Athanasius
+  alleen naast het kerkboek van 1774 gelegd (geen tweede bron in dezelfde bewoording gevonden).
+  Voetnoten, uitleg en bijbelverwijzingen weggelaten (behalve waar ze zinsdeel zijn, NGB art. 9/10).
+  Bij twijfel beslist met online-bijbel.nl en het kerkboek van 1774 (DBNL); 12 fouten verbeterd.
+  Zie tools/controle-belijdenissen.txt en tools/belijdenis-oordelen.json.
+
+formulieren.json
+  Negen liturgische formulieren, klassieke versie van liturgie.nu, gecontroleerd tegen
+  online-bijbel.nl/liturgie (andere uitgave: 'dienaars', 'zichzelven', doop in het enkelvoud) en bij
+  twijfel tegen het kerkboek van 1774. 22 fouten verbeterd (o.a. 'dragen mogen', 'Goddelijken Woords',
+  tweede Onze Vader in het avondmaalsformulier). Het formulier openbare belijdenis (vragen naar Voetius)
+  is niet tegen een tweede bron gecontroleerd: geen bron met dezelfde tekst gevonden. Uitgesproken
+  verwijzingen ('1 Kor. 11:23-29', 'Psalm 103') staan er nog in; versnummers en voetnoten niet.
