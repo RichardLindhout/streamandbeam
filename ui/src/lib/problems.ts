@@ -10,11 +10,11 @@ export type Health = { label: string; ok: boolean };
 /** The status light: green, amber (only the boards) or red, with its lines. */
 export function health(status: StreamStatus, yt: YouTubeCheck | null, connected: boolean, alarm: boolean) {
   const live = status.mode === "live";
-  const running = status.mode !== "stop";
   const lines: Health[] = [];
   if (!connected) lines.push({ label: "Verbinding", ok: false });
   if (live) lines.push({ label: "YouTube", ok: !status.error });
-  if (running) lines.push({ label: "Geluid", ok: !status.audioWarning && !(live && yt?.at && yt.live && !yt.audio) });
+  // Only while live: in the preview between services silence is normal.
+  if (live) lines.push({ label: "Geluid", ok: !status.audioWarning && !(live && yt?.at && yt.live && !yt.audio) });
   const boards = status.boards || 0;
   lines.push({ label: `Borden ${Math.min(boards, 99)} van ${BOARDS}`, ok: boards >= BOARDS });
   const bad = !connected || alarm || lines.some((l) => !l.ok && !l.label.startsWith("Borden"));

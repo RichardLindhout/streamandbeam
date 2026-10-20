@@ -29,7 +29,6 @@ export function SettingsDialog({ open, onOpenChange, state, status, onMade }: {
   const [error, setError] = useState("");
   const [fetching, setFetching] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
-  const live = status.mode === "live";
   useEffect(() => {
     if (!open) return;
     setError("");
@@ -93,8 +92,8 @@ export function SettingsDialog({ open, onOpenChange, state, status, onMade }: {
           <DialogBody className="gap-8">
             <Section title="Diensten">
               <div className="grid gap-3 sm:grid-cols-2">
-                <Button variant="outline" disabled={live || fetching} onClick={fetchSite}><Globe /> {fetching ? "Bezig…" : "Diensten ophalen van website"}</Button>
-                <Button variant="outline" disabled={live} onClick={() => setNewOpen(true)}><CalendarPlus /> Nieuwe dienst</Button>
+                <Button variant="outline" disabled={fetching} onClick={fetchSite}><Globe /> {fetching ? "Bezig…" : "Diensten ophalen van website"}</Button>
+                <Button variant="outline" onClick={() => setNewOpen(true)}><CalendarPlus /> Nieuwe dienst</Button>
               </div>
             </Section>
             <Section title="Camera en geluid">
@@ -212,6 +211,7 @@ export function NewServiceDialog({ open, onOpenChange, onMade }: { open: boolean
           <Button
             onClick={async () => {
               const r = await post("/api/new-service", v, { quiet: true });
+              if (r.status === 499) return;
               if (!r.ok) return setError(r.status === 409 ? "Er is al een dienst op dat moment" : await errorText(r));
               onOpenChange(false);
               onMade?.();

@@ -5,6 +5,9 @@ import { SUNG, itemDetail, itemLabel } from "@/lib/kinds";
 import { chime } from "@/lib/chime";
 import { cn } from "@/lib/utils";
 import { Confirm } from "@/components/Confirm";
+import { BoardColumn } from "@/components/BoardColumn";
+import { OrderEdit } from "@/components/OrderEdit";
+import { Pencil, Play } from "lucide-react";
 
 type Props = { state: View | null; svc?: Service; status: StreamStatus; lis: ListenStatus | null };
 
@@ -182,6 +185,7 @@ function Bottom({ svc, p, status, now }: { svc?: Service; p: ReturnType<typeof p
 }
 
 export function Dienst({ state, svc, status, lis }: Props) {
+  const [edit, setEdit] = useState(false);
   const now = Date.now();
   const p = position(state, svc);
   const sub = subline(p, svc, status, now);
@@ -189,7 +193,38 @@ export function Dienst({ state, svc, status, lis }: Props) {
   const hint = s !== undefined && s !== null ? state?.slides?.[s]?.item : undefined;
   return (
     <>
-      <Order svc={svc} p={p} sub={sub} hint={hint} />
+      <div className="flex min-h-0 flex-1">
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex h-[72px] shrink-0 items-center gap-5 px-5 pt-1">
+            <div role="radiogroup" aria-label="Lijst" className="flex shrink-0 rounded-2xl border-2 border-input bg-card p-1">
+              {([[false, "Bedienen", <Play key="b" />], [true, "Bewerken", <Pencil key="e" />]] as const).map(([on, label, icon]) => (
+                <button
+                  key={label}
+                  role="radio"
+                  aria-checked={edit === on}
+                  disabled={on && !svc}
+                  onClick={() => setEdit(on)}
+                  className={cn(
+                    "flex h-14 items-center gap-2 rounded-xl px-6 text-[22px] font-semibold transition [&_svg]:size-6",
+                    edit === on ? (on ? "bg-primary text-primary-foreground" : "bg-walnut text-white") : "text-muted-foreground hover:bg-accent",
+                  )}
+                >
+                  {icon} {label}
+                </button>
+              ))}
+            </div>
+            {edit && <span className="min-w-0 truncate text-[22px] text-[#7a5a1c]">Bewerken — er verandert niets op het scherm</span>}
+          </div>
+          {edit && svc ? (
+            <div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
+              <OrderEdit svc={svc} cur={p.cur} />
+            </div>
+          ) : (
+            <Order svc={svc} p={p} sub={sub} hint={hint} />
+          )}
+        </div>
+        <BoardColumn state={state} svc={svc} edit={edit} />
+      </div>
       <Bottom svc={svc} p={p} status={status} now={now} />
     </>
   );

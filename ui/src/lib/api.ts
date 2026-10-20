@@ -27,7 +27,18 @@ export type Service = {
   problems: string[];
   youtubeId: string;
   items: Item[];
+  /** The operator's own boards; what is absent or null is automatic. */
+  boardCustom?: BoardCustom;
+  /** Changed by the operator: fetching the website does not replace it. */
+  edited?: boolean;
+  /** The website has a newer version, waiting in `website`. */
+  websiteChanged?: boolean;
+  website?: { summary: string; problems: string[] } | null;
+  [k: string]: unknown;
 };
+
+export type BoardTheme = { tekst: string; thema: string; punten: string[] };
+export type BoardCustom = { liturgie?: string[] | null; thema?: BoardTheme | null; slotzang?: string | null };
 
 export type Slide = {
   item: number;
@@ -53,6 +64,14 @@ export type View = {
   overrideBoard: Slide | null;
   overrideStream: boolean;
   boardBackground: number;
+  /** Unix seconds of the last successful website fetch (0 = never). */
+  lastFetched?: number;
+  /** Why the last fetch failed ("" = fine). */
+  fetchError?: string;
+  /** The screens still show the slide as it was before the last change. */
+  held?: boolean;
+  /** While held: the new version of the board on screen. */
+  freshBoard?: Slide | null;
 };
 
 export type Mode = "stop" | "voorbeeld" | "opnemen" | "live";
@@ -124,16 +143,31 @@ export type Settings = {
   [k: string]: unknown;
 };
 
-/** POSTs JSON. A refusal (409 and the like) or a lost connection is always shown as a message,
- *  unless `quiet` is set because the caller shows it itself. Never throws. */
-export async function post(url: string, body?: unknown, opts?: { quiet?: boolean }): Promise<Response> {
-  let r: Response;
+/** Asks "Je bent live. <question> Kijkers zien dit direct."; set by <LiveConfirm> in the app. */
+let askLive: (what: string) => Promise<boolean> = async (what) => confirm(`Je bent live. ${what}`);
+export function setLiveConfirm(f: (what: string) => Promise<boolean>) {
+  askLive = f;
+}
+
+async function send(url: string, body?: unknown) {
   try {
-    r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body ?? {}) });
+    return await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body ?? {}) });
   } catch {
-    r = new Response("Geen verbinding met de kerk-PC", { status: 503 });
+    return new Response("Geen verbinding met de kerk-PC", { status: 503 });
   }
-  if (!r.ok && !opts?.quiet) toast.error(await errorText(r), { duration: 8000 });
+}
+
+/** POSTs JSON. While live, the program first asks to confirm an action viewers would see
+ *  (409 with X-Bevestigen): then the volunteer is asked, and on yes it is sent again.
+ *  A refusal or a lost connection is always shown as a message, unless `quiet` is set because
+ *  the caller shows it itself. Cancelling gives status 499. Never throws. */
+export async function post(url: string, body?: unknown, opts?: { quiet?: boolean }): Promise<Response> {
+  let r = await send(url, body);
+  if (r.status === 409 && r.headers.get("X-Bevestigen")) {
+    if (!(await askLive(await r.text()))) return new Response("", { status: 499 });
+    r = await send(url + (url.includes("?") ? "&" : "?") + "bevestigd=1", body);
+  }
+  if (!r.ok && r.status !== 499 && !opts?.quiet) toast.error(await errorText(r), { duration: 8000 });
   return r;
 }
 
@@ -163,7 +197,8 @@ export const setStreamMode = (mode: Mode) => post("/api/stream", { mode });
 /** At the end card: wait five more minutes before stopping. */
 export const later = () => post("/api/stream/later");
 
-export const saveService = (s: Service) => post("/api/service", s);
+/** Saves a service. The screens keep what they show, unless `show` (asks to confirm while live). */
+export const saveService = (s: Service, show?: boolean) => post("/api/service" + (show ? "?tonen=1" : ""), s);
 
 export async function quick(text: string): Promise<Item[]> {
   const r = await post("/api/quick", { text }, { quiet: true });

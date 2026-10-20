@@ -33,8 +33,8 @@ export function Voorbereiden({ state, status, onBack }: { state: View | null; st
             <Button variant="outline" size="icon" aria-label="Menu" className="shrink-0"><Ellipsis className="size-9" /></Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem disabled={live || !svc} onSelect={() => setAsk("fetch")}><Globe /> Opnieuw ophalen</DropdownMenuItem>
-            <DropdownMenuItem disabled={isLive || !svc} onSelect={() => setAsk("delete")} className="text-live [&_svg]:text-live"><Trash /> Dienst verwijderen</DropdownMenuItem>
+            <DropdownMenuItem disabled={!svc} onSelect={() => setAsk("fetch")}><Globe /> Opnieuw ophalen</DropdownMenuItem>
+            <DropdownMenuItem disabled={!svc} onSelect={() => setAsk("delete")} className="text-live [&_svg]:text-live"><Trash /> Dienst verwijderen</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

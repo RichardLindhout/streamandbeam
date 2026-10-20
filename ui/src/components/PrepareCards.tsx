@@ -74,10 +74,11 @@ export function SermonCard({ svc }: { svc: Service }) {
   );
 }
 
-/** Voorbeeld, Opnemen, Live and Stop, for the technician. Hidden while live. */
+/** Voorbeeld, Opnemen, Live and Stop, for the technician. While live every change is asked first. */
 export function StreamControls({ status }: { status: StreamStatus }) {
   const [ask, setAsk] = useState(false);
-  if (status.mode === "live") return <div className="text-[24px] font-semibold">Live: eerst stoppen</div>;
+  const [stop, setStop] = useState(false);
+  const live = status.mode === "live";
   const modes: [Mode, string, React.ReactNode][] = [
     ["voorbeeld", "Voorbeeld", <Eye key="v" />],
     ["opnemen", "Opnemen", <Circle key="o" className="fill-current text-live" />],
@@ -91,7 +92,7 @@ export function StreamControls({ status }: { status: StreamStatus }) {
           <Button
             key={m}
             variant="outline"
-            onClick={() => (m === "live" ? setAsk(true) : setStreamMode(m))}
+            onClick={() => (m === "live" ? !live && setAsk(true) : m === "stop" && live ? setStop(true) : setStreamMode(m))}
             className={cn(status.mode === m && "border-walnut bg-[#efe3c6]")}
           >
             {icon} {label}
@@ -101,6 +102,7 @@ export function StreamControls({ status }: { status: StreamStatus }) {
       {status.recording && <div className="truncate text-[18px] text-muted-foreground">Opname: {status.recording.split(/[\\/]/).pop()}</div>}
       {status.error && <div className="rounded-xl border-2 border-warn/50 bg-warn/10 p-3 text-[18px]">{status.error}</div>}
       <Confirm open={ask} onOpenChange={setAsk} title="Live gaan?" yes="Ja, live" tone="live" onYes={() => setStreamMode("live")} />
+      <Confirm open={stop} onOpenChange={setStop} title="Uitzending stoppen?" text="Kijkers zien daarna niets meer." yes="Ja, stoppen" tone="live" onYes={() => setStreamMode("stop")} />
     </div>
   );
 }

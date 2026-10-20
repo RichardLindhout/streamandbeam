@@ -6,6 +6,7 @@ import { chime } from "@/lib/chime";
 import { Header, type Screen } from "@/components/Header";
 import { AlarmBand, Notice } from "@/components/Alarms";
 import { Toaster } from "@/components/ui/sonner";
+import { LiveConfirm } from "@/components/LiveConfirm";
 import { SettingsDialog } from "@/components/Dialogs";
 import { Dienst } from "@/views/Dienst";
 import { Voorbereiden } from "@/views/Voorbereiden";
@@ -66,7 +67,7 @@ export default function App() {
           setScreen={setScreen} onSettings={() => setSettings(true)}
         />
       )}
-      {alarm ? <AlarmBand alarm={alarm} onAct={act} /> : screen === "dienst" ? <Notice state={state} /> : null}
+      {alarm ? <AlarmBand alarm={alarm} onAct={act} /> : screen === "dienst" ? <Notice state={state} svc={svc} live={status.mode === "live"} /> : null}
       {screen === "dienst" ? (
         <Dienst state={state} svc={svc} status={status} lis={lis} />
       ) : (
@@ -76,6 +77,7 @@ export default function App() {
         open={settings} onOpenChange={setSettings} state={state} status={status}
         onMade={() => { setSettings(false); setScreen("voorbereiden"); }}
       />
+      <LiveConfirm />
       <Toaster />
     </div>
   );

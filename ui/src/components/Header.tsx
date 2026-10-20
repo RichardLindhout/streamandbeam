@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { CalendarDays, Ellipsis, Eye, EyeOff, ListOrdered, Settings2, Square, Type, Wrench } from "lucide-react";
+import { useState } from "react";
+import { CalendarDays, Ellipsis, ExternalLink, Eye, EyeOff, Globe, ListOrdered, LoaderCircle, Settings2, Square, Type, Wrench } from "lucide-react";
 import type { Service, StreamStatus, View, YouTubeCheck } from "@/lib/api";
 import { at, go, hhmm, longDate, post, setStreamMode } from "@/lib/api";
 import { health } from "@/lib/problems";
@@ -14,6 +14,7 @@ import { Sheet, SheetContent } from "./ui/sheet";
 import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Confirm } from "./Confirm";
+import { toast } from "sonner";
 import { ServiceTiles } from "./ServiceTiles";
 
 export type Screen = "dienst" | "voorbereiden";
@@ -51,15 +52,54 @@ function StatusLight({ status, yt, connected, alarm }: { status: StreamStatus; y
   );
 }
 
-/** Live: a red pill. Not live: when it will go live by itself, and the button to go live now. */
-function LiveArea({ status }: { status: StreamStatus }) {
+/** What YouTube itself says (checked every minute while live): live, and with sound? */
+function youtubeLines(status: StreamStatus, yt: YouTubeCheck | null) {
+  // Only a check made after going live counts; the first takes about a minute.
+  const fresh = !!yt?.at && yt.at >= (status.since || 0);
+  if (!fresh) return { mark: "", lines: [{ ok: null, text: "YouTube wordt gecontroleerd" }] };
+  const lines = [
+    yt!.live ? { ok: true, text: "Live op YouTube" } : { ok: false, text: "Nog niet te zien op YouTube" },
+    yt!.live && yt!.audio ? { ok: true, text: "Geluid op YouTube" } : { ok: false, text: yt!.live ? "Geen geluid op YouTube" : "Geluid nog niet te horen" },
+  ];
+  return { mark: lines.every((l) => l.ok) ? "✓" : "⚠", lines };
+}
+
+/** The broadcast on YouTube: this service's own, else the channel's live page. */
+function youtubeUrl(svc?: Service, yt?: YouTubeCheck | null) {
+  if (svc?.youtubeId) return `https://www.youtube.com/watch?v=${encodeURIComponent(svc.youtubeId)}`;
+  if (yt?.channel) return `https://www.youtube.com/channel/${encodeURIComponent(yt.channel)}/live`;
+  return "https://www.youtube.com";
+}
+
+/** Live: a red pill; tap it to see what YouTube receives and to open it there. Not live: when it
+ *  will go live by itself, and the button to go live now. */
+function LiveArea({ status, svc, yt }: { status: StreamStatus; svc?: Service; yt: YouTubeCheck | null }) {
   const [ask, setAsk] = useState(false);
-  if (status.mode === "live")
+  if (status.mode === "live") {
+    const y = youtubeLines(status, yt);
     return (
-      <span className="flex h-14 shrink-0 items-center gap-2.5 rounded-full bg-live px-5 text-[22px] font-bold tracking-wide text-white tabular-nums">
-        <span className="size-3 animate-pulse-dot rounded-full bg-white" /> LIVE {hhmm(at(status.since))}
-      </span>
+      <Popover>
+        <PopoverTrigger asChild>
+          <button className="flex h-14 shrink-0 items-center gap-2.5 rounded-full bg-live px-5 text-[22px] font-bold tracking-wide text-white tabular-nums transition hover:brightness-110">
+            <span className="size-3 animate-pulse-dot rounded-full bg-white" /> LIVE {hhmm(at(status.since))}
+            {y.mark && <span className={cn("grid size-8 place-items-center rounded-full text-[20px]", y.mark === "✓" ? "bg-white text-ok" : "bg-warn text-[#2b1d12]")}>{y.mark}</span>}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-auto min-w-[22rem] p-5">
+          <div className="grid gap-3">
+            {y.lines.map((l) => (
+              <div key={l.text} className={cn("flex items-center gap-3 text-[24px]", l.ok === false && "font-semibold text-[#9a5a00]")}>
+                <span className="grid w-7 place-items-center">{l.ok === null ? <LoaderCircle className="size-6 animate-spin" /> : l.ok ? "✓" : "⚠"}</span> {l.text}
+              </div>
+            ))}
+            <Button asChild variant="outline" className="mt-2">
+              <a href={youtubeUrl(svc, yt)} target="_blank" rel="noreferrer"><ExternalLink /> Openen op YouTube</a>
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
     );
+  }
   const startAt = at(status.autoStartAt);
   // Today only the time; another day also the day ("Gaat live zo 09:15").
   const day = startAt && startAt.toDateString() !== new Date().toDateString() ? ["zo", "ma", "di", "wo", "do", "vr", "za"][startAt.getDay()] : "om";
@@ -203,53 +243,13 @@ function OtherServiceDialog({ open, onOpenChange, state }: { open: boolean; onOp
   );
 }
 
-/** "Uitzending stoppen" in the menu: hold it for three seconds while a bar fills, then confirm. */
-function HoldToStop({ onDone }: { onDone: () => void }) {
-  const [p, setP] = useState(0);
-  const raf = useRef(0);
-  const stop = () => {
-    cancelAnimationFrame(raf.current);
-    setP(0);
-  };
-  const start = () => {
-    const t0 = performance.now();
-    const tick = () => {
-      const v = Math.min(1, (performance.now() - t0) / 3000);
-      setP(v);
-      if (v >= 1) {
-        setP(0);
-        onDone();
-        return;
-      }
-      raf.current = requestAnimationFrame(tick);
-    };
-    cancelAnimationFrame(raf.current);
-    raf.current = requestAnimationFrame(tick);
-  };
-  return (
-    <DropdownMenuItem
-      onSelect={(e) => e.preventDefault()}
-      onPointerDown={start}
-      onPointerUp={stop}
-      onPointerLeave={stop}
-      onPointerCancel={stop}
-      onContextMenu={(e) => e.preventDefault()}
-      className="relative touch-none overflow-hidden font-semibold text-live focus:bg-[#fbe9e7] [&_svg]:text-live"
-    >
-      <span className="absolute inset-y-0 left-0 bg-live/25" style={{ width: `${p * 100}%` }} />
-      <Square className="relative fill-current" />
-      <span className="relative">{p > 0 ? "Blijf drukken…" : "Uitzending stoppen"}</span>
-    </DropdownMenuItem>
-  );
-}
-
 /** The ⋯ menu of the service screen. */
 function MainMenu({ state, svc, status, setScreen, onSettings }: {
   state: View | null; svc?: Service; status: StreamStatus; setScreen: (s: Screen) => void; onSettings: () => void;
 }) {
   const live = status.mode === "live";
   const [open, setOpen] = useState(false);
-  const [dlg, setDlg] = useState<"" | "goto" | "text" | "other" | "tech" | "stop">("");
+  const [dlg, setDlg] = useState<"" | "goto" | "text" | "other" | "stop">("");
   const close = (o: boolean) => !o && setDlg("");
   return (
     <>
@@ -265,12 +265,14 @@ function MainMenu({ state, svc, status, setScreen, onSettings }: {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={() => setScreen("voorbereiden")}><Wrench /> Dienst voorbereiden</DropdownMenuItem>
-          <DropdownMenuItem disabled={live} onSelect={() => setDlg("other")}><CalendarDays /> Andere dienst…</DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setDlg("tech")}><Settings2 /> Instellingen</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setDlg("other")}><CalendarDays /> Andere dienst…</DropdownMenuItem>
+          <DropdownMenuItem onSelect={onSettings}><Settings2 /> Instellingen</DropdownMenuItem>
           {live && (
             <>
               <DropdownMenuSeparator />
-              <HoldToStop onDone={() => { setOpen(false); setDlg("stop"); }} />
+              <DropdownMenuItem onSelect={() => setDlg("stop")} className="font-semibold text-live focus:bg-[#fbe9e7] [&_svg]:text-live">
+                <Square className="fill-current" /> Uitzending stoppen
+              </DropdownMenuItem>
             </>
           )}
         </DropdownMenuContent>
@@ -278,7 +280,6 @@ function MainMenu({ state, svc, status, setScreen, onSettings }: {
       <GotoSheet open={dlg === "goto"} onOpenChange={close} state={state} svc={svc} />
       <FreeTextDialog open={dlg === "text"} onOpenChange={close} />
       <OtherServiceDialog open={dlg === "other"} onOpenChange={close} state={state} />
-      <Confirm open={dlg === "tech"} onOpenChange={close} title="Alleen voor de technicus. Doorgaan?" yes="Ja" onYes={onSettings} />
       <Confirm
         open={dlg === "stop"}
         onOpenChange={close}
@@ -292,6 +293,76 @@ function MainMenu({ state, svc, status, setScreen, onSettings }: {
   );
 }
 
+/** "vandaag 08:15", "gisteren 21:00", "za 17 okt 08:15" */
+function when(t?: number) {
+  const d = at(t);
+  if (!d) return "";
+  const day = new Date(d), today = new Date();
+  day.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  const diff = Math.round((+today - +day) / 86_400_000);
+  const name = diff === 0 ? "vandaag" : diff === 1 ? "gisteren" : `${["zo", "ma", "di", "wo", "do", "vr", "za"][d.getDay()]} ${d.getDate()} ${["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"][d.getMonth()]}`;
+  return `${name} ${hhmm(d)}`;
+}
+
+/** Quietly under the service name: when the website was last read. Tap for what was not
+ *  understood, a newer website version, and fetching now. */
+function WebsiteInfo({ state, svc }: { state: View | null; svc?: Service }) {
+  const [busy, setBusy] = useState(false);
+  const last = when(state?.lastFetched);
+  const problems = svc?.problems || [];
+  const flag = !!state?.fetchError || problems.length > 0 || !!svc?.websiteChanged;
+  async function fetchNow() {
+    setBusy(true);
+    const r = await post("/api/fetch");
+    setBusy(false);
+    if (r.ok) toast.success("Opgehaald");
+  }
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className="flex max-w-full items-center gap-2 truncate rounded-lg px-2 text-[18px] text-muted-foreground transition hover:bg-accent">
+          {flag && <span className="size-2.5 shrink-0 rounded-full bg-warn" />}
+          website: {last || "nog niet opgehaald"}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="grid w-[30rem] gap-4 p-5 text-[20px]">
+        {svc?.websiteChanged && <WebsiteChanged svc={svc} />}
+        {problems.length > 0 && (
+          <div className="grid gap-1">
+            <div className="font-semibold">Niet herkend</div>
+            {problems.map((p) => <div key={p} className="text-[#7a4a00]">{p}</div>)}
+          </div>
+        )}
+        {state?.fetchError && (
+          <div className="grid gap-1">
+            <div className="font-semibold">Ophalen lukte niet</div>
+            <div className="line-clamp-3 text-[18px] break-words text-muted-foreground">{state.fetchError}</div>
+          </div>
+        )}
+        <Button variant="outline" disabled={busy} onClick={fetchNow}>
+          {busy ? <LoaderCircle className="animate-spin" /> : <Globe />} Nu ophalen
+        </Button>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+/** The website has a newer version of a service the volunteer changed: take it over or not. */
+export function WebsiteChanged({ svc }: { svc: Service }) {
+  const choose = (take: boolean) => post("/api/website", { id: svc.id, take });
+  return (
+    <div className="grid gap-3 rounded-xl border-2 border-warn/50 bg-warn/10 p-3">
+      <div className="font-semibold">Website gewijzigd</div>
+      {svc.website?.summary && <div className="text-[18px]">{svc.website.summary}</div>}
+      <div className="flex gap-3">
+        <Button size="sm" onClick={() => choose(true)}>Overnemen</Button>
+        <Button size="sm" variant="outline" onClick={() => choose(false)}>Negeren</Button>
+      </div>
+    </div>
+  );
+}
+
 export function Header({ state, svc, status, yt, connected, alarm, setScreen, onSettings }: {
   state: View | null; svc?: Service; status: StreamStatus; yt: YouTubeCheck | null; connected: boolean; alarm: boolean;
   setScreen: (s: Screen) => void; onSettings: () => void;
@@ -299,10 +370,11 @@ export function Header({ state, svc, status, yt, connected, alarm, setScreen, on
   return (
     <header className="flex h-24 shrink-0 items-center gap-4 border-b-2 border-walnut/15 bg-[#efe5cc] px-4">
       <StatusLight status={status} yt={yt} connected={connected} alarm={alarm} />
-      <div className="min-w-0 flex-1 truncate text-center text-[22px]">
-        {svc ? `${longDate(svc)} · ${svc.label}` : "Geen dienst"}
+      <div className="flex min-w-0 flex-1 flex-col items-center leading-tight">
+        <div className="max-w-full truncate text-[22px]">{svc ? `${longDate(svc)} · ${svc.label}` : "Geen dienst"}</div>
+        <WebsiteInfo state={state} svc={svc} />
       </div>
-      <LiveArea status={status} />
+      <LiveArea status={status} svc={svc} yt={yt} />
       <PreviewThumb status={status} />
       <MainMenu state={state} svc={svc} status={status} setScreen={setScreen} onSettings={onSettings} />
     </header>

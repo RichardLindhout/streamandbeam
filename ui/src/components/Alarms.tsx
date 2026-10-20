@@ -1,4 +1,4 @@
-import type { View } from "@/lib/api";
+import type { Service, View } from "@/lib/api";
 import { go, post } from "@/lib/api";
 import type { Alarm } from "@/lib/problems";
 
@@ -17,7 +17,7 @@ export function AlarmBand({ alarm, onAct }: { alarm: Alarm; onAct: (a: Alarm) =>
 }
 
 /** What the operator chose for the boards, in one calm line; shares its place with the alarm. */
-export function Notice({ state }: { state: View | null }) {
+export function Notice({ state, svc, live }: { state: View | null; svc?: Service; live: boolean }) {
   if (state?.black)
     return (
       <div className={`${band} border-b-2 border-walnut/30 bg-[#e8dcc0]`}>
@@ -32,6 +32,22 @@ export function Notice({ state }: { state: View | null }) {
         <button className={`${bandButton} bg-walnut text-white hover:bg-[#6b4a33]`} onClick={() => post("/api/board-override", { clear: true })}>
           Terug naar normaal
         </button>
+      </div>
+    );
+  if (state?.held)
+    return (
+      <div className={`${band} border-b-2 border-walnut/30 bg-[#e8dcc0]`}>
+        <span className="min-w-0 flex-1 truncate text-[24px] font-semibold">Scherm toont nog de vorige versie</span>
+        <button className={`${bandButton} bg-walnut text-white hover:bg-[#6b4a33]`} onClick={() => post("/api/tonen")}>Nu tonen</button>
+      </div>
+    );
+  // During the service it waits in the website popover; no news in the band then.
+  if (svc?.websiteChanged && !live)
+    return (
+      <div className={`${band} border-b-2 border-warn/40 bg-[#f6e6c2]`}>
+        <span className="min-w-0 flex-1 truncate text-[24px] font-semibold">Website gewijzigd</span>
+        <button className={`${bandButton} bg-walnut text-white hover:bg-[#6b4a33]`} onClick={() => post("/api/website", { id: svc.id, take: true })}>Overnemen</button>
+        <button className={`${bandButton} border-2 border-input bg-card hover:bg-accent`} onClick={() => post("/api/website", { id: svc.id, take: false })}>Negeren</button>
       </div>
     );
   return null;
