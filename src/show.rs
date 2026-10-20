@@ -5,7 +5,7 @@ use crate::extract::ExtractedService;
 use crate::texts::{Verse, read_json, write_json};
 use chrono::{Datelike, Local, NaiveDate, NaiveDateTime};
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tokio::sync::{Mutex, watch};
 
@@ -156,6 +156,8 @@ pub struct View {
     pub override_board: Option<Slide>,
     /// Whether that text also goes into the stream.
     pub override_stream: bool,
+    /// Version of the board background (file time in ms); 0 = the standard wood.
+    pub board_background: u64,
     #[serde(skip)]
     collecte: String,
 }
@@ -183,12 +185,31 @@ impl Show {
             collecte: saved.collecte,
             ..Default::default()
         };
+        let mut view = view;
+        view.board_background = background_version(path.parent().unwrap_or(Path::new(".")));
         let (tx, _) = watch::channel(view.clone());
         let show = Arc::new(Show { liturgy_url, path, state: Mutex::new(view), tx });
         let mut st = show.state.lock().await;
         show.changed(&mut st);
         drop(st);
         show
+    }
+
+    /// Folder with the saved liturgy, settings and the board background.
+    pub fn data_dir(&self) -> PathBuf {
+        self.path.parent().map(Path::to_path_buf).unwrap_or_default()
+    }
+
+    /// The church's own background picture for the boards, if one was chosen.
+    pub fn board_background(&self) -> Option<PathBuf> {
+        background_file(&self.data_dir())
+    }
+
+    /// Tells every screen that the board background changed, so they load it again.
+    pub async fn board_background_changed(&self) {
+        let mut st = self.state.lock().await;
+        st.board_background = background_version(&self.data_dir());
+        self.publish(&st);
     }
 
     pub fn subscribe(&self) -> watch::Receiver<View> {
@@ -727,4 +748,19 @@ fn paginate(verses: Vec<Verse>, max_chars: usize) -> Vec<Vec<Verse>> {
         }
     }
     pages
+}
+
+/// File types allowed for the board background.
+pub const BACKGROUND_TYPES: [(&str, &str); 3] = [("jpg", "image/jpeg"), ("png", "image/png"), ("webp", "image/webp")];
+
+fn background_file(dir: &Path) -> Option<PathBuf> {
+    BACKGROUND_TYPES.iter().map(|(ext, _)| dir.join(format!("bord-achtergrond.{ext}"))).find(|p| p.exists())
+}
+
+fn background_version(dir: &Path) -> u64 {
+    background_file(dir)
+        .and_then(|p| std::fs::metadata(p).ok()?.modified().ok())
+        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0)
 }

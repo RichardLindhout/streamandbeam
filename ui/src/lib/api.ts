@@ -51,6 +51,7 @@ export type View = {
   boards: Slide[];
   overrideBoard: Slide | null;
   overrideStream: boolean;
+  boardBackground: number;
 };
 
 export type Mode = "stop" | "voorbeeld" | "opnemen" | "live";

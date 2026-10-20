@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { OrderEditor } from "@/components/OrderEditor";
-import { FreeTextCard, SermonCard, StreamCard } from "@/components/PrepareCards";
+import { BoardBackgroundCard, FreeTextCard, SermonCard, StreamCard } from "@/components/PrepareCards";
 import { SettingsDialog } from "@/components/Dialogs";
 import { Strip } from "@/components/Strip";
 
@@ -60,6 +60,7 @@ export function Voorbereiden({ state, svc, status }: { state: View | null; svc?:
           <FreeTextCard state={state} />
           <QuickJumps state={state} />
           <StreamCard status={status} onSettings={() => setSettings(true)} />
+          <BoardBackgroundCard state={state} />
         </div>
       </div>
 

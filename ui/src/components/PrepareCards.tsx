@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Circle, Eye, Mic, Radio, Square, Trash, Type, Video } from "lucide-react";
+import { Circle, Eye, ImageUp, Mic, Radio, Square, Trash, TreePine, Type, Video, Image as ImageIcon } from "lucide-react";
+import { toast } from "sonner";
 import type { Mode, Service, StreamStatus, View } from "@/lib/api";
 import { post, quick, saveService } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader } from "./ui/card";
-import { Button } from "./ui/button";
+import { Button, buttonVariants } from "./ui/button";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
@@ -132,6 +133,46 @@ export function StreamCard({ status, onSettings }: { status: StreamStatus; onSet
         {status.error && <div className="rounded-lg border border-warn/40 bg-warn/10 p-3 text-[13px] text-warn">{status.error}</div>}
       </CardContent>
       <ConfirmMode mode={ask} open={ask !== null} onOpenChange={(o) => !o && setAsk(null)} />
+    </Card>
+  );
+}
+
+/** The background picture of the boards in church: the wood, or a photo of the church's own. */
+export function BoardBackgroundCard({ state }: { state: View | null }) {
+  const [busy, setBusy] = useState(false);
+  const sample = state?.boards?.find((b) => b.kind === "bord") || { kind: "bord", item: 0, header: "", sub: "", list: ["Ps 42:1", "Ps 119:5", "Joh. 3:16", "", "Ps 25:2"] };
+  const custom = (state?.boardBackground ?? 0) > 0;
+  async function upload(file: File) {
+    setBusy(true);
+    const r = await fetch("/api/bord-achtergrond", { method: "POST", headers: { "Content-Type": file.type }, body: file });
+    setBusy(false);
+    if (!r.ok) toast.error(await r.text());
+    else toast.success("Nieuwe achtergrond op de borden");
+  }
+  return (
+    <Card>
+      <CardHeader><ImageIcon /> Achtergrond van het bord</CardHeader>
+      <CardContent className="grid grid-cols-[110px_minmax(0,1fr)] items-start gap-5">
+        <Board slide={sample} className="rounded-lg ring-1 ring-[#3a3229]" />
+        <div className="grid gap-3">
+          <p className="text-sm text-muted-foreground">
+            {custom ? "De borden tonen nu een eigen afbeelding." : "De borden tonen nu het hout."} Een staande foto (9:16) past het best;
+            de letters blijven wit en worden iets donkerder omrand.
+          </p>
+          <label className={cn(buttonVariants({ variant: "outline" }), "cursor-pointer", busy && "pointer-events-none opacity-50")}>
+            <ImageUp /> {busy ? "Bezig…" : "Kies afbeelding…"}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="sr-only"
+              onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) upload(f); }}
+            />
+          </label>
+          {custom && (
+            <Button variant="ghost" onClick={() => fetch("/api/bord-achtergrond", { method: "DELETE" })}><TreePine /> Terug naar hout</Button>
+          )}
+        </div>
+      </CardContent>
     </Card>
   );
 }

@@ -111,16 +111,32 @@ function fitText(canvas) {
 // window.sbConnected tells whether the live connection is up.
 // With ?static in the URL it loads the state once (for screenshots).
 function listen(onState) {
+  var got = function (st) {
+    boardBackground(st.boardBackground);
+    onState(st);
+  };
   if (location.search.indexOf("static") >= 0) {
-    fetch("/api/state").then(function (r) { return r.json(); }).then(onState);
+    fetch("/api/state").then(function (r) { return r.json(); }).then(got);
     return;
   }
   var es = new EventSource("/events" + (window.sbRole ? "?rol=" + window.sbRole : ""));
   es.onopen = function () { window.sbConnected = true; };
-  es.onmessage = function (e) { onState(JSON.parse(e.data)); };
+  es.onmessage = function (e) { got(JSON.parse(e.data)); };
   es.onerror = function () {
     window.sbConnected = false;
     es.close();
     setTimeout(function () { listen(onState); }, 2000);
   };
+}
+
+// The boards' background: the church's own picture when one is chosen (version > 0),
+// otherwise the wood. A new version makes every screen load the picture again.
+var boardBackgroundVersion = -1;
+function boardBackground(version) {
+  version = version || 0;
+  if (version === boardBackgroundVersion) return;
+  boardBackgroundVersion = version;
+  var root = document.documentElement.style;
+  root.setProperty("--board-bg", 'url("/bord-achtergrond?v=' + version + '")');
+  root.setProperty("--board-shade", version ? ".45" : "0");
 }

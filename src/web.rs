@@ -82,6 +82,13 @@ pub fn router(
         .route("/preview.mjpg", get(preview_mjpeg))
         .route("/api/thumb", get(thumb))
         .route("/api/youtube-check", get(youtube_check))
+        .route("/bord-achtergrond", get(board_background))
+        .route(
+            "/api/bord-achtergrond",
+            post(set_board_background)
+                .delete(reset_board_background)
+                .layer(axum::extract::DefaultBodyLimit::max(12 * 1024 * 1024)),
+        )
         .with_state(App { boards: Arc::default(), show, director, listener, check, screen_url, port })
 }
 
@@ -102,6 +109,7 @@ pub fn public_router(
         .route("/slide.css", get(|| asset("slide.css")))
         .route("/kijk.css", get(|| asset("kijk.css")))
         .route("/hout.jpg", get(|| asset("hout.jpg")))
+        .route("/bord-achtergrond", get(board_background))
         .route("/fonts/{file}", get(font))
         .route("/events", get(events))
         .route("/api/state", get(state))
@@ -396,4 +404,46 @@ async fn youtube_check(State(app): State<App>) -> impl IntoResponse {
     v["channel"] = app.director.settings().youtube_channel.into();
     v["streaming"] = (app.director.engine.status().mode == crate::stream::Mode::Live).into();
     Json(v)
+}
+
+/// The background of the boards: the church's own picture, or the standard wood.
+async fn board_background(State(app): State<App>) -> Response {
+    if let Some(file) = app.show.board_background() {
+        let ext = file.extension().and_then(|e| e.to_str()).unwrap_or_default().to_string();
+        let mime = crate::show::BACKGROUND_TYPES.iter().find(|(e, _)| *e == ext).map(|(_, m)| *m).unwrap_or("image/jpeg");
+        if let Ok(data) = tokio::fs::read(&file).await {
+            return ([(header::CONTENT_TYPE, mime), (header::CACHE_CONTROL, "no-cache")], data).into_response();
+        }
+    }
+    asset("hout.jpg").await
+}
+
+async fn remove_board_background(app: &App) {
+    for (ext, _) in crate::show::BACKGROUND_TYPES {
+        let _ = tokio::fs::remove_file(app.show.data_dir().join(format!("bord-achtergrond.{ext}"))).await;
+    }
+}
+
+/// A new background picture for the boards (the raw image as the request body).
+async fn set_board_background(State(app): State<App>, headers: axum::http::HeaderMap, body: axum::body::Bytes) -> Response {
+    let mime = headers.get(header::CONTENT_TYPE).and_then(|v| v.to_str().ok()).unwrap_or_default();
+    let Some((ext, _)) = crate::show::BACKGROUND_TYPES.iter().find(|(_, m)| mime.starts_with(m)) else {
+        return (StatusCode::UNSUPPORTED_MEDIA_TYPE, "Kies een JPG-, PNG- of WebP-afbeelding.").into_response();
+    };
+    if body.is_empty() {
+        return (StatusCode::BAD_REQUEST, "Lege afbeelding.").into_response();
+    }
+    remove_board_background(&app).await;
+    if let Err(e) = tokio::fs::write(app.show.data_dir().join(format!("bord-achtergrond.{ext}")), &body).await {
+        return (StatusCode::INTERNAL_SERVER_ERROR, format!("Opslaan mislukt: {e}")).into_response();
+    }
+    app.show.board_background_changed().await;
+    StatusCode::NO_CONTENT.into_response()
+}
+
+/// Back to the standard wood.
+async fn reset_board_background(State(app): State<App>) -> StatusCode {
+    remove_board_background(&app).await;
+    app.show.board_background_changed().await;
+    StatusCode::NO_CONTENT
 }

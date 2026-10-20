@@ -130,8 +130,16 @@
 .canvas.portrait {
   --row: 160px;
   --top: 70px;
-  background: #554d58 url("/hout.jpg") center / cover;
+  /* The church's own picture (or the wood), set by slide.js as --board-bg. With a photo,
+     --board-shade darkens it a little so the white letters stay readable. The first line
+     is for older TV browsers without CSS variables. */
+  background: #554d58 url("/bord-achtergrond") center / cover;
+  background:
+    linear-gradient(rgba(0, 0, 0, var(--board-shade, 0)), rgba(0, 0, 0, var(--board-shade, 0))),
+    var(--board-bg, url("/bord-achtergrond")) center / cover,
+    #554d58;
   font-family: "Source Sans 3", Arial, sans-serif;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, calc(var(--board-shade, 0) * 1.6)), 0 4px 18px rgba(0, 0, 0, calc(var(--board-shade, 0) * 2));
 }
 .canvas.portrait::before {
   content: "";
@@ -159,6 +167,7 @@
   font: 700 calc(var(--row) * .74) / 1 "Source Sans 3", Arial, sans-serif;
   color: #f6f4f7;
   text-shadow: 0 2px 4px rgba(0, 0, 0, .35);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, calc(.35 + var(--board-shade, 0))), 0 4px 22px rgba(0, 0, 0, calc(var(--board-shade, 0) * 2));
   white-space: nowrap;
 }
 
