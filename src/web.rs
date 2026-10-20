@@ -67,6 +67,7 @@ pub fn router(show: Arc<Show>, director: Arc<Director>, listener: Arc<crate::lis
         .route("/api/listen", get(listen_status))
         .route("/api/listen/accept", post(listen_accept))
         .route("/api/board-mode", post(board_mode))
+        .route("/api/board-override", post(board_override))
         .with_state(App { show, director, listener, screen_url, port })
 }
 
@@ -287,5 +288,28 @@ struct BoardMode {
 /// Boards in church: only liturgy, theme and last psalm (default), or every text.
 async fn board_mode(State(app): State<App>, Json(m): Json<BoardMode>) -> StatusCode {
     app.show.set_board_full(m.full).await;
+    StatusCode::NO_CONTENT
+}
+
+#[derive(Deserialize)]
+struct Override {
+    #[serde(default)]
+    title: String,
+    #[serde(default)]
+    text: String,
+    #[serde(default)]
+    stream: bool,
+    #[serde(default)]
+    clear: bool,
+}
+
+/// Puts the operator's own text on the boards right away, or takes it off again.
+async fn board_override(State(app): State<App>, Json(o): Json<Override>) -> StatusCode {
+    let slide = (!o.clear).then(|| crate::show::Slide {
+        header: o.title,
+        lines: o.text.lines().map(String::from).collect(),
+        ..Default::default()
+    });
+    app.show.set_override(slide, o.stream).await;
     StatusCode::NO_CONTENT
 }

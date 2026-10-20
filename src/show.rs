@@ -11,8 +11,9 @@ use tokio::sync::{Mutex, watch};
 
 /// One part of a service, in the order the predikant uses. All references are numbers
 /// (Claude maps what is typed or on the website onto them), so nothing is parsed later.
-/// Kinds: welkom, psalm, slotzang, nazang (song after the service), lezing, catechismus,
-/// gebed, collecte, preek, mededeling, einde.
+/// Kinds: welkom, psalm, slotzang, nazang (song after the service), lied (a song not in
+/// the psalm book, e.g. on a children's singing day), lezing, catechismus, gebed,
+/// collecte, preek, mededeling, einde.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Item {
@@ -55,6 +56,7 @@ impl Item {
                 format!("vraag {}", qs.join(", "))
             }
             "catechismus" => format!("zondag {}", self.zondag),
+            "lied" => self.label.clone(),
             _ => String::new(),
         };
     }
@@ -124,6 +126,10 @@ pub struct View {
     /// What the boards in church show for each slide.
     pub boards: Vec<Slide>,
     pub board_full: bool,
+    /// Text the operator put on the boards directly, over whatever the service shows.
+    pub override_board: Option<Slide>,
+    /// Whether that text also goes into the stream.
+    pub override_stream: bool,
     #[serde(skip)]
     collecte: String,
 }
@@ -276,6 +282,14 @@ impl Show {
     }
 
     /// Rebuilds the slides after the services changed.
+    /// Puts the operator's own text on the boards right away (None = back to normal).
+    pub async fn set_override(&self, slide: Option<Slide>, stream: bool) {
+        let mut st = self.state.lock().await;
+        st.override_board = slide.map(|s| Slide { kind: "mededeling".into(), ..s });
+        st.override_stream = stream && st.override_board.is_some();
+        self.publish(&st);
+    }
+
     pub async fn set_board_full(&self, full: bool) {
         let mut st = self.state.lock().await;
         st.board_full = full;
@@ -468,6 +482,12 @@ fn build_slides(svc: &Service) -> Vec<Slide> {
                 let list = liturgy(svc).into_iter().map(|(_, l)| l).collect();
                 add(Slide { header: "Hersteld Hervormde Gemeente Tholen".into(), sub: service_title(svc), list, ..Default::default() });
             }
+            "lied" => add(Slide {
+                header: it.label.clone(),
+                sub: "Lied".into(),
+                lines: it.text.lines().map(String::from).collect(),
+                ..Default::default()
+            }),
             "nazang" if it.psalm == 0 => add(Slide {
                 header: it.label.clone(),
                 lines: it.text.lines().map(String::from).collect(),

@@ -166,6 +166,16 @@
     <p class="heard" id="heard"></p>
     <p class="hint">→ / spatie = volgende · ← = vorige · P preek · G gebed · S slotzang · B zwart · Enter = suggestie volgen</p>
     <div class="slides" id="slides"></div>
+    <details id="overrideBox" style="margin-top:12px">
+      <summary><b>Direct op het bord</b> — eigen tekst, meteen zichtbaar</summary>
+      <div class="fields">
+        <input id="ovTitle" placeholder="Kop, bijv. Mededeling of de titel van een lied">
+        <textarea id="ovText" rows="4" placeholder="Tekst (één regel per regel)"></textarea>
+        <label class="hint" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="ovStream" style="width:auto"> ook in de YouTube-uitzending</label>
+        <div style="display:flex;gap:6px"><button id="ovShow" class="primary" style="background:var(--teal);color:#fff;border-color:var(--teal)">Toon nu op de borden</button><button id="ovClear">Terug naar normaal</button></div>
+      </div>
+    </details>
+    <div id="overrideOn" class="note" hidden style="margin-top:10px">Het bord toont nu je eigen tekst. <button id="ovClear2">Terug naar normaal</button></div>
   </section>
 
   <section class="wide">
@@ -245,7 +255,8 @@ function draw() {
   drawService();
   const slides = state.slides || [];
   const boards = state.boards || slides;
-  renderSlide($("now"), boards[state.index], state.black);
+  renderSlide($("now"), state.overrideBoard || boards[state.index], state.black);
+  $("overrideOn").hidden = !state.overrideBoard;
   renderSlide($("next"), boards[state.index + 1], false);
   $("boardFull").checked = !!state.boardFull;
   document.querySelector(".zwart").classList.toggle("on", state.black);
@@ -448,6 +459,8 @@ document.querySelector(".controls").addEventListener("click", (e) => { const b =
 document.querySelector(".jumps").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b?.dataset.kind) go({ kind: b.dataset.kind }); });
 $("slides").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) go({ index: +b.dataset.index }); });
 $("boardFull").addEventListener("change", (e) => post("/api/board-mode", { full: e.target.checked }));
+$("ovShow").addEventListener("click", () => post("/api/board-override", { title: $("ovTitle").value, text: $("ovText").value, stream: $("ovStream").checked }));
+for (const id of ["ovClear", "ovClear2"]) $(id).addEventListener("click", () => post("/api/board-override", { clear: true }));
 document.addEventListener("keydown", (e) => {
   if (e.target.closest("input, textarea, select")) return;
   const keys = { ArrowRight: { delta: 1 }, " ": { delta: 1 }, PageDown: { delta: 1 }, ArrowLeft: { delta: -1 }, PageUp: { delta: -1 },

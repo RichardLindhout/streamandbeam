@@ -183,6 +183,11 @@ enum Position {
 /// The stream scene and camera position for what the screens show now, and until when
 /// that holds (for timed intros), measured from when the slide appeared.
 fn scene_for(view: &View, shown: Duration, s: &Settings) -> (Scene, Position, Option<Duration>) {
+    // The operator's own text, when it should go into the stream too.
+    if let Some(o) = view.override_board.as_ref().filter(|_| view.override_stream) {
+        let scene = Scene::Panel { label: String::new(), title: o.header.clone(), paragraphs: o.lines.clone(), style: Body::Prose, footer: String::new(), qr: false };
+        return (scene, Position::Preekstoel, None);
+    }
     let Some(slide) = view.slides.get(view.index) else {
         return (Scene::Camera, Position::Overzicht, None);
     };
@@ -248,6 +253,8 @@ fn scene_for(view: &View, shown: Duration, s: &Settings) -> (Scene, Position, Op
         "collecte" => (panel("", &slide.header, slide.lines.clone(), Body::Lines, "", true), Position::Orgel, None),
         "gebed" => (bar("", &slide.header), Position::Doopvont, None),
         "mededeling" => (panel("", &slide.header, slide.lines.clone(), Body::Prose, "", false), Position::Preekstoel, None),
+        "lied" if slide.lines.is_empty() => (bar("Lied", &slide.header), Position::Orgel, None),
+        "lied" => (panel("Lied", &slide.header, slide.lines.clone(), Body::Lines, "", false), Position::Orgel, None),
         "preek" if !slide.theme.is_empty() && shown < theme => {
             let points = slide.points.iter().enumerate().map(|(i, p)| format!("{}. {p}", i + 1)).collect();
             (panel("Thema", &slide.theme, points, Body::Lines, "", false), Position::Preekstoel, Some(theme))

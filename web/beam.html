@@ -27,7 +27,8 @@
   function draw() {
     // The boards have their own version of each slide (see Show::board_slides).
     var boards = last && (last.boards || last.slides);
-    if (last) renderSlide(canvas, boards ? boards[last.index] : null, last.black);
+    // Text the operator put on the boards directly goes over everything else.
+    if (last) renderSlide(canvas, last.overrideBoard || (boards ? boards[last.index] : null), last.black);
   }
   listen(function (st) {
     last = st;
