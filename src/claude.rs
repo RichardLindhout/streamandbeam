@@ -2,7 +2,7 @@
 //! format: the service items below. Per item it says whether it understood it; the
 //! program then checks the numbers against its own texts.
 
-use crate::books::{BOOK_NAMES, BibleRef};
+use crate::books::{BOOKS, BibleRef};
 use crate::show::Item;
 use anyhow::{Context, Result, bail};
 use serde::Deserialize;
@@ -91,7 +91,7 @@ pub fn item_schema() -> Value {
 
 /// What Claude needs to know to map names onto numbers.
 pub fn reference_lists() -> String {
-    let books: Vec<String> = BOOK_NAMES.iter().enumerate().map(|(i, b)| format!("{}={b}", i + 1)).collect();
+    let books: Vec<String> = BOOKS.iter().map(|b| format!("{}={} ({})", b.nummer, b.naam, b.afkorting)).collect();
     let gezangen: Vec<String> = crate::texts::gezangen().iter().map(|(n, name)| format!("{n}={name}")).collect();
     format!("Bible books: {}\nGezangen (use as psalm number): {}", books.join(", "), gezangen.join(", "))
 }

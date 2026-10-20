@@ -62,6 +62,27 @@ impl Item {
     }
 }
 
+impl Item {
+    /// As written on the psalm board: "Ps 74:2,20", "Openb.1:9-26", "Zondag 21".
+    pub fn short(&self) -> String {
+        let verses = self.verses.iter().map(u32::to_string).collect::<Vec<_>>().join(",");
+        match self.kind.as_str() {
+            "psalm" | "slotzang" | "nazang" if self.psalm > 0 && self.psalm <= 150 => format!("Ps {}:{verses}", self.psalm),
+            "psalm" | "slotzang" | "nazang" if self.psalm > 150 => {
+                let name = crate::texts::psalm(self.psalm).map(|p| p.naam.clone()).unwrap_or_default();
+                format!("{name}:{verses}")
+            }
+            "lezing" => self.passage.map(|p| p.short()).unwrap_or_default(),
+            "catechismus" => {
+                let zondag = if self.zondag > 0 { self.zondag } else { crate::catechism::for_item(self).first().map_or(0, |q| q.zondag) };
+                if zondag > 0 { format!("Zondag {zondag}") } else { String::new() }
+            }
+            "lied" | "nazang" => self.label.clone(),
+            _ => String::new(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct Service {
@@ -280,7 +301,7 @@ impl Show {
     /// Puts the operator's own text on the boards right away (None = back to normal).
     pub async fn set_override(&self, slide: Option<Slide>, stream: bool) {
         let mut st = self.state.lock().await;
-        st.override_board = slide.map(|s| Slide { kind: "mededeling".into(), ..s });
+        st.override_board = slide.map(|s| Slide { kind: "vrij".into(), ..s });
         st.override_stream = stream && st.override_board.is_some();
         self.publish(&st);
     }
@@ -581,12 +602,39 @@ fn liturgy(svc: &Service) -> Vec<(usize, String)> {
     out
 }
 
-/// What the boards show, as the church wants it: the liturgy (with the current part
-/// marked), the theme during the sermon, and the last psalm and any song after the
-/// service. Not every text, so people keep using their own Bible and psalter.
+/// The psalm board as it hangs in church: one line per ledge — the psalms and the
+/// reading in order, an empty ledge after the reading, and the catechism Sunday at the
+/// bottom ("Zondag 21"). No headings, no texts.
+fn board_rows(svc: &Service) -> Vec<String> {
+    let mut rows: Vec<String> = Vec::new();
+    let mut zondag = String::new();
+    let last_reading = svc.items.iter().rposition(|i| i.kind == "lezing");
+    for (i, it) in svc.items.iter().enumerate() {
+        match it.kind.as_str() {
+            "catechismus" => zondag = it.short(),
+            "psalm" | "slotzang" | "nazang" | "lezing" | "lied" => {
+                let line = it.short();
+                if !line.is_empty() {
+                    rows.push(line);
+                }
+                if Some(i) == last_reading && svc.items[i + 1..].iter().any(|o| matches!(o.kind.as_str(), "psalm" | "slotzang")) {
+                    rows.push(String::new());
+                }
+            }
+            _ => {}
+        }
+    }
+    if !zondag.is_empty() {
+        rows.extend([String::new(), String::new(), zondag]);
+    }
+    rows
+}
+
+/// What the boards show, as the church wants it: the psalm board, the theme during the
+/// sermon, and the last psalm (and any song after the service). Not every text, so
+/// people keep using their own Bible and psalter.
 fn board_slides(svc: &Service, slides: &[Slide]) -> Vec<Slide> {
-    let list = liturgy(svc);
-    let lines: Vec<String> = list.iter().map(|(_, l)| l.clone()).collect();
+    let rows = board_rows(svc);
     slides
         .iter()
         .map(|sl| match sl.kind.as_str() {
@@ -595,20 +643,19 @@ fn board_slides(svc: &Service, slides: &[Slide]) -> Vec<Slide> {
                 item: sl.item,
                 kind: "slotzang".into(),
                 header: if sl.kind == "nazang" { "Na de dienst".into() } else { "Slotzang".into() },
-                sub: svc.items.get(sl.item).map(|i| i.reference.clone()).unwrap_or_default(),
+                sub: svc.items.get(sl.item).map(|i| i.short()).unwrap_or_default(),
                 ..Default::default()
             },
-            "einde" => sl.clone(),
-            "preek" => Slide { verses: Vec::new(), ..sl.clone() },
-            _ => Slide {
+            // During the sermon: the text and the theme with its points.
+            "preek" => Slide {
                 item: sl.item,
-                kind: "welkom".into(),
-                header: if sl.kind == "welkom" { sl.header.clone() } else { "Liturgie".into() },
-                sub: service_title(svc),
-                list: lines.clone(),
-                active: if sl.kind == "welkom" { None } else { list.iter().position(|(i, _)| *i == sl.item) },
+                kind: "thema".into(),
+                sub: if svc.text.kind == "catechismus" { svc.text.short() } else { svc.text.passage.map(|p| p.short()).unwrap_or_default() },
+                theme: sl.theme.clone(),
+                points: sl.points.clone(),
                 ..Default::default()
             },
+            _ => Slide { item: sl.item, kind: "bord".into(), list: rows.clone(), ..Default::default() },
         })
         .collect()
 }

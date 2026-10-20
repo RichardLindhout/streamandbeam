@@ -78,6 +78,7 @@ pub fn public_router(show: Arc<Show>, director: Arc<Director>, listener: Arc<cra
         .route("/beam", get(|| asset("beam.html")))
         .route("/slide.js", get(|| asset("slide.js")))
         .route("/slide.css", get(|| asset("slide.css")))
+        .route("/hout.jpg", get(|| asset("hout.jpg")))
         .route("/fonts/{file}", get(font))
         .route("/events", get(events))
         .route("/api/state", get(state))

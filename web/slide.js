@@ -14,6 +14,15 @@ function slideHTML(s) {
   if (!s) return "";
   const bar = `<div class="bar"><h1>${typo(s.header)}</h1><span>${typo(s.sub)}</span></div>`;
   switch (s.kind) {
+    case "bord":
+      return `<div class="rows">${(s.list || []).map((l) => `<div class="row">${typo(l)}</div>`).join("")}</div>`;
+    // Free text from the operator, set on the ledges like the psalm board.
+    case "vrij":
+      return `<div class="rows">${[s.header].concat(s.lines || []).filter((l, i) => i > 0 || l).map((l, i) =>
+        `<div class="row${i === 0 && s.header ? " head" : ""}">${typo(l)}</div>`).join("")}</div>`;
+    // The theme during the sermon: every line of text sits on a ledge.
+    case "thema":
+      return `<div class="flow">${s.sub ? `<div class="ref">Tekst: ${typo(s.sub)}</div>` : ""}<div class="t">${typo(s.theme)}</div>${(s.points || []).map((p, i) => `<div>${i + 1}. ${typo(p)}</div>`).join("")}</div>`;
     case "welkom":
     case "einde":
       return `<div class="head"><h1>${typo(s.header)}</h1><p>${typo(s.sub)}</p></div>
@@ -53,6 +62,23 @@ function renderSlide(canvas, slide, black, layout) {
   canvas.innerHTML = slideHTML(slide);
   scaleCanvas(canvas, layout);
   fitText(canvas);
+  fitRows(canvas);
+}
+
+// The psalm board: at least 11 ledges, closer together when there are more lines, and
+// a line that is too long gets smaller letters.
+function fitRows(canvas) {
+  var rows = canvas.querySelectorAll(".bord .row, .vrij .row");
+  if (!rows.length) return;
+  var n = Math.max(11, rows.length);
+  canvas.style.setProperty("--row", Math.floor((1920 - 140) / n) + "px");
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i], size = parseFloat(getComputedStyle(r).fontSize);
+    while (size > 40 && r.scrollWidth > r.clientWidth + 1) {
+      size -= 4;
+      r.style.fontSize = size + "px";
+    }
+  }
 }
 
 function scaleCanvas(canvas, layout) {

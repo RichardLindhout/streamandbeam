@@ -164,11 +164,11 @@
     <p class="heard" id="heard"></p>
     <p class="hint">→ / spatie = volgende · ← = vorige · P preek · G gebed · S slotzang · B zwart · Enter = suggestie volgen</p>
     <div class="slides" id="slides"></div>
-    <details id="overrideBox" style="margin-top:12px">
-      <summary><b>Direct op het bord</b> — eigen tekst, meteen zichtbaar</summary>
+    <details id="overrideBox" open style="margin-top:12px">
+      <summary><b>Vrije tekst op het bord</b> — typ zelf wat er op het bord moet, meteen zichtbaar</summary>
       <div class="fields">
-        <input id="ovTitle" placeholder="Kop, bijv. Mededeling of de titel van een lied">
-        <textarea id="ovText" rows="4" placeholder="Tekst (één regel per regel)"></textarea>
+        <input id="ovTitle" placeholder="Bovenste regel (groot), bijv. Kinderzangdag">
+        <textarea id="ovText" rows="5" placeholder="Eén regel per richel, bijv.&#10;Ps 100:1,4&#10;Lied: Hoe groot zijt Gij"></textarea>
         <label class="hint" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="ovStream" style="width:auto"> ook in de YouTube-uitzending</label>
         <div style="display:flex;gap:6px"><button id="ovShow" class="primary" style="background:var(--teal);color:#fff;border-color:var(--teal)">Toon nu op de borden</button><button id="ovClear">Terug naar normaal</button></div>
       </div>

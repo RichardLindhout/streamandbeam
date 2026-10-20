@@ -1,22 +1,43 @@
 //! Dutch Bible book names and how references are written.
 
 use serde::{Deserialize, Serialize};
+use std::sync::LazyLock;
 
-/// Statenvertaling book names in canonical order; index+1 is the book number.
-pub const BOOK_NAMES: [&str; 66] = [
-    "Genesis", "Exodus", "Leviticus", "Numeri", "Deuteronomium", "Jozua", "Richteren", "Ruth",
-    "1 Samuël", "2 Samuël", "1 Koningen", "2 Koningen", "1 Kronieken", "2 Kronieken", "Ezra",
-    "Nehemia", "Esther", "Job", "Psalmen", "Spreuken", "Prediker", "Hooglied", "Jesaja", "Jeremia",
-    "Klaagliederen", "Ezechiël", "Daniël", "Hosea", "Joël", "Amos", "Obadja", "Jona", "Micha",
-    "Nahum", "Habakuk", "Sefanja", "Haggaï", "Zacharia", "Maleachi", "Mattheüs", "Markus", "Lukas",
-    "Johannes", "Handelingen", "Romeinen", "1 Korinthe", "2 Korinthe", "Galaten", "Efeze",
-    "Filippenzen", "Kolossenzen", "1 Thessalonicenzen", "2 Thessalonicenzen", "1 Timotheüs",
-    "2 Timotheüs", "Titus", "Filemon", "Hebreeën", "Jakobus", "1 Petrus", "2 Petrus", "1 Johannes",
-    "2 Johannes", "3 Johannes", "Judas", "Openbaring",
-];
+/// One book of the Bible, from assets/data/bijbelboeken.json.
+#[derive(Debug, Deserialize)]
+pub struct Book {
+    pub nummer: u32,
+    /// Full name, e.g. "1 Korinthe".
+    pub naam: String,
+    /// As on the psalm board, e.g. "1 Kor." or "Openb.".
+    pub afkorting: String,
+}
+
+/// The 66 books in canonical order; `nummer` is also the number used in the Bible data.
+pub static BOOKS: LazyLock<Vec<Book>> =
+    LazyLock::new(|| serde_json::from_str(include_str!("../assets/data/bijbelboeken.json")).expect("bijbelboeken.json"));
+
+fn book(n: u32) -> Option<&'static Book> {
+    BOOKS.get((n as usize).wrapping_sub(1))
+}
 
 pub fn book_name(n: u32) -> &'static str {
-    BOOK_NAMES.get((n as usize).wrapping_sub(1)).copied().unwrap_or("?")
+    book(n).map_or("?", |b| b.naam.as_str())
+}
+
+impl BibleRef {
+    /// As written on the psalm board: "Openb.1:9-26", "Job 3:1".
+    pub fn short(&self) -> String {
+        let abbr = book(self.book).map_or("?", |b| b.afkorting.as_str());
+        let sep = if abbr.ends_with('.') { "" } else { " " };
+        if self.from <= 1 && self.to >= 999 {
+            format!("{abbr}{sep}{}", self.chapter)
+        } else if self.to <= self.from {
+            format!("{abbr}{sep}{}:{}", self.chapter, self.from)
+        } else {
+            format!("{abbr}{sep}{}:{}-{}", self.chapter, self.from, self.to)
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Serialize, Deserialize)]

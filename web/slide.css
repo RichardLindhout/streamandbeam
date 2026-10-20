@@ -124,3 +124,69 @@
 .canvas.portrait.einde .footer { left: 70px; bottom: 110px; }
 .canvas.portrait .slotzang .announce small, .canvas.portrait.slotzang .announce small { font-size: 70px; }
 .canvas.portrait.slotzang .announce strong { font-size: 150px; text-align: center; }
+
+/* The psalm board as it hangs in church: dark wood with ledges, one line per ledge,
+   large white letters. --row is the distance between the ledges (set by slide.js). */
+.canvas.portrait {
+  --row: 160px;
+  --top: 70px;
+  background: #554d58 url("/hout.jpg") center / cover;
+  font-family: "Source Sans 3", Arial, sans-serif;
+}
+.canvas.portrait::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(to bottom,
+    transparent 0, transparent calc(var(--row) - 10px),
+    rgba(0, 0, 0, .38) calc(var(--row) - 10px), rgba(0, 0, 0, .38) calc(var(--row) - 7px),
+    rgba(255, 255, 255, .16) calc(var(--row) - 7px), rgba(255, 255, 255, .16) calc(var(--row) - 3px),
+    rgba(0, 0, 0, .14) calc(var(--row) - 3px), transparent var(--row));
+  background-position: 0 var(--top);
+  pointer-events: none;
+}
+.canvas.portrait > * { position: relative; z-index: 1; }
+.canvas.portrait.black { background: #000; }
+.canvas.portrait.black::before { display: none; }
+
+.bord .rows, .vrij .rows { position: absolute; top: var(--top); left: 64px; right: 36px; }
+.bord .row, .vrij .row {
+  box-sizing: border-box;
+  height: var(--row);
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 12px;
+  font: 700 calc(var(--row) * .74) / 1 "Source Sans 3", Arial, sans-serif;
+  color: #f6f4f7;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, .35);
+  white-space: nowrap;
+}
+
+/* Theme and last psalm on the same wood. */
+.canvas.portrait .bar { border-bottom-color: rgba(255, 255, 255, .25); }
+.canvas.portrait .bar h1 { color: #fff; }
+.canvas.portrait .bar span { color: rgba(255, 255, 255, .7); }
+.canvas.portrait.preek .theme { color: #fff; font-weight: 700; }
+.canvas.portrait .fit { text-shadow: 0 2px 4px rgba(0, 0, 0, .3); }
+.canvas.portrait.slotzang { box-shadow: none; }
+.canvas.portrait.slotzang .announce small { color: rgba(255, 255, 255, .8); }
+.canvas.portrait.slotzang .announce strong { font-family: "Source Sans 3", Arial, sans-serif; font-weight: 700; text-shadow: 0 3px 6px rgba(0, 0, 0, .35); }
+
+.vrij .row { font-size: calc(var(--row) * .5); font-weight: 600; }
+.vrij .row.head { font-size: calc(var(--row) * .66); font-weight: 700; }
+
+/* Theme: lines of text on the ledges. */
+.thema .flow {
+  position: absolute;
+  top: var(--top);
+  left: 64px;
+  right: 50px;
+  font: 600 calc(var(--row) * .5) / var(--row) "Source Sans 3", Arial, sans-serif;
+  color: #f6f4f7;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, .35);
+  transform: translateY(calc(var(--row) * .2));
+}
+.thema .flow .ref { color: rgba(255, 255, 255, .78); font-weight: 400; }
+.thema .flow .t { font-weight: 700; font-size: calc(var(--row) * .6); }
+
+.canvas.portrait .announce { position: absolute; }
