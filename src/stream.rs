@@ -104,7 +104,7 @@ impl Default for Settings {
             youtube_client_secret: String::new(),
             youtube_privacy: "public".into(),
             youtube_test: false,
-            autopilot: "suggestie".into(),
+            autopilot: "uit".into(),
             youtube_channel: "UCv0FTJ5pf3aXF7fhVYLwe2g".into(),
             overlay_zones: vec![crate::render::Zone::camera_circle()],
         }

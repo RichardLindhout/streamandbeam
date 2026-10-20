@@ -24,7 +24,7 @@ struct Options {
     port: u16,
     data_dir: PathBuf,
     liturgy_url: String,
-    /// Port for the read-only watch page (for a Cloudflare tunnel); 0 = off.
+    /// Port for the read-only watch page (for a Cloudflare tunnel); 0 = off (the default).
     public_port: u16,
     command: Option<String>,
 }
@@ -34,7 +34,7 @@ fn parse_args() -> Options {
         port: 8080,
         data_dir: "data".into(),
         liturgy_url: extract::LITURGY_URL.into(),
-        public_port: 8090,
+        public_port: 0,
         command: None,
     };
     let mut args = std::env::args().skip(1);
@@ -47,7 +47,7 @@ fn parse_args() -> Options {
             "-h" | "--help" => {
                 println!(
                     "streamandbeam [--poort 8080] [--publiek-poort 8090] [--data data] [--liturgie-url URL] [fetch|scenes]\n\n  \
-                     --publiek-poort  alleen-kijken-pagina (bord + uitzending) voor internet; 0 = uit\n  \
+                     --publiek-poort  alleen-kijken-pagina (bord + uitzending) voor internet, bv. 8090; standaard uit\n  \
                      fetch            laat zien wat Claude van de website leest\n  \
                      scenes           schrijf voorbeelden van de uitzendbeelden naar data/scenes"
                 );
@@ -95,6 +95,23 @@ async fn main() -> anyhow::Result<()> {
     let (d1, d2) = (director.clone(), director.clone());
     tokio::spawn(check.clone().run(move || d1.settings().youtube_channel, move || d2.engine.status().mode == stream::Mode::Live));
     tokio::spawn(director.clone().run(show.clone()));
+    // The liturgy from the website: at the start and every hour, not while live (then a few
+    // minutes later). A failure (no Claude key, no internet) is only shown quietly.
+    let (s, d) = (show.clone(), director.clone());
+    tokio::spawn(async move {
+        tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+        loop {
+            let live = || d.engine.status().mode == stream::Mode::Live;
+            if live() {
+                tokio::time::sleep(std::time::Duration::from_secs(300)).await;
+                continue;
+            }
+            if let Err(e) = s.fetch(live).await {
+                eprintln!("website ophalen: {e:#}");
+            }
+            tokio::time::sleep(std::time::Duration::from_secs(3600)).await;
+        }
+    });
     if std::env::var("ANTHROPIC_API_KEY").is_err() {
         eprintln!("let op: ANTHROPIC_API_KEY is niet gezet; liturgie ophalen van de website werkt dan niet");
     }

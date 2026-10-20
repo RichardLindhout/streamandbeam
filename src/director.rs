@@ -88,6 +88,13 @@ impl Director {
                 settings.auto_start_minutes = 15;
             }
             settings.settings_version = 2;
+        }
+        // Once: listening along gave too many suggestions; off until switched on again.
+        if settings.settings_version < 3 {
+            if settings.autopilot == "suggestie" {
+                settings.autopilot = "uit".into();
+            }
+            settings.settings_version = 3;
             if let Err(e) = write_json(&path, &settings) {
                 eprintln!("instellingen opslaan mislukt: {e:#}");
             }
@@ -189,7 +196,22 @@ impl Director {
                 }
             }
         }
+        // After the service the preview stays on (nothing goes to YouTube).
+        if was_live && mode == Mode::Stop {
+            self.start_preview().await;
+        }
         Ok(())
+    }
+
+    /// Camera, overlay and sound in the console, nothing sent anywhere. Failing is fine:
+    /// the status light shows it.
+    async fn start_preview(&self) {
+        let (engine, settings) = (self.engine.clone(), self.settings());
+        match tokio::task::spawn_blocking(move || engine.set_mode(Mode::Voorbeeld, &settings)).await {
+            Ok(Err(e)) => eprintln!("voorbeeld starten mislukt: {e:#}"),
+            Err(e) => eprintln!("voorbeeld starten mislukt: {e}"),
+            Ok(Ok(())) => {}
+        }
     }
 
     pub fn settings(&self) -> Settings {
@@ -205,6 +227,10 @@ impl Director {
 
     /// Runs for the lifetime of the program.
     pub async fn run(self: Arc<Self>, show: Arc<Show>) {
+        // At the start the preview is on, so the console shows the camera and the sound.
+        if self.engine.status().mode == Mode::Stop {
+            self.start_preview().await;
+        }
         tokio::spawn(self.clone().autopilot(show.clone()));
         let qr_link = self.settings().qr_link;
         let renderer = Arc::new(Mutex::new(Renderer::with_builtin_images(&qr_link)));
