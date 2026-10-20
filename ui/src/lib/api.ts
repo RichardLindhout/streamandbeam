@@ -84,6 +84,8 @@ export type YouTubeCheck = {
   streaming: boolean;
 };
 
+export type Zone = { round: boolean; x: number; y: number; w: number; h: number; camera: boolean };
+
 export type Settings = {
   cameraIp: string;
   cameraRtsp: string;
@@ -104,6 +106,7 @@ export type Settings = {
   youtubeTest: boolean;
   autopilot: string;
   youtubeChannel: string;
+  overlayZones: Zone[];
 };
 
 export const post = (url: string, body?: unknown) =>

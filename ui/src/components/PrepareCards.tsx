@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Circle, Eye, ImageUp, Mic, Radio, Square, Trash, TreePine, Type, Video, Image as ImageIcon } from "lucide-react";
+import { Circle, Eye, ImageUp, Mic, Radio, Square, Trash, TreePine, Type, Video, } from "lucide-react";
 import { toast } from "sonner";
 import type { Mode, Service, StreamStatus, View } from "@/lib/api";
 import { post, quick, saveService } from "@/lib/api";
@@ -98,7 +98,8 @@ export function FreeTextCard({ state }: { state: View | null }) {
   );
 }
 
-export function StreamCard({ status, onSettings }: { status: StreamStatus; onSettings: () => void }) {
+/** Voorbeeld, Opnemen, Live and Stop, for testing before the service. */
+export function StreamControls({ status }: { status: StreamStatus }) {
   const [ask, setAsk] = useState<Mode | null>(null);
   const modes: [Mode, string, React.ReactNode][] = [
     ["voorbeeld", "Voorbeeld", <Eye key="v" />],
@@ -111,34 +112,32 @@ export function StreamCard({ status, onSettings }: { status: StreamStatus; onSet
     else setStreamMode(m);
   };
   return (
-    <Card>
-      <CardHeader action={<Button variant="ghost" size="sm" onClick={onSettings}>Instellingen</Button>}><Video /> Uitzending</CardHeader>
-      <CardContent className="grid gap-3">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {modes.map(([m, label, icon]) => (
-            <Button
-              key={m}
-              variant="outline"
-              size="lg"
-              onClick={() => choose(m)}
-              className={cn(
-                status.mode === m && (m === "live" ? "border-live bg-live text-[#fff6ef] hover:bg-live" : "border-primary bg-primary/15 text-foreground"),
-              )}
-            >
-              {icon} {label}
-            </Button>
-          ))}
-        </div>
-        {status.recording && <div className="truncate text-[13px] text-muted-foreground">Opname: {status.recording.split(/[\\/]/).pop()}</div>}
-        {status.error && <div className="rounded-lg border border-warn/40 bg-warn/10 p-3 text-[13px] text-warn">{status.error}</div>}
-      </CardContent>
+    <div className="grid gap-4">
+      <p className="text-sm text-muted-foreground">
+        Voorbeeld laat het beeld zien zonder iets uit te zenden; Opnemen bewaart de dienst op deze PC zonder YouTube. Tijdens de dienst gebruik je de knop Ga live.
+      </p>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {modes.map(([m, label, icon]) => (
+          <Button
+            key={m}
+            variant="outline"
+            size="lg"
+            onClick={() => choose(m)}
+            className={cn(status.mode === m && (m === "live" ? "border-live bg-live text-[#fff6ef] hover:bg-live" : "border-primary bg-primary/15 text-foreground"))}
+          >
+            {icon} {label}
+          </Button>
+        ))}
+      </div>
+      {status.recording && <div className="truncate text-[13px] text-muted-foreground">Opname: {status.recording.split(/[\\/]/).pop()}</div>}
+      {status.error && <div className="rounded-lg border border-warn/40 bg-warn/10 p-3 text-[13px] text-warn">{status.error}</div>}
       <ConfirmMode mode={ask} open={ask !== null} onOpenChange={(o) => !o && setAsk(null)} />
-    </Card>
+    </div>
   );
 }
 
 /** The background picture of the boards in church: the wood, or a photo of the church's own. */
-export function BoardBackgroundCard({ state }: { state: View | null }) {
+export function BoardBackground({ state }: { state: View | null }) {
   const [busy, setBusy] = useState(false);
   const sample = state?.boards?.find((b) => b.kind === "bord") || { kind: "bord", item: 0, header: "", sub: "", list: ["Ps 42:1", "Ps 119:5", "Joh. 3:16", "", "Ps 25:2"] };
   const custom = (state?.boardBackground ?? 0) > 0;
@@ -150,9 +149,7 @@ export function BoardBackgroundCard({ state }: { state: View | null }) {
     else toast.success("Nieuwe achtergrond op de borden");
   }
   return (
-    <Card>
-      <CardHeader><ImageIcon /> Achtergrond van het bord</CardHeader>
-      <CardContent className="grid grid-cols-[110px_minmax(0,1fr)] items-start gap-5">
+    <div className="grid grid-cols-[130px_minmax(0,1fr)] items-start gap-5">
         <Board slide={sample} className="rounded-lg ring-1 ring-[#3a3229]" />
         <div className="grid gap-3">
           <p className="text-sm text-muted-foreground">
@@ -172,7 +169,6 @@ export function BoardBackgroundCard({ state }: { state: View | null }) {
             <Button variant="ghost" onClick={() => fetch("/api/bord-achtergrond", { method: "DELETE" })}><TreePine /> Terug naar hout</Button>
           )}
         </div>
-      </CardContent>
-    </Card>
+    </div>
   );
 }

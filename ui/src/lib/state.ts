@@ -24,7 +24,7 @@ export function useConsole() {
     const l = poll("/api/listen", setLis);
     const y = poll("/api/youtube-check", setYt);
     s(); l(); y();
-    const t = [setInterval(s, 700), setInterval(l, 1500), setInterval(y, 10000), setInterval(() => tick((n) => n + 1), 1000)];
+    const t = [setInterval(s, 250), setInterval(l, 1500), setInterval(y, 10000), setInterval(() => tick((n) => n + 1), 1000)];
     return () => t.forEach(clearInterval);
   }, []);
 

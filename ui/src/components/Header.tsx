@@ -1,36 +1,16 @@
 import { useState } from "react";
-import { CalendarPlus, Ear, Globe, LoaderCircle, MonitorPlay, Cross, Tv, Volume2, Wrench, SquarePlay as Youtube } from "lucide-react";
+import { ArrowLeft, CalendarPlus, Cross, Ellipsis, Eye, EyeOff, Globe, Settings2, Wrench } from "lucide-react";
 import { toast } from "sonner";
-import { post } from "@/lib/api";
+import type { ListenStatus, Service, StreamStatus, View, YouTubeCheck } from "@/lib/api";
+import { go, post } from "@/lib/api";
+import type { Problem } from "@/lib/problems";
+import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "./ui/select";
-import type { ListenStatus, Service, StreamStatus, View, YouTubeCheck } from "@/lib/api";
-import { clock } from "@/lib/api";
-import { cn } from "@/lib/utils";
-import type { ReactNode } from "react";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 
 export type Screen = "dienst" | "voorbereiden";
-
-type Tone = "ok" | "warn" | "live" | "off";
-
-function Light({ tone, icon, label, value, title }: { tone: Tone; icon: ReactNode; label: string; value?: ReactNode; title?: string }) {
-  return (
-    <div title={title} className="flex h-10 items-center gap-2 rounded-lg border bg-card/80 pr-3 pl-2.5 text-[13px] text-muted-foreground [&_svg]:size-4">
-      <span
-        className={cn(
-          "size-2 rounded-full",
-          tone === "ok" && "bg-ok shadow-[0_0_10px_var(--ok)]",
-          tone === "warn" && "bg-warn shadow-[0_0_10px_var(--warn)]",
-          tone === "live" && "animate-pulse-dot bg-live shadow-[0_0_10px_var(--live)]",
-          tone === "off" && "bg-white/20",
-        )}
-      />
-      {icon}
-      <span className="hidden xl:inline">{label}</span>
-      {value != null && <b className="font-semibold text-foreground">{value}</b>}
-    </div>
-  );
-}
 
 const months = ["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"];
 const days = ["zo", "ma", "di", "wo", "do", "vr", "za"];
@@ -41,110 +21,122 @@ export function serviceDate(s: Service) {
   return t[0].toUpperCase() + t.slice(1);
 }
 
-/** Which service is on, always in sight: choose another, fetch them from the website, or make a new one. */
-function ServicePicker({ state, svc, onNew }: { state: View | null; svc?: Service; onNew: () => void }) {
+/** Which service is on: one dropdown to choose another. */
+function ServicePicker({ state, svc }: { state: View | null; svc?: Service }) {
+  return (
+    <Select value={state?.current || ""} onValueChange={(id) => post("/api/select?id=" + encodeURIComponent(id))}>
+      <SelectTrigger className="h-12 w-auto max-w-[440px] min-w-0 flex-1 rounded-xl border-border bg-card py-1 text-left">
+        {svc ? (
+          <span className="min-w-0 leading-tight">
+            <span className="block truncate font-serif text-[17px] font-semibold">{svc.label}{svc.predikant ? <span className="font-normal text-muted-foreground"> · {svc.predikant}</span> : null}</span>
+            <span className="block truncate text-[13px] text-muted-foreground">{serviceDate(svc)} · {svc.time} uur</span>
+          </span>
+        ) : (
+          <span className="text-muted-foreground">Kies een dienst</span>
+        )}
+      </SelectTrigger>
+      <SelectContent className="min-w-[340px]">
+        {(state?.services || []).map((s) => (
+          <SelectItem key={s.id} value={s.id}>
+            {serviceDate(s)} · {s.time} · {s.label}{s.predikant ? " · " + s.predikant : ""}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function Row({ ok, label, value }: { ok: boolean | null; label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-3 py-1.5 text-sm">
+      <span className={cn("size-2 rounded-full", ok === null ? "bg-white/20" : ok ? "bg-ok" : "bg-warn")} />
+      <span className="flex-1 text-muted-foreground">{label}</span>
+      <span className="font-semibold">{value}</span>
+    </div>
+  );
+}
+
+/** One light: green when all is well; amber or red with a short word when not. Tap for details. */
+function StatusLight({ problems, status, lis, yt }: { problems: Problem[]; status: StreamStatus; lis: ListenStatus | null; yt: YouTubeCheck | null }) {
+  const worst = problems.find((p) => p.severity === "rood") || problems[0];
+  const running = status.mode !== "stop";
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          className={cn(
+            "flex h-12 items-center gap-2.5 rounded-xl border px-4 text-[15px] font-semibold transition",
+            !worst && "border-ok/30 bg-ok/10 text-[#c9d6a6]",
+            worst?.severity === "oranje" && "border-warn/40 bg-warn/10 text-warn",
+            worst?.severity === "rood" && "border-live/50 bg-live/15 text-[#f3a3a8]",
+          )}
+        >
+          <span className={cn("size-2.5 rounded-full", !worst ? "bg-ok shadow-[0_0_10px_var(--ok)]" : worst.severity === "rood" ? "bg-live" : "bg-warn")} />
+          <span className="max-w-[220px] truncate">{worst ? worst.title : "Alles in orde"}</span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80">
+        <div className="hymnal mb-2 text-[15px] text-primary">hoe staat het ervoor</div>
+        <Row ok={status.boards > 0} label="Borden in de kerk" value={status.boards > 0 ? `${status.boards} verbonden` : "geen"} />
+        <Row ok={running ? !status.audioWarning : null} label="Geluid van de kerk" value={!running ? "uitzending uit" : status.audioWarning ? "geen geluid" : "in orde"} />
+        <Row
+          ok={status.mode === "live" && yt?.at ? yt.audio : null}
+          label="Geluid op YouTube"
+          value={status.mode !== "live" ? "niet live" : !yt?.at ? "wordt gecontroleerd" : yt.audio ? "te horen" : "niet te horen"}
+        />
+        <Row ok={lis?.active ? true : null} label="Meeluisteren" value={lis?.active ? "aan" : "uit"} />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+export function Header({ state, svc, status, lis, yt, problems, screen, setScreen, onNew, onSettings }: {
+  state: View | null; svc?: Service; status: StreamStatus; lis: ListenStatus | null; yt: YouTubeCheck | null; problems: Problem[];
+  screen: Screen; setScreen: (s: Screen) => void; onNew: () => void; onSettings: () => void;
+}) {
   const [fetching, setFetching] = useState(false);
   async function fetchSite() {
     setFetching(true);
     const r = await post("/api/fetch");
     setFetching(false);
-    if (!r.ok) toast.error("Ophalen mislukt: " + (await r.text()));
-    else toast.success("Diensten opgehaald van de website");
+    if (!r.ok) toast.error("Ophalen is niet gelukt. Werkt het internet?");
   }
   return (
-    <div className="order-last flex w-full min-w-0 items-center gap-2 xl:order-none xl:w-auto xl:flex-1">
-      <Select value={state?.current || ""} onValueChange={(id) => post("/api/select?id=" + encodeURIComponent(id))}>
-        <SelectTrigger className="h-12 min-w-0 flex-1 xl:max-w-[420px] rounded-xl border-border bg-card py-1 text-left">
-          {svc ? (
-            <span className="min-w-0 leading-tight">
-              <span className="block truncate font-serif text-[16px] font-semibold">{svc.label}{svc.predikant ? <span className="font-normal text-muted-foreground"> · {svc.predikant}</span> : null}</span>
-              <span className="block truncate text-xs text-muted-foreground">{serviceDate(svc)} · {svc.time} uur</span>
-            </span>
-          ) : (
-            <span className="text-muted-foreground">Kies een dienst</span>
-          )}
-        </SelectTrigger>
-        <SelectContent className="min-w-[340px]">
-          {(state?.services || []).map((s) => (
-            <SelectItem key={s.id} value={s.id}>
-              {serviceDate(s)} · {s.time} · {s.label}{s.predikant ? " · " + s.predikant : ""}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Button variant="outline" className="h-12 rounded-xl px-3.5" onClick={fetchSite} disabled={fetching} title="Diensten ophalen van hhgtholen.nl">
-        {fetching ? <LoaderCircle className="animate-spin" /> : <Globe />}
-        <span className="hidden 2xl:inline">{fetching ? "Bezig…" : "Website"}</span>
-      </Button>
-      <Button variant="outline" className="h-12 rounded-xl px-3.5" onClick={onNew}>
-        <CalendarPlus /> <span className="hidden sm:inline">Nieuwe dienst</span>
-      </Button>
-    </div>
-  );
-}
-
-export function Header({ state, svc, status, lis, yt, screen, setScreen, onNew }: {
-  state: View | null; svc?: Service; status: StreamStatus; lis: ListenStatus | null; yt: YouTubeCheck | null; screen: Screen; setScreen: (s: Screen) => void; onNew: () => void;
-}) {
-  const live = status.mode === "live";
-  return (
-    <header className="flex flex-wrap items-center gap-x-5 gap-y-3 border-b bg-[#0d0b09]/90 px-5 py-3 backdrop-blur">
-      <div className="flex items-center gap-3">
-        <div className="grid size-10 place-items-center rounded-xl border border-primary/45 bg-gradient-to-b from-[#2a231b] to-[#18130f] shadow-[0_8px_24px_-12px_rgb(201_164_92/0.6)]">
+    <header className="flex flex-wrap items-center gap-3 border-b bg-[#0d0b09]/90 px-5 py-3 backdrop-blur">
+      <div className="flex items-center gap-3 pr-2">
+        <div className="grid size-11 place-items-center rounded-xl border border-primary/45 bg-gradient-to-b from-[#2a231b] to-[#18130f] shadow-[0_8px_24px_-12px_rgb(201_164_92/0.6)]">
           <Cross className="size-5 fill-primary/25 text-primary" strokeWidth={1.75} />
         </div>
         <div className="hidden leading-tight xl:block">
-          <div className="font-serif text-[16px] font-semibold tracking-tight">Stream &amp; Beam</div>
-          <div className="text-xs text-muted-foreground">HHG Tholen</div>
+          <div className="font-serif text-[17px] font-semibold tracking-tight">Stream &amp; Beam</div>
+          <div className="text-[13px] text-muted-foreground">HHG Tholen</div>
         </div>
       </div>
 
-      <div className="hidden h-8 w-px bg-border xl:block" />
+      <ServicePicker state={state} svc={svc} />
 
-      <ServicePicker state={state} svc={svc} onNew={onNew} />
-
-      <div className="ml-auto flex flex-wrap items-center gap-2 xl:ml-0">
-        <Light tone={status.boards > 0 ? "ok" : "warn"} icon={<Tv />} label="Borden" value={status.boards} title="Aantal verbonden borden in de kerk" />
-        <Light tone={status.mode === "stop" ? "off" : status.audioWarning ? "warn" : "ok"} icon={<Volume2 />} label="Geluid" />
-        {live && (
-          <Light
-            tone={!yt?.at ? "off" : yt.audio ? "ok" : "live"}
-            icon={<Youtube />}
-            label="YouTube-geluid"
-            value={yt?.at ? (yt.audio ? "✓" : "⚠") : "…"}
-            title={yt?.problem || "Wat kijkers op YouTube horen, elke minuut gemeten"}
-          />
-        )}
-        {lis?.active && <Light tone="ok" icon={<Ear />} label="Meeluisteren" />}
-        <div
-          className={cn(
-            "flex h-10 items-center gap-2 rounded-lg px-3 font-mono text-[13px] font-bold tracking-wider",
-            live ? "bg-live text-[#fff6ef] shadow-[0_0_24px_-6px_var(--live)]" : status.mode === "opnemen" ? "bg-live/15 text-[#f0a0a4] ring-1 ring-live/40" : "border bg-card/80 text-muted-foreground",
-          )}
-        >
-          <span className={cn("size-2 rounded-full", live ? "animate-pulse-dot bg-[#fff6ef]" : status.mode === "opnemen" ? "bg-live" : status.mode === "voorbeeld" ? "bg-ok" : "bg-white/20")} />
-          {live ? <>LIVE {clock(status.since)}</> : status.mode === "opnemen" ? <>OPNAME {clock(status.since)}</> : status.mode === "voorbeeld" ? "VOORBEELD" : "NIET LIVE"}
-        </div>
-      </div>
-
-      <nav className="flex rounded-xl border bg-card p-1">
-        {([
-          ["dienst", "Dienst", <MonitorPlay key="d" />],
-          ["voorbereiden", "Voorbereiden", <Wrench key="v" />],
-        ] as const).map(([k, label, icon]) => (
-          <button
-            key={k}
-            onClick={() => setScreen(k)}
-            className={cn(
-              "flex h-9 items-center gap-2 rounded-lg px-4 text-sm font-semibold transition [&_svg]:size-4",
-              screen === k ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground",
+      <div className="ml-auto flex items-center gap-3">
+        <StatusLight problems={problems} status={status} lis={lis} yt={yt} />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="h-12 rounded-xl px-4 text-[15px]"><Ellipsis /> Menu</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            {screen === "dienst" ? (
+              <DropdownMenuItem onSelect={() => setScreen("voorbereiden")}><Wrench /> Dienst voorbereiden</DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem onSelect={() => setScreen("dienst")}><ArrowLeft /> Terug naar de dienst</DropdownMenuItem>
             )}
-          >
-            {icon}
-            {label}
-          </button>
-        ))}
-      </nav>
+            <DropdownMenuItem onSelect={onNew}><CalendarPlus /> Nieuwe dienst</DropdownMenuItem>
+            <DropdownMenuItem disabled={fetching} onSelect={fetchSite}><Globe /> {fetching ? "Bezig met ophalen…" : "Diensten ophalen van website"}</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => go({ kind: "zwart" })}>
+              {state?.black ? <><Eye /> Borden weer aan</> : <><EyeOff /> Borden zwart</>}
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={onSettings}><Settings2 /> Instellingen</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </header>
   );
 }

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { LogIn } from "lucide-react";
-import type { Settings } from "@/lib/api";
+import type { Settings, StreamStatus, View } from "@/lib/api";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { BoardBackground, StreamControls } from "./PrepareCards";
 import { post } from "@/lib/api";
 import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
@@ -18,7 +20,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-export function SettingsDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (b: boolean) => void }) {
+export function SettingsDialog({ open, onOpenChange, state, status }: { open: boolean; onOpenChange: (b: boolean) => void; state: View | null; status: StreamStatus }) {
   const [s, setS] = useState<Settings | null>(null);
   const [yt, setYt] = useState<{ configured: boolean; channel: string } | null>(null);
   useEffect(() => {
@@ -53,10 +55,19 @@ export function SettingsDialog({ open, onOpenChange }: { open: boolean; onOpenCh
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
-        <DialogHeader>
+        <DialogHeader className="border-b-0 pb-2">
           <DialogTitle>Instellingen</DialogTitle>
-          <DialogDescription>Camera, geluid, YouTube en het meeluisteren.</DialogDescription>
+          <DialogDescription>Camera, geluid, YouTube, de uitzending en het bord.</DialogDescription>
         </DialogHeader>
+        <Tabs defaultValue="algemeen" className="flex min-h-0 flex-col">
+        <TabsList>
+          <TabsTrigger value="algemeen">Algemeen</TabsTrigger>
+          <TabsTrigger value="uitzending">Uitzending</TabsTrigger>
+          <TabsTrigger value="bord">Bord</TabsTrigger>
+        </TabsList>
+        <TabsContent value="uitzending"><DialogBody><StreamControls status={status} /></DialogBody></TabsContent>
+        <TabsContent value="bord"><DialogBody><BoardBackground state={state} /></DialogBody></TabsContent>
+        <TabsContent value="algemeen" className="flex min-h-0 flex-col">
         {s ? (
           <DialogBody className="gap-7">
             <Section title="Camera en geluid">
@@ -116,8 +127,20 @@ export function SettingsDialog({ open, onOpenChange }: { open: boolean; onOpenCh
         )}
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Annuleer</Button>
-          <Button disabled={!s} onClick={async () => { await post("/api/settings", s); onOpenChange(false); }}>Opslaan</Button>
+          <Button
+            disabled={!s}
+            onClick={async () => {
+              // Keep what was changed elsewhere meanwhile (e.g. the text zones).
+              const latest: Settings = await (await fetch("/api/settings")).json();
+              await post("/api/settings", { ...latest, ...s, overlayZones: latest.overlayZones });
+              onOpenChange(false);
+            }}
+          >
+            Opslaan
+          </Button>
         </DialogFooter>
+        </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

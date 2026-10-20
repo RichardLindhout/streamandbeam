@@ -66,6 +66,10 @@
   --animate-blink: blink 1s steps(1) infinite;
   --animate-pulse-dot: pulse-dot 1.4s ease-in-out infinite;
   --animate-glow: glow 1.3s ease-in-out infinite;
+  --animate-alarm: alarm 2.2s ease-in-out infinite;
+  --animate-ring: ring 2.2s ease-in-out infinite;
+  @keyframes alarm { 50% { box-shadow: 0 0 0 10px var(--alarm); } }
+  @keyframes ring { 0%, 60%, 100% { transform: rotate(0); } 70% { transform: rotate(14deg); } 80% { transform: rotate(-12deg); } 90% { transform: rotate(6deg); } }
   @keyframes blink { 50% { background-color: #8a1c24; } }
   @keyframes pulse-dot { 50% { opacity: 0.35; } }
   @keyframes glow { 50% { box-shadow: 0 0 0 8px rgb(201 164 92 / 0.28); } }

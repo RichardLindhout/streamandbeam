@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
-import { ArrowDown, ArrowUp, CircleAlert, ListOrdered, LoaderCircle, Pencil, Play, Plus, RotateCcw, Sparkles, Trash, X } from "lucide-react";
+import { ArrowDown, ArrowUp, CircleAlert, CornerDownRight, ListOrdered, LoaderCircle, Pencil, Play, Plus, RotateCcw, Sparkles, Trash, X } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { toast } from "sonner";
 import type { CustomSlide, Item, Service, View } from "@/lib/api";
 import { go, quick, saveService } from "@/lib/api";
@@ -11,18 +12,18 @@ import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { BlurField } from "./BlurField";
 
-function ToolButton({ title, onClick, children, danger, disabled }: { title: string; onClick: () => void; children: React.ReactNode; danger?: boolean; disabled?: boolean }) {
+function MenuItem({ icon, onClick, children, danger, disabled }: { icon: React.ReactNode; onClick: () => void; children: React.ReactNode; danger?: boolean; disabled?: boolean }) {
   return (
     <button
       type="button"
-      title={title}
       disabled={disabled}
-      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      onClick={onClick}
       className={cn(
-        "grid size-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-white/10 hover:text-foreground disabled:opacity-25 [&_svg]:size-4",
-        danger && "hover:bg-live/15 hover:text-live",
+        "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[15px] transition hover:bg-accent disabled:opacity-30 [&_svg]:size-4 [&_svg]:text-primary",
+        danger && "text-[#f3a3a8] [&_svg]:text-live",
       )}
     >
+      {icon}
       {children}
     </button>
   );
@@ -43,7 +44,7 @@ function SlideEditor({ initial, label, onSave, onReset, onClose }: {
             <span className="text-[11px] font-bold whitespace-nowrap text-muted-foreground">DIA {k + 1}</span>
             <Input className="h-9" value={c.header} placeholder="Kop" onChange={(e) => set(k, { header: e.target.value })} />
             {slides.length > 1 && (
-              <ToolButton title="Dia weghalen" danger onClick={() => setSlides(slides.filter((_, j) => j !== k))}><X /></ToolButton>
+              <Button variant="ghost" size="icon" title="Dia weghalen" onClick={() => setSlides(slides.filter((_, j) => j !== k))}><X /></Button>
             )}
           </div>
           <Textarea rows={6} value={c.text} onChange={(e) => set(k, { text: e.target.value })} />
@@ -64,6 +65,7 @@ export function OrderEditor({ svc, state }: { svc: Service; state: View }) {
   const [busy, setBusy] = useState<{ text: string; spin?: boolean } | null>(null);
   const [after, setAfter] = useState<number | null>(null);
   const [edit, setEdit] = useState<{ i: number; slides: CustomSlide[] } | null>(null);
+  const [menu, setMenu] = useState<number | null>(null);
   const latest = useRef(svc);
   latest.current = svc;
   const cur = state.slides?.[state.index]?.item;
@@ -90,6 +92,7 @@ export function OrderEditor({ svc, state }: { svc: Service; state: View }) {
     setTyped("");
   }
   function move(i: number, d: number) {
+    setMenu(null);
     const j = i + d;
     if (j < 0 || j >= svc.items.length) return;
     const list = [...svc.items];
@@ -98,6 +101,7 @@ export function OrderEditor({ svc, state }: { svc: Service; state: View }) {
     if (after === i) setAfter(j);
   }
   function remove(i: number) {
+    setMenu(null);
     const list = [...svc.items];
     const [gone] = list.splice(i, 1);
     update(list);
@@ -115,6 +119,7 @@ export function OrderEditor({ svc, state }: { svc: Service; state: View }) {
     });
   }
   function openEdit(i: number) {
+    setMenu(null);
     const it = svc.items[i];
     const slides = it.custom?.length
       ? it.custom.map((c) => ({ ...c }))
@@ -128,7 +133,7 @@ export function OrderEditor({ svc, state }: { svc: Service; state: View }) {
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader action={<span className="text-xs text-muted-foreground">verplaatsen met ↑ ↓</span>}>
+      <CardHeader action={<span className="text-[13px] text-muted-foreground">tik op een onderdeel om het te wijzigen</span>}>
         <ListOrdered /> Volgorde van de dienst
       </CardHeader>
 
@@ -148,8 +153,7 @@ export function OrderEditor({ svc, state }: { svc: Service; state: View }) {
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-muted-foreground">
           <span>
             Komt {after !== null && svc.items[after] ? <>na <b className="text-foreground">{svc.items[after].label}</b></> : <>vóór het einde</>}
-            {after !== null && <button className="ml-2 text-primary hover:underline" onClick={() => setAfter(null)}>reset</button>}
-            <span className="ml-1 opacity-70">— tik een onderdeel om de plek te kiezen</span>
+            {after !== null && <button className="ml-2 text-primary hover:underline" onClick={() => setAfter(null)}>vóór het einde</button>}
           </span>
           {busy && <span className={cn("ml-auto font-medium", busy.text.startsWith("Fout") ? "text-live" : "text-foreground")}>{busy.text}</span>}
         </div>
@@ -164,34 +168,38 @@ export function OrderEditor({ svc, state }: { svc: Service; state: View }) {
         {svc.items.map((it, i) => {
           const sel = after === i;
           return (
-            <li key={it.id || i} className={cn("rounded-xl transition", sel && "bg-primary/10 ring-1 ring-primary/50 ring-inset")}>
-              <div
-                className={cn("flex cursor-pointer items-center gap-3 rounded-xl px-2.5 py-2", !sel && "hover:bg-accent")}
-                onClick={() => setAfter(i)}
-              >
-                <span className="w-6 text-right text-xs font-semibold text-muted-foreground tabular-nums">{i + 1}</span>
-                <span className={cn("grid size-8 shrink-0 place-items-center rounded-lg", i === cur ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground")}>
-                  <KindIcon kind={it.kind} className="size-4" />
-                </span>
-                <span className="min-w-0 flex-1 leading-tight">
-                  <span className="flex items-center gap-2">
-                    <span className="truncate text-[15px] font-semibold">{it.label}</span>
-                    {it.ref && <span className="truncate text-sm text-muted-foreground">{it.ref}</span>}
-                    {it.custom?.length ? <span className="rounded bg-primary/15 px-1.5 text-[10px] font-bold text-primary">AANGEPAST</span> : null}
-                    {i === cur && <span className="rounded bg-primary px-1.5 text-[10px] font-black text-primary-foreground">NU</span>}
-                  </span>
-                  {it.problem && <span className="mt-0.5 flex items-center gap-1 text-xs text-warn"><CircleAlert className="size-3.5" /> {it.problem}</span>}
-                </span>
-                <span className="flex shrink-0 items-center">
-                  <ToolButton title="Nu tonen" onClick={() => { const s = state.slides.findIndex((x) => x.item === i); if (s >= 0) go({ index: s }); }}><Play /></ToolButton>
-                  <ToolButton title="Tekst aanpassen" onClick={() => openEdit(i)}><Pencil /></ToolButton>
-                  <ToolButton title="Omhoog" disabled={i === 0} onClick={() => move(i, -1)}><ArrowUp /></ToolButton>
-                  <ToolButton title="Omlaag" disabled={i === svc.items.length - 1} onClick={() => move(i, 1)}><ArrowDown /></ToolButton>
-                  <ToolButton title="Weghalen" danger onClick={() => remove(i)}><Trash /></ToolButton>
-                </span>
-              </div>
+            <li key={it.id || i} className={cn("rounded-xl transition-colors", sel && "bg-primary/10 ring-1 ring-primary/40 ring-inset")}>
+              <Popover open={menu === i} onOpenChange={(o) => setMenu(o ? i : null)}>
+                <PopoverTrigger asChild>
+                  <button className={cn("flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left", menu === i ? "bg-accent" : "hover:bg-accent")}>
+                    <span className="w-6 text-right text-sm text-muted-foreground tabular-nums">{i + 1}</span>
+                    <span className={cn("grid size-8 shrink-0 place-items-center rounded-lg", i === cur ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground")}>
+                      <KindIcon kind={it.kind} className="size-4" />
+                    </span>
+                    <span className="min-w-0 flex-1 leading-tight">
+                      <span className="flex items-center gap-2">
+                        <span className="truncate text-[16px] font-semibold">{it.label}</span>
+                        {it.ref && <span className="truncate text-[15px] text-muted-foreground">{it.ref}</span>}
+                        {it.custom?.length ? <span className="hymnal text-[12px] text-primary">aangepast</span> : null}
+                      </span>
+                      {it.problem && <span className="mt-0.5 flex items-center gap-1 text-[13px] text-warn"><CircleAlert className="size-3.5" /> {it.problem}</span>}
+                    </span>
+                    {sel && <span className="hymnal text-[12px] text-primary">hierna invoegen</span>}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="end" side="bottom" className="w-64 p-1.5">
+                  <div className="truncate px-3 pt-2 pb-1.5 font-serif text-[16px] font-semibold">{it.label}</div>
+                  <MenuItem icon={<Play />} onClick={() => { setMenu(null); const s = state.slides.findIndex((x) => x.item === i); if (s >= 0) go({ index: s }); }}>Nu tonen</MenuItem>
+                  <MenuItem icon={<Pencil />} onClick={() => openEdit(i)}>Tekst aanpassen</MenuItem>
+                  <MenuItem icon={<ArrowUp />} disabled={i === 0} onClick={() => move(i, -1)}>Omhoog</MenuItem>
+                  <MenuItem icon={<ArrowDown />} disabled={i === svc.items.length - 1} onClick={() => move(i, 1)}>Omlaag</MenuItem>
+                  <MenuItem icon={<CornerDownRight />} onClick={() => { setAfter(i); setMenu(null); }}>Nieuwe onderdelen hierna</MenuItem>
+                  <div className="my-1 h-px bg-border" />
+                  <MenuItem icon={<Trash />} danger onClick={() => remove(i)}>Weghalen</MenuItem>
+                </PopoverContent>
+              </Popover>
               {(it.kind === "collecte" || it.kind === "mededeling") && (
-                <div className="px-2.5 pb-2.5 pl-[4.6rem]">
+                <div className="px-3 pb-3 pl-[4.75rem]">
                   <BlurField
                     multiline
                     rows={Math.min(6, Math.max(2, (it.text || "").split("\n").length))}
