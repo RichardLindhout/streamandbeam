@@ -74,6 +74,11 @@ async fn main() -> Result<()> {
         println!("  (testdata/dienst.mp4 ontbreekt: nepcamera gebruikt een testbeeld)");
     }
     procs.0.push(cam.stdout(log("nepcamera")?).stderr(log("nepcamera-fouten")?).spawn().context("nepcamera starten")?);
+    // The camera must answer before streamandbeam calls its first position.
+    let http = reqwest::Client::new();
+    wait_until(Duration::from_secs(20), || async { http.get(format!("http://{CAMERA_HTTP}/log")).send().await.ok().map(|_| ()) })
+        .await
+        .context("nepcamera start niet")?;
 
     let youtube = out.join("youtube.flv");
     let ffmpeg = Command::new("ffmpeg")
@@ -100,7 +105,6 @@ async fn main() -> Result<()> {
     }
     procs.0.push(app.stdout(log("streamandbeam")?).stderr(log("streamandbeam-fouten")?).spawn()?);
 
-    let http = reqwest::Client::new();
     wait_until(Duration::from_secs(15), || async { http.get(format!("{APP}/api/state")).send().await.ok().map(|_| ()) })
         .await
         .context("streamandbeam start niet")?;
@@ -116,6 +120,8 @@ async fn main() -> Result<()> {
     settings["recordDir"] = json!(out.join("opnames"));
     settings["introSeconds"] = json!(1);
     settings["themeSeconds"] = json!(2);
+    // This test goes live and stops by itself; no automatic start in between.
+    settings["autoStartMinutes"] = json!(0);
     if real_youtube {
         settings["youtubeClientId"] = main_settings["youtubeClientId"].clone();
         settings["youtubeClientSecret"] = main_settings["youtubeClientSecret"].clone();
@@ -314,7 +320,8 @@ fn expected_presets(slides: &[Value]) -> Vec<u32> {
                 push(2);
             }
             _ if sung => push(2),
-            "welkom" | "einde" => push(1),
+            // The end screen: first the empty pulpit (this test steps on within 20 s).
+            "welkom" => push(1),
             "collecte" => push(2),
             "gebed" => push(4),
             _ => push(3),
@@ -430,7 +437,7 @@ fn fallback_service() -> Value {
         "text": {"kind": "catechismus", "label": "Heidelbergse Catechismus", "questions": [57]},
         "theme": "Dit mijn lichaam", "points": ["Nu ik leef", "Als ik sterf", "Als Jezus terugkomt"],
         "items": [
-            simple("i1", "welkom", "Welkom"),
+            simple("i1", "welkom", "Startscherm"),
             psalm("i2", "psalm", "Voorzang", 55, &[1]),
             psalm("i3", "psalm", "Zingen", 49, &[6]),
             psalm("i4", "psalm", "Zingen", 16, &[6]),
@@ -444,7 +451,8 @@ fn fallback_service() -> Value {
             simple("i12", "preek", "Prediking"),
             simple("i13", "gebed", "Dankgebed"),
             psalm("i14", "slotzang", "Slotzang", 73, &[14]),
-            simple("i15", "einde", "Einde"),
+            simple("i16", "zegen", "Zegen"),
+            simple("i15", "einde", "Aftiteling"),
         ]
     })
 }

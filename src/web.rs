@@ -70,6 +70,7 @@ pub fn router(
         .route("/api/go", post(go))
         .route("/events", get(events))
         .route("/api/stream", get(stream_status).post(stream_mode))
+        .route("/api/stream/later", post(stream_later))
         .route("/api/settings", get(get_settings).post(save_settings))
         .route("/preview.jpg", get(preview))
         .route("/api/youtube", get(youtube_status))
@@ -113,7 +114,7 @@ pub fn public_router(
         .route("/fonts/{file}", get(font))
         .route("/events", get(events))
         .route("/api/state", get(state))
-        .route("/api/stream", get(stream_status))
+        .route("/api/stream", get(public_stream_status))
         .route("/api/youtube", get(youtube_status))
         .route("/api/listen", get(listen_status))
         .route("/preview.jpg", get(preview))
@@ -143,7 +144,19 @@ async fn info(State(app): State<App>) -> impl IntoResponse {
     Json(serde_json::json!({ "screenUrl": app.screen_url }))
 }
 
+fn is_live(app: &App) -> bool {
+    app.director.engine.status().mode == Mode::Live
+}
+
+/// Refused while live, so the stream cannot be thrown off by accident.
+fn conflict(msg: &str) -> Response {
+    (StatusCode::CONFLICT, msg.to_string()).into_response()
+}
+
 async fn fetch(State(app): State<App>) -> Response {
+    if is_live(&app) {
+        return conflict("Je bent live");
+    }
     match app.show.fetch().await {
         Ok(()) => Json(app.show.view()).into_response(),
         Err(e) => (StatusCode::BAD_GATEWAY, format!("{e:#}")).into_response(),
@@ -162,14 +175,21 @@ struct NewService {
     label: String,
 }
 
-async fn new_service(State(app): State<App>, Json(n): Json<NewService>) -> impl IntoResponse {
+async fn new_service(State(app): State<App>, Json(n): Json<NewService>) -> Response {
+    let id = format!("{} {}", n.date, n.time);
+    if app.show.view().services.iter().any(|s| s.id == id) {
+        return conflict("Er is al een dienst op dat moment");
+    }
     app.show.new_service(n.date, n.time, n.label).await;
-    Json(app.show.view())
+    Json(app.show.view()).into_response()
 }
 
-async fn delete_service(State(app): State<App>, Query(q): Query<SelectQuery>) -> StatusCode {
+async fn delete_service(State(app): State<App>, Query(q): Query<SelectQuery>) -> Response {
+    if is_live(&app) && app.show.view().current == q.id {
+        return conflict("Deze dienst is live");
+    }
     app.show.delete_service(&q.id).await;
-    StatusCode::NO_CONTENT
+    StatusCode::NO_CONTENT.into_response()
 }
 
 #[derive(Deserialize)]
@@ -190,9 +210,12 @@ struct SelectQuery {
     id: String,
 }
 
-async fn select(State(app): State<App>, Query(q): Query<SelectQuery>) -> StatusCode {
+async fn select(State(app): State<App>, Query(q): Query<SelectQuery>) -> Response {
+    if is_live(&app) {
+        return conflict("Je bent live");
+    }
     app.show.select(q.id).await;
-    StatusCode::NO_CONTENT
+    StatusCode::NO_CONTENT.into_response()
 }
 
 #[derive(Deserialize)]
@@ -277,7 +300,28 @@ async fn thumb(State(app): State<App>, Query(q): Query<ThumbQuery>) -> Response 
 async fn stream_status(State(app): State<App>) -> impl IntoResponse {
     let mut v = serde_json::to_value(app.director.engine.status()).unwrap_or_default();
     v["boards"] = app.boards.load(std::sync::atomic::Ordering::Relaxed).into();
+    // When the stream starts and stops by itself.
+    if let (Some(obj), serde_json::Value::Object(auto)) =
+        (v.as_object_mut(), app.director.autopilot_status(&app.show.view(), &app.director.settings()))
+    {
+        obj.extend(auto);
+    }
     Json(v)
+}
+
+/// For the watch page on the internet: only whether it runs and the sound, never error
+/// texts (they can contain the stream key).
+async fn public_stream_status(State(app): State<App>) -> impl IntoResponse {
+    let st = app.director.engine.status();
+    Json(serde_json::json!({ "mode": st.mode, "audioDb": st.audio_db, "audioWarning": st.audio_warning }))
+}
+
+/// Five more minutes on the end screen before the stream stops by itself.
+async fn stream_later(State(app): State<App>) -> Response {
+    match app.director.later() {
+        Ok(()) => StatusCode::NO_CONTENT.into_response(),
+        Err(e) => conflict(&format!("{e:#}")),
+    }
 }
 
 #[derive(Deserialize)]
@@ -286,6 +330,9 @@ struct ModeRequest {
 }
 
 async fn stream_mode(State(app): State<App>, Json(req): Json<ModeRequest>) -> Response {
+    if is_live(&app) && matches!(req.mode, Mode::Voorbeeld | Mode::Opnemen) {
+        return conflict("Eerst stoppen");
+    }
     match app.director.set_mode(&app.show, req.mode).await {
         Ok(()) => Json(app.director.engine.status()).into_response(),
         Err(e) => (StatusCode::BAD_REQUEST, format!("{e:#}")).into_response(),

@@ -14,7 +14,8 @@ use tokio::sync::{Mutex, watch};
 /// Kinds: welkom, psalm, slotzang, nazang (song after the service), lied (a song not in
 /// the psalm book, e.g. on a children's singing day), lezing, catechismus, gebed,
 /// collecte, preek, belijdenis (NGB, DL, a creed), formulier (baptism, Lord's Supper, …),
-/// mededeling (also a named part without text: levensloop, condoleance, zegen), einde.
+/// mededeling (also a named part without text: levensloop, condoleance), zegen (the
+/// blessing: the camera on the predikant), einde (the end screen, "Aftiteling").
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Item {
@@ -186,6 +187,7 @@ impl Show {
             ..Default::default()
         };
         let mut view = view;
+        migrate(&mut view.services);
         view.board_background = background_version(path.parent().unwrap_or(Path::new(".")));
         let (tx, _) = watch::channel(view.clone());
         let show = Arc::new(Show { liturgy_url, path, state: Mutex::new(view), tx });
@@ -257,8 +259,9 @@ impl Show {
     pub async fn new_service(&self, date: String, time: String, label: String) {
         let mut st = self.state.lock().await;
         let mut items = vec![
-            Item { kind: "welkom".into(), label: "Welkom".into(), ..Default::default() },
-            Item { kind: "einde".into(), label: "Einde".into(), ..Default::default() },
+            Item { kind: "welkom".into(), label: "Startscherm".into(), ..Default::default() },
+            Item { kind: "zegen".into(), label: "Zegen".into(), ..Default::default() },
+            Item { kind: "einde".into(), label: "Aftiteling".into(), ..Default::default() },
         ];
         for (i, it) in items.iter_mut().enumerate() {
             it.id = format!("i{}", i + 1);
@@ -290,7 +293,20 @@ impl Show {
         if let Some(c) = svc.items.iter().find(|i| i.kind == "collecte") {
             st.collecte = c.text.clone();
         }
+        // Editing the service on screen keeps the same part (and slide in it) on screen, even
+        // when parts are added or removed before it.
+        let keep = if st.current == svc.id { on_screen(&st) } else { None };
         upsert(&mut st.services, svc);
+        if let Some((id, offset)) = keep {
+            st.slides = st.service().map(build_slides).unwrap_or_default();
+            let item = st.service().and_then(|s| s.items.iter().position(|i| i.id == id));
+            if let Some(item) = item {
+                let mine: Vec<usize> = st.slides.iter().enumerate().filter(|(_, s)| s.item == item).map(|(i, _)| i).collect();
+                if let Some(&i) = mine.get(offset.min(mine.len().saturating_sub(1))) {
+                    st.index = i;
+                }
+            }
+        }
         self.changed(&mut st);
     }
 
@@ -381,6 +397,48 @@ async fn enrich_from_kerktijden(services: &mut [Service]) {
     }
 }
 
+/// The part on screen (its id, never empty) and which of its slides.
+fn on_screen(st: &View) -> Option<(String, usize)> {
+    let slide = st.slides.get(st.index)?;
+    let id = st.service()?.items.get(slide.item)?.id.clone();
+    let first = st.slides.iter().position(|s| s.item == slide.item)?;
+    (!id.is_empty()).then_some((id, st.index - first))
+}
+
+/// Brings services saved by an older version up to date, once at startup: the new names
+/// "Startscherm" and "Aftiteling", and a "Zegen" part before the end screen.
+fn migrate(services: &mut [Service]) {
+    for svc in services.iter_mut() {
+        for it in &mut svc.items {
+            if it.kind == "welkom" && it.label == "Welkom" {
+                it.label = "Startscherm".into();
+            }
+            if it.kind == "einde" && it.label == "Einde" {
+                it.label = "Aftiteling".into();
+            }
+        }
+        // A blessing typed earlier was a mededeling without text: now its own kind.
+        for it in &mut svc.items {
+            if it.kind == "mededeling" && it.label.trim().eq_ignore_ascii_case("zegen") && it.text.trim().is_empty() && it.custom.is_empty() {
+                it.kind = "zegen".into();
+            }
+        }
+        let has_zegen = svc.items.iter().any(|i| i.kind == "zegen");
+        let ends = svc.items.last().is_some_and(|i| i.kind == "einde");
+        let sung_at_end = svc.items.iter().any(|i| i.kind == "slotzang" || i.kind == "nazang");
+        if !has_zegen && ends && sung_at_end {
+            let max = svc.items.iter().filter_map(|i| i.id.strip_prefix('i')?.parse::<u32>().ok()).max().unwrap_or(0);
+            let zegen = Item { id: format!("i{}", max + 1), kind: "zegen".into(), label: "Zegen".into(), ..Default::default() };
+            // Before the end screen, and before a song after the service (that comes after the blessing).
+            let mut at = svc.items.len() - 1;
+            while at > 0 && svc.items[at - 1].kind == "nazang" {
+                at -= 1;
+            }
+            svc.items.insert(at, zegen);
+        }
+    }
+}
+
 fn upsert(services: &mut Vec<Service>, svc: Service) {
     match services.iter_mut().find(|s| s.id == svc.id) {
         Some(s) => *s = svc,
@@ -429,7 +487,7 @@ fn default_items(e: &ExtractedService, collecte: &str) -> Vec<Item> {
         items.extend(reading.iter().map(|i| (*i).clone()));
     };
     let n = psalms.len();
-    items.push(simple("welkom", "Welkom"));
+    items.push(simple("welkom", "Startscherm"));
     for (i, p) in psalms.iter().enumerate() {
         if i == 0 {
             items.push(sung(p, "psalm", "Voorzang"));
@@ -452,7 +510,8 @@ fn default_items(e: &ExtractedService, collecte: &str) -> Vec<Item> {
             items.push(sung(p, "psalm", "Zingen"));
         }
     }
-    items.push(simple("einde", "Einde"));
+    items.push(simple("zegen", "Zegen"));
+    items.push(simple("einde", "Aftiteling"));
     for (i, it) in items.iter_mut().enumerate() {
         it.id = format!("i{}", i + 1);
     }
@@ -466,7 +525,7 @@ const MONTHS: [&str; 12] = [
 ];
 
 /// "Zondag 25 oktober"
-fn long_date_no_year(d: NaiveDate) -> String {
+pub(crate) fn long_date_no_year(d: NaiveDate) -> String {
     let day = DAYS[d.weekday().num_days_from_monday() as usize];
     format!("{}{} {} {}", day[..1].to_uppercase(), &day[1..], d.day(), MONTHS[d.month0() as usize])
 }
@@ -591,6 +650,7 @@ fn build_slides(svc: &Service) -> Vec<Slide> {
                 ..Default::default()
             }),
             "gebed" => add(Slide { header: it.label.clone(), ..Default::default() }),
+            "zegen" => add(Slide { header: if it.label.is_empty() { "Zegen".into() } else { it.label.clone() }, ..Default::default() }),
             "mededeling" => add(Slide { header: it.label.clone(), lines: it.text.lines().map(String::from).collect(), ..Default::default() }),
             "belijdenis" => {
                 let pieces = crate::confessions::confession(&it.doc, it.chapter, &it.articles);
@@ -686,9 +746,9 @@ fn board_rows(svc: &Service) -> Vec<String> {
 /// people keep using their own Bible and psalter.
 fn board_slides(svc: &Service, slides: &[Slide]) -> Vec<Slide> {
     let rows = board_rows(svc);
-    slides
-        .iter()
-        .map(|sl| match sl.kind.as_str() {
+    let mut out: Vec<Slide> = Vec::with_capacity(slides.len());
+    for sl in slides {
+        let board = match sl.kind.as_str() {
             // The last psalm and the song after the service: only which one, in large letters.
             "slotzang" | "nazang" => Slide {
                 item: sl.item,
@@ -706,9 +766,13 @@ fn board_slides(svc: &Service, slides: &[Slide]) -> Vec<Slide> {
                 points: sl.points.clone(),
                 ..Default::default()
             },
+            // The blessing: the boards keep what they showed (the slotzang stays up).
+            "zegen" if !out.is_empty() => Slide { item: sl.item, ..out[out.len() - 1].clone() },
             _ => Slide { item: sl.item, kind: "bord".into(), list: rows.clone(), ..Default::default() },
-        })
-        .collect()
+        };
+        out.push(board);
+    }
+    out
 }
 
 /// Splits paragraphs into slides of roughly max_chars characters (a long paragraph stays
@@ -763,4 +827,41 @@ fn background_version(dir: &Path) -> u64 {
         .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
         .map(|d| d.as_millis() as u64)
         .unwrap_or(0)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn item(id: &str, kind: &str, label: &str) -> Item {
+        Item { id: id.into(), kind: kind.into(), label: label.into(), ..Default::default() }
+    }
+
+    fn kinds(svc: &Service) -> Vec<String> {
+        svc.items.iter().map(|i| format!("{}:{}", i.kind, i.label)).collect()
+    }
+
+    #[test]
+    fn migrate_adds_blessing_before_song_after_service() {
+        let mut services = vec![Service {
+            items: vec![item("i1", "welkom", "Welkom"), item("i2", "slotzang", "Slotzang"), item("i3", "nazang", "Na de dienst"), item("i4", "einde", "Einde")],
+            ..Default::default()
+        }];
+        migrate(&mut services);
+        assert_eq!(kinds(&services[0]), ["welkom:Startscherm", "slotzang:Slotzang", "zegen:Zegen", "nazang:Na de dienst", "einde:Aftiteling"]);
+        assert_eq!(services[0].items[2].id, "i5");
+        // Once only.
+        migrate(&mut services);
+        assert_eq!(services[0].items.len(), 5);
+    }
+
+    #[test]
+    fn migrate_turns_typed_blessing_into_its_own_kind() {
+        let mut services = vec![Service {
+            items: vec![item("i1", "slotzang", "Slotzang"), item("i2", "mededeling", "Zegen"), item("i3", "einde", "Aftiteling")],
+            ..Default::default()
+        }];
+        migrate(&mut services);
+        assert_eq!(kinds(&services[0]), ["slotzang:Slotzang", "zegen:Zegen", "einde:Aftiteling"]);
+    }
 }

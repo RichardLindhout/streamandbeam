@@ -65,9 +65,9 @@ pub struct RawItem {
     pub reden: String,
 }
 
-pub const KINDS: [&str; 14] = [
+pub const KINDS: [&str; 15] = [
     "welkom", "psalm", "slotzang", "nazang", "lied", "lezing", "catechismus", "belijdenis", "formulier", "gebed", "collecte", "preek",
-    "mededeling", "einde",
+    "mededeling", "zegen", "einde",
 ];
 
 /// Documents for soort belijdenis and formulier.
@@ -116,8 +116,8 @@ pub const RULES: &str = r#"Rules for items:
 - "HC 57", "vraag en antwoord 57", "Heidelbergse Catechismus zondag 22" is soort "catechismus" with vragen or zondag.
 - Nederlandse Geloofsbelijdenis ("NGB art. 14", "geloofsbelijdenis artikel 14") is soort "belijdenis", document "ngb", artikelen [14]. Dordtse Leerregels ("DL I, 1-3", "Dordtse Leerregels hoofdstuk 1 artikel 1") is document "dl" with hoofdstuk and artikelen. A creed read aloud: document "apostolicum" (apostolische geloofsbelijdenis, twaalf artikelen gelezen), "nicea" or "athanasius".
 - A liturgical form is soort "formulier" with document: doop-kinderen (doopformulier), doop-volwassenen, heilig-avondmaal (avondmaalsformulier), belijdenis (openbare geloofsbelijdenis afleggen), bevestiging-ouderling-diaken, bevestiging-predikant, huwelijk, christelijke-ban.
-- gebed, dankgebed, collecte, preek/prediking, welkom, einde are their own soort.
-- Other named parts of a service without a text of their own (levensloop, in memoriam, condoleance, woord van de familie, votum, zegen, uitdragen, afscheid) are soort "mededeling" with that name as opschrift and empty tekst.
+- gebed, dankgebed, collecte, preek/prediking, zegen, welkom, einde are their own soort.
+- Other named parts of a service without a text of their own (levensloop, in memoriam, condoleance, woord van de familie, votum, uitdragen, afscheid) are soort "mededeling" with that name as opschrift and empty tekst.
 - Anything that is an announcement is soort "mededeling" with the text as typed.
 - If you are not sure, still give your best guess but set herkend false and explain in reden. Never invent verses that were not mentioned."#;
 

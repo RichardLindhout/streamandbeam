@@ -41,10 +41,15 @@ pub struct Settings {
     pub intro_seconds: u64,
     /// Seconds the sermon theme shows before the camera turns to the predikant (0 = off).
     pub theme_seconds: u64,
-    /// Go live automatically this many minutes before a service starts (0 = off).
+    /// Go live automatically this many minutes before a service starts, with the start
+    /// screen (0 = off). The church goes live about 15 minutes before.
     pub auto_start_minutes: u64,
-    /// Stop automatically this many minutes after the end screen appears (0 = off).
-    pub auto_stop_minutes: u64,
+    /// Stop automatically this many seconds after the end screen (with the church photo)
+    /// appears, i.e. 20 s after "Aftiteling" is chosen (0 = off). The church stops after
+    /// about 2 to 2.5 minutes.
+    pub auto_stop_seconds: u64,
+    /// Version of these settings, to change old saved values once (see Director::new).
+    pub settings_version: u32,
     /// OAuth client ("Desktop app") from Google Cloud Console, for logging in to YouTube.
     pub youtube_client_id: String,
     pub youtube_client_secret: String,
@@ -92,8 +97,9 @@ impl Default for Settings {
             qr_link: "https://www.hhgtholen.nl".into(),
             intro_seconds: 12,
             theme_seconds: 20,
-            auto_start_minutes: 0,
-            auto_stop_minutes: 10,
+            auto_start_minutes: 15,
+            auto_stop_seconds: 150,
+            settings_version: 0,
             youtube_client_id: String::new(),
             youtube_client_secret: String::new(),
             youtube_privacy: "public".into(),

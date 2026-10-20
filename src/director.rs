@@ -1,13 +1,15 @@
 //! Follows the operator: for every slide it picks the scene for the YouTube stream and
 //! moves the camera, plays the short intros the church's stream has (organ before a
-//! psalm, the theme before the sermon), and can start and stop the stream by itself.
+//! psalm, the theme before the sermon), and can start and stop the stream by itself:
+//! live with the start screen some minutes before a service, and stopped a while after
+//! the end screen (as the church does: blessing, empty pulpit, end screen, stop).
 
 use crate::render::{Body, Photo, Renderer, Scene};
-use crate::show::{Show, View, long_date};
+use crate::show::{Service, Show, View, long_date, long_date_no_year};
 use crate::stream::{Engine, Mode, Settings, recall_preset};
 use crate::texts::{read_json, write_json};
 use crate::youtube::{Broadcast, YouTube};
-use chrono::{Local, NaiveDateTime};
+use chrono::{Local, NaiveDate, NaiveDateTime, NaiveTime};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -24,12 +26,74 @@ pub struct Director {
     renderer: Mutex<Option<Arc<Mutex<Renderer>>>>,
     /// Thumbnails already made, by scene.
     thumbs: Mutex<std::collections::HashMap<String, Vec<u8>>>,
+    autopilot: Mutex<Autopilot>,
+    /// Where `Autopilot::started` is kept, so a restart does not go live again.
+    autopilot_path: PathBuf,
+}
+
+/// What the automatic start and stop know (times in Unix seconds).
+#[derive(Debug, Default)]
+struct Autopilot {
+    /// The service that already went live (automatically or by hand): never again by itself.
+    started: String,
+    /// Why the last automatic start failed; empty when it worked.
+    start_error: String,
+    /// When the end screen (church photo) appeared; 0 = not on the end screen.
+    end_card_at: i64,
+    /// Extra time before stopping, added with "later".
+    extra_secs: u64,
+}
+
+#[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+struct SavedAutopilot {
+    started: String,
+}
+
+/// The camera stays on the pulpit this long after "Aftiteling" (the predikant walks away,
+/// the organ starts), then the end screen comes.
+const PULPIT_HOLD: Duration = Duration::from_secs(20);
+/// The end screen changes sentence this often.
+const SWAP: Duration = Duration::from_secs(8);
+/// After this long on the blessing, the end screen comes by itself.
+const ZEGEN_MAX: Duration = Duration::from_secs(600);
+
+fn service_start(svc: &Service) -> Option<NaiveDateTime> {
+    NaiveDateTime::parse_from_str(&svc.id, "%Y-%m-%d %H:%M").ok()
+}
+
+/// The earliest service with `now` between `lead_minutes` before its start and 30 minutes after.
+fn service_in_window(services: &[Service], now: NaiveDateTime, lead_minutes: u64) -> Option<&Service> {
+    let lead = chrono::Duration::minutes(lead_minutes as i64);
+    services
+        .iter()
+        .filter_map(|svc| service_start(svc).map(|start| (start, svc)))
+        .filter(|(start, _)| now >= *start - lead && now <= *start + chrono::Duration::minutes(30))
+        .min_by_key(|(start, _)| *start)
+        .map(|(_, svc)| svc)
+}
+
+fn unix(t: NaiveDateTime) -> i64 {
+    t.and_local_timezone(Local).earliest().map(|t| t.timestamp()).unwrap_or(0)
 }
 
 impl Director {
     pub fn new(engine: Arc<Engine>, data_dir: &std::path::Path) -> Arc<Director> {
         let path = data_dir.join("instellingen.json");
-        let settings = read_json(&path).unwrap_or_default();
+        let mut settings: Settings = read_json(&path).unwrap_or_default();
+        // Once: the automatic start was off by default before; the church goes live
+        // about 15 minutes before the service.
+        if settings.settings_version < 2 {
+            if settings.auto_start_minutes == 0 {
+                settings.auto_start_minutes = 15;
+            }
+            settings.settings_version = 2;
+            if let Err(e) = write_json(&path, &settings) {
+                eprintln!("instellingen opslaan mislukt: {e:#}");
+            }
+        }
+        let autopilot_path = data_dir.join("autopilot.json");
+        let saved: SavedAutopilot = read_json(&autopilot_path).unwrap_or_default();
         Arc::new(Director {
             engine,
             youtube: YouTube::new(data_dir.join("youtube.json")),
@@ -39,6 +103,8 @@ impl Director {
             broadcast: Mutex::new(None),
             renderer: Mutex::new(None),
             thumbs: Mutex::new(std::collections::HashMap::new()),
+            autopilot: Mutex::new(Autopilot { started: saved.started, ..Default::default() }),
+            autopilot_path,
         })
     }
 
@@ -87,6 +153,17 @@ impl Director {
     pub async fn set_mode(&self, show: &Show, mode: Mode) -> anyhow::Result<()> {
         let mut settings = self.settings();
         let was_live = self.engine.status().mode == Mode::Live;
+        if mode == Mode::Live && !was_live {
+            // Never go live on an old end screen: the service about to start, from the top.
+            let view = show.view();
+            let on_end = view.slides.get(view.index).is_some_and(|sl| sl.kind == "einde");
+            let now = Local::now().naive_local();
+            match service_in_window(&view.services, now, 90) {
+                Some(svc) if view.current != svc.id || on_end => show.select(svc.id.clone()).await,
+                _ if on_end => show.go(Some(0), 0, "").await,
+                _ => {}
+            }
+        }
         if mode == Mode::Live && self.youtube.channel().is_some() {
             let view = show.view();
             let svc = view.service().cloned().ok_or_else(|| anyhow::anyhow!("kies eerst een dienst"))?;
@@ -145,6 +222,19 @@ impl Director {
             if on_screen.0 != view.index || on_screen.1 != key {
                 on_screen = (view.index, key, Instant::now());
             }
+            // When the end screen comes (after the pulpit), from the moment "Aftiteling" was
+            // chosen; leaving it (← Terug) cancels the automatic stop at once.
+            {
+                let on_end = view.slides.get(view.index).is_some_and(|sl| sl.kind == "einde");
+                let mut ap = self.autopilot.lock().unwrap();
+                if !on_end {
+                    ap.end_card_at = 0;
+                    ap.extra_secs = 0;
+                } else if ap.end_card_at == 0 {
+                    let since = on_screen.2.elapsed().as_secs() as i64;
+                    ap.end_card_at = Local::now().timestamp() - since + PULPIT_HOLD.as_secs() as i64;
+                }
+            }
             let (scene, position, until) = scene_for(&view, on_screen.2.elapsed(), &settings);
             let drawn = (scene.clone(), settings.overlay_zones.clone());
             if last_scene.as_ref() != Some(&drawn) {
@@ -180,38 +270,117 @@ impl Director {
         }
     }
 
-    /// Goes live before a service and stops after the end screen, when switched on.
+    fn set_started(&self, id: &str) {
+        let mut ap = self.autopilot.lock().unwrap();
+        if ap.started == id {
+            return;
+        }
+        ap.started = id.to_string();
+        if let Err(e) = write_json(&self.autopilot_path, &SavedAutopilot { started: id.to_string() }) {
+            eprintln!("autopilot opslaan mislukt: {e:#}");
+        }
+    }
+
+    /// For the operator page: when the stream starts and stops by itself (Unix seconds,
+    /// 0 = not planned), and why an automatic start failed.
+    pub fn autopilot_status(&self, view: &View, s: &Settings) -> serde_json::Value {
+        let ap = self.autopilot.lock().unwrap();
+        let now = Local::now().naive_local();
+        let lead = chrono::Duration::minutes(s.auto_start_minutes as i64);
+        let next = if s.auto_start_minutes == 0 {
+            None
+        } else {
+            service_in_window(&view.services, now, s.auto_start_minutes).filter(|svc| svc.id != ap.started).or_else(|| {
+                view.services
+                    .iter()
+                    .filter(|svc| service_start(svc).is_some_and(|start| start - lead > now))
+                    .min_by_key(|svc| service_start(svc))
+            })
+        };
+        let live = self.engine.status().mode == Mode::Live;
+        let stop_at = if ap.end_card_at > 0 && s.auto_stop_seconds > 0 && live {
+            ap.end_card_at + (s.auto_stop_seconds + ap.extra_secs) as i64
+        } else {
+            0
+        };
+        serde_json::json!({
+            "autoStartAt": next.and_then(service_start).map(|start| unix(start - lead)).unwrap_or(0),
+            "autoStartService": next.map(|svc| svc.id.clone()).unwrap_or_default(),
+            "autoStartError": ap.start_error,
+            "autoStopAt": stop_at,
+            "endCardAt": ap.end_card_at,
+        })
+    }
+
+    /// Five more minutes before the automatic stop.
+    pub fn later(&self) -> anyhow::Result<()> {
+        let mut ap = self.autopilot.lock().unwrap();
+        if ap.end_card_at == 0 {
+            anyhow::bail!("niet op de aftiteling");
+        }
+        ap.extra_secs += 300;
+        Ok(())
+    }
+
+    /// Goes live before a service (with the start screen) and stops a while after the end
+    /// screen, when switched on.
     async fn autopilot(self: Arc<Self>, show: Arc<Show>) {
-        let mut started: Option<String> = None;
-        let mut end_since: Option<Instant> = None;
+        // The blessing slide on screen and since when.
+        let mut zegen_since: Option<(usize, Instant)> = None;
         loop {
             tokio::time::sleep(Duration::from_secs(10)).await;
             let s = self.settings();
             let view = show.view();
             let mode = self.engine.status().mode;
-            let on_end = view.slides.get(view.index).is_some_and(|sl| sl.kind == "einde");
-            end_since = if on_end { end_since.or(Some(Instant::now())) } else { None };
+            let now = Local::now().naive_local();
+            let kind = view.slides.get(view.index).map(|sl| sl.kind.clone()).unwrap_or_default();
 
-            if s.auto_start_minutes > 0 && mode == Mode::Stop {
-                let now = Local::now().naive_local();
-                let lead = chrono::Duration::minutes(s.auto_start_minutes as i64);
-                let due = view.services.iter().find(|svc| {
-                    let Ok(start) = NaiveDateTime::parse_from_str(&svc.id, "%Y-%m-%d %H:%M") else { return false };
-                    now >= start - lead && now <= start + chrono::Duration::minutes(30) && started.as_deref() != Some(&svc.id)
-                });
-                if let Some(svc) = due {
-                    println!("automatisch live voor {}", svc.id);
-                    started = Some(svc.id.clone());
-                    show.select(svc.id.clone()).await;
-                    if let Err(e) = self.set_mode(&show, Mode::Live).await {
-                        eprintln!("automatisch live gaan mislukt: {e:#}");
-                    }
-                }
+            let due = service_in_window(&view.services, now, s.auto_start_minutes).cloned();
+            // A failed automatic start is only news until the stream is live or the service is past.
+            if mode == Mode::Live || due.is_none() {
+                self.autopilot.lock().unwrap().start_error.clear();
             }
-            if s.auto_stop_minutes > 0
-                && mode == Mode::Live
-                && end_since.is_some_and(|t| t.elapsed() >= Duration::from_secs(s.auto_stop_minutes * 60))
+            let started = self.autopilot.lock().unwrap().started.clone();
+            if s.auto_start_minutes > 0
+                && matches!(mode, Mode::Stop | Mode::Voorbeeld)
+                && let Some(svc) = due.as_ref().filter(|svc| svc.id != started)
             {
+                println!("automatisch live voor {}", svc.id);
+                self.set_started(&svc.id);
+                if view.current != svc.id {
+                    show.select(svc.id.clone()).await;
+                }
+                let result = self.set_mode(&show, Mode::Live).await;
+                if let Err(e) = &result {
+                    eprintln!("automatisch live gaan mislukt: {e:#}");
+                }
+                self.autopilot.lock().unwrap().start_error = result.err().map(|e| format!("{e:#}")).unwrap_or_default();
+                continue;
+            }
+            // Live by hand counts too: after a deliberate stop it does not go live again.
+            if mode == Mode::Live
+                && let Some(svc) = &due
+            {
+                self.set_started(&svc.id);
+            }
+
+            // Nobody pressed on after the blessing: the end screen comes by itself.
+            zegen_since = if kind == "zegen" { zegen_since.filter(|(i, _)| *i == view.index).or(Some((view.index, Instant::now()))) } else { None };
+            if mode == Mode::Live
+                && zegen_since.is_some_and(|(_, t)| t.elapsed() >= ZEGEN_MAX)
+                && view.slides.get(view.index + 1).is_some_and(|sl| sl.kind == "einde")
+            {
+                println!("automatisch naar de aftiteling na de zegen");
+                show.go(Some(view.index + 1), 0, "").await;
+                zegen_since = None;
+                continue;
+            }
+
+            let stop_at = {
+                let ap = self.autopilot.lock().unwrap();
+                (ap.end_card_at > 0).then(|| ap.end_card_at + (s.auto_stop_seconds + ap.extra_secs) as i64)
+            };
+            if s.auto_stop_seconds > 0 && mode == Mode::Live && stop_at.is_some_and(|t| Local::now().timestamp() >= t) {
                 println!("automatisch gestopt na het eindscherm");
                 if let Err(e) = self.set_mode(&show, Mode::Stop).await {
                     eprintln!("automatisch stoppen mislukt: {e:#}");
@@ -253,23 +422,23 @@ fn scene_for(view: &View, shown: Duration, s: &Settings) -> (Scene, Position, Op
     let intro = Duration::from_secs(s.intro_seconds);
     let theme = Duration::from_secs(s.theme_seconds);
     match slide.kind.as_str() {
+        // The church's start screen: the outside of the church, the date and the service.
         "welkom" => {
-            let title = svc.map(|s| long_date(&s.date)).unwrap_or_default();
-            let sub = svc
-                .map(|s| [s.label.as_str(), s.predikant.as_str()].iter().filter(|x| !x.is_empty()).copied().collect::<Vec<_>>().join(" · "))
-                .unwrap_or_default();
-            (Scene::Holding { photo: Photo::Inside, label: "Welkom".into(), title, sub, qr: true }, Position::Overzicht, None)
+            let left = svc.map(|s| long_date(&s.date)).unwrap_or_default();
+            let right = svc.map(|s| s.label.clone()).unwrap_or_default();
+            (Scene::Frame { photo: Photo::Outside, left, right }, Position::Overzicht, None)
         }
+        "zegen" => (Scene::Camera, Position::Preekstoel, None),
+        // First the empty pulpit while the organ starts, then the end screen: the inside of
+        // the church with, in turn, the next service and the website.
+        "einde" if shown < PULPIT_HOLD => (Scene::Camera, Position::Preekstoel, Some(PULPIT_HOLD)),
         "einde" => {
-            // svc.next is "Zondag 25 oktober om 9.30 uur · ds. K. Klopstra".
-            let next = svc.map(|s| s.next.clone()).unwrap_or_default();
-            let (title, sub) = next.split_once(" · ").map(|(a, b)| (a.to_string(), b.to_string())).unwrap_or((next.clone(), String::new()));
-            let scene = if title.is_empty() {
-                Scene::Holding { photo: Photo::Outside, label: String::new(), title: "Hersteld Hervormde Gemeente Tholen".into(), sub: "www.hhgtholen.nl".into(), qr: true }
-            } else {
-                Scene::Holding { photo: Photo::Outside, label: "Volgende dienst".into(), title, sub, qr: true }
-            };
-            (scene, Position::Overzicht, None)
+            let mut sentences: Vec<String> = next_sentence(view).into_iter().collect();
+            sentences.push("Voor meer informatie over onze gemeente kijk op www.hhgtholen.nl".into());
+            let n = (shown - PULPIT_HOLD).as_secs() / SWAP.as_secs();
+            let left = sentences[n as usize % sentences.len()].clone();
+            let until = (sentences.len() > 1).then(|| PULPIT_HOLD + SWAP * (n as u32 + 1));
+            (Scene::Frame { photo: Photo::Inside, left, right: String::new() }, Position::Overzicht, until)
         }
         // The predikant announces the psalm: the camera stays on him, the psalm below him.
         "psalm" | "slotzang" | "nazang" if slide.lines.is_empty() => (bar(&slide.header, &slide.sub), Position::Preekstoel, None),
@@ -315,5 +484,73 @@ fn scene_for(view: &View, shown: Duration, s: &Settings) -> (Scene, Position, Op
         }
         // During the sermon viewers see the predikant.
         _ => (Scene::Camera, Position::Preekstoel, None),
+    }
+}
+
+/// The sentence about the next service on the end screen, as the church writes it:
+/// "Vanmiddag is er een dienst om 16.00 uur." or "Zondag om 9.30 uur is er weer een dienst.".
+fn next_sentence(view: &View) -> Option<String> {
+    let svc = view.service()?;
+    let today = NaiveDate::parse_from_str(&svc.date, "%Y-%m-%d").ok().map(long_date_no_year).unwrap_or_default();
+    // svc.next is "Zondag 25 oktober om 9.30 uur · ds. K. Klopstra".
+    let (date, time) = if svc.next.is_empty() {
+        let next = view.services.iter().filter(|s| s.id > svc.id).min_by(|a, b| a.id.cmp(&b.id))?;
+        let date = long_date_no_year(NaiveDate::parse_from_str(&next.date, "%Y-%m-%d").ok()?);
+        let time = NaiveTime::parse_from_str(&next.time, "%H:%M").ok()?.format("%-H.%M").to_string();
+        (date, time)
+    } else {
+        let when = svc.next.split(" · ").next().unwrap_or_default();
+        let (date, time) = when.split_once(" om ")?;
+        (date.to_string(), time.trim_end_matches(" uur").trim().to_string())
+    };
+    if date == today {
+        let hour: u32 = time.split('.').next().and_then(|h| h.parse().ok()).unwrap_or(0);
+        let part = if hour >= 18 { "Vanavond" } else { "Vanmiddag" };
+        Some(format!("{part} is er een dienst om {time} uur."))
+    } else {
+        let day = date.split_whitespace().next()?;
+        Some(format!("{day} om {time} uur is er weer een dienst."))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn view(services: Vec<Service>, current: &str) -> View {
+        let mut v = View::default();
+        v.services = services;
+        v.current = current.to_string();
+        v
+    }
+
+    fn svc(date: &str, time: &str, next: &str) -> Service {
+        Service { id: format!("{date} {time}"), date: date.into(), time: time.into(), next: next.into(), ..Default::default() }
+    }
+
+    #[test]
+    fn same_day() {
+        let v = view(vec![svc("2026-10-18", "09:30", "Zondag 18 oktober om 16.00 uur · ds. A. den Hartog")], "2026-10-18 09:30");
+        assert_eq!(next_sentence(&v).as_deref(), Some("Vanmiddag is er een dienst om 16.00 uur."));
+        let v = view(vec![svc("2026-10-18", "09:30", "Zondag 18 oktober om 18.30 uur")], "2026-10-18 09:30");
+        assert_eq!(next_sentence(&v).as_deref(), Some("Vanavond is er een dienst om 18.30 uur."));
+    }
+
+    #[test]
+    fn next_sunday() {
+        let v = view(vec![svc("2026-10-18", "16:00", "Zondag 25 oktober om 9.30 uur · ds. K. Klopstra")], "2026-10-18 16:00");
+        assert_eq!(next_sentence(&v).as_deref(), Some("Zondag om 9.30 uur is er weer een dienst."));
+        // Without kerktijden.nl: the next service in the list.
+        let v = view(vec![svc("2026-10-18", "16:00", ""), svc("2026-10-25", "09:30", "")], "2026-10-18 16:00");
+        assert_eq!(next_sentence(&v).as_deref(), Some("Zondag om 9.30 uur is er weer een dienst."));
+        let v = view(vec![svc("2026-10-18", "09:30", ""), svc("2026-10-18", "16:00", "")], "2026-10-18 09:30");
+        assert_eq!(next_sentence(&v).as_deref(), Some("Vanmiddag is er een dienst om 16.00 uur."));
+    }
+
+    #[test]
+    fn empty() {
+        let v = view(vec![svc("2026-10-18", "16:00", "")], "2026-10-18 16:00");
+        assert_eq!(next_sentence(&v), None);
+        assert_eq!(next_sentence(&view(vec![], "")), None);
     }
 }

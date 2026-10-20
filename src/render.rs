@@ -1,10 +1,10 @@
 //! Draws the overlay for the YouTube stream, in the style of the church's own stream:
 //! a white panel with a large round opening showing the camera (the text runs along the
-//! curve), a lower-third card over the camera, or the church photo before and after the
-//! service. Transparent pixels show the camera.
+//! curve), a lower-third card over the camera, or the church photo in a teal frame before
+//! and after the service. Transparent pixels show the camera.
 
 use cosmic_text::{Align, Attrs, Buffer, Color, Family, FontSystem, Metrics, Shaping, SwashCache, Weight};
-use tiny_skia::{FillRule, GradientStop, LinearGradient, Paint, PathBuilder, Pixmap, PixmapPaint, Point, Rect, SpreadMode, Transform};
+use tiny_skia::{FillRule, Paint, PathBuilder, Pixmap, PixmapPaint, Rect, Transform};
 
 pub const WIDTH: u32 = 1920;
 pub const HEIGHT: u32 = 1080;
@@ -15,6 +15,8 @@ const INK: [u8; 3] = [0x26, 0x2d, 0x2f];
 const WARM: [u8; 3] = [0x8f, 0x83, 0x77];
 const SAND: [u8; 3] = [0xe3, 0xda, 0xcf];
 const PAPER: [u8; 3] = [0xfb, 0xfa, 0xf7];
+/// The teal of the church's own start and end screens.
+const FRAME_TEAL: [u8; 3] = [0x00, 0x5e, 0x70];
 
 /// Left margin of the panel text.
 const LEFT: f32 = 96.0;
@@ -101,8 +103,10 @@ pub enum Scene {
     Bar { label: String, text: String },
     /// White panel with the text on the left, the camera in the round opening on the right.
     Panel { label: String, title: String, paragraphs: Vec<String>, style: Body, footer: String, qr: bool },
-    /// The church photo (inside before the service, outside after it) with text.
-    Holding { photo: Photo, label: String, title: String, sub: String, qr: bool },
+    /// The church photo in a teal frame (logo top left, QR code bottom left) with one line
+    /// in the bar below it: `left` left-aligned, `right` right-aligned. As the church's own
+    /// start screen (outside, date and service) and end screen (inside, next service).
+    Frame { photo: Photo, left: String, right: String },
 }
 
 /// How the panel text is set.
@@ -147,7 +151,6 @@ pub struct Renderer {
 #[derive(Clone, Copy, PartialEq)]
 enum Face {
     Serif,
-    Sans,
     SansBold,
 }
 
@@ -224,7 +227,7 @@ impl Renderer {
             Scene::Camera => {}
             Scene::Bar { label, text } => self.bar(&mut pm, label, text),
             Scene::Panel { label, title, paragraphs, style, footer, qr } => self.panel(&mut pm, label, title, paragraphs, *style, footer, *qr),
-            Scene::Holding { photo, label, title, sub, qr } => self.holding(&mut pm, *photo, label, title, sub, *qr),
+            Scene::Frame { photo, left, right } => self.frame(&mut pm, *photo, left, right),
         }
         to_straight_rgba(pm)
     }
@@ -367,53 +370,64 @@ impl Renderer {
         (y - gap <= bottom).then_some(out)
     }
 
-    /// Church photo over the whole picture, a dark fade at the bottom with the text,
-    /// the logo top left and the QR code bottom right.
-    fn holding(&mut self, pm: &mut Pixmap, photo: Photo, label: &str, title: &str, sub: &str, qr: bool) {
-        let (w, h) = (WIDTH as f32, HEIGHT as f32);
-        pm.fill(color(TEAL, 255));
+    /// The church's start/end screen, measured from its own stream: a teal bar on the left
+    /// (178 px) and below (96 px), a white band between the bars and the photo with a thin
+    /// white line 8 px inside the photo, the logo on a white tile top left, the QR code bottom
+    /// left and one line of large white text in the bottom bar.
+    fn frame(&mut self, pm: &mut Pixmap, photo: Photo, left: &str, right: &str) {
+        const BAR: f32 = 178.0;
+        const PHOTO_X: f32 = 196.0;
+        const PHOTO_BOTTOM: f32 = 965.0;
+        const BAR_TOP: f32 = 984.0;
+        let w = WIDTH as f32;
+        pm.fill(color(FRAME_TEAL, 255));
+        fill_rect(pm, BAR, 0.0, w - BAR, BAR_TOP, [255; 3], 255);
         let img = if photo == Photo::Inside { &self.inside } else { &self.outside };
         if let Some(img) = img {
-            draw_cover(pm, img, 0.0, 0.0, w, h);
+            let mut part = Pixmap::new((w - PHOTO_X) as u32, PHOTO_BOTTOM as u32).unwrap();
+            draw_cover(&mut part, img, 0.0, 0.0, w - PHOTO_X, PHOTO_BOTTOM);
+            pm.draw_pixmap(PHOTO_X as i32, 0, part.as_ref(), &PixmapPaint::default(), Transform::identity(), None);
         }
-        let fade = LinearGradient::new(
-            Point::from_xy(0.0, h * 0.38),
-            Point::from_xy(0.0, h),
-            vec![GradientStop::new(0.0, color([0, 0x1c, 0x22], 0)), GradientStop::new(1.0, color([0, 0x1c, 0x22], 235))],
-            SpreadMode::Pad,
-            Transform::identity(),
-        );
-        if let Some(shader) = fade {
-            let mut paint = Paint::default();
-            paint.shader = shader;
-            pm.fill_rect(Rect::from_xywh(0.0, 0.0, w, h).unwrap(), &paint, Transform::identity(), None);
-        }
+        // The thin white L inside the photo.
+        fill_rect(pm, PHOTO_X + 8.0, 0.0, 3.0, PHOTO_BOTTOM - 8.0, [255; 3], 255);
+        fill_rect(pm, PHOTO_X + 8.0, PHOTO_BOTTOM - 11.0, w - PHOTO_X - 8.0, 3.0, [255; 3], 255);
+        // Logo, dark on a white tile.
+        fill_rect(pm, 0.0, 0.0, 195.0, 140.0, [255; 3], 255);
         if let Some(logo) = &self.logo {
-            let scale = 230.0 / logo.width() as f32;
-            let t = Transform::from_scale(scale, scale).post_translate(80.0, 64.0);
+            let scale = (187.0 / logo.width() as f32).min(134.0 / logo.height() as f32);
+            let (lw, lh) = (logo.width() as f32 * scale, logo.height() as f32 * scale);
+            let mut dark = logo.clone();
+            for px in dark.data_mut().chunks_exact_mut(4) {
+                px[0] = 0;
+                px[1] = 0;
+                px[2] = 0;
+            }
+            let t = Transform::from_scale(scale, scale).post_translate((195.0 - lw) / 2.0, (140.0 - lh) / 2.0);
             let paint = PixmapPaint { quality: tiny_skia::FilterQuality::Bicubic, ..Default::default() };
-            pm.draw_pixmap(0, 0, logo.as_ref(), &paint, t, None);
+            pm.draw_pixmap(0, 0, dark.as_ref(), &paint, t, None);
         }
-        let mut y = h - 120.0 - 56.0;
-        if !sub.is_empty() {
-            self.line(pm, &[(sub, TextStyle::new(42.0, Face::Sans, SAND))], 96.0, y);
-            y -= 96.0;
-        } else {
-            y += 40.0;
+        self.draw_qr(pm, (BAR - 115.0) / 2.0, 940.0, 115.0);
+        // One line in the bar, as large as the church's own (70 px), smaller only when it
+        // does not fit, down to 40 px.
+        let (x0, x1) = (BAR, 1890.0);
+        let style = |size: f32| TextStyle::new(size, Face::SansBold, [255; 3]);
+        let mut size = 70.0;
+        loop {
+            let lw = self.measure(&[(left, style(size))]);
+            let rw = if right.is_empty() { 0.0 } else { 60.0 + self.measure(&[(right, style(size))]) };
+            if lw + rw <= x1 - x0 || size <= 40.0 {
+                break;
+            }
+            size -= 2.0;
         }
-        self.line(pm, &[(title, TextStyle::new(76.0, Face::SansBold, [255; 3]))], 96.0, y);
-        if !label.is_empty() {
-            let small = TextStyle { tracking: 0.18, ..TextStyle::new(26.0, Face::SansBold, SAND) };
-            self.line(pm, &[(&label.to_uppercase(), small)], 96.0, y - 44.0);
+        // Capitals centred in the bar.
+        let y = (BAR_TOP + HEIGHT as f32) / 2.0 - 0.68 * size;
+        if !left.is_empty() {
+            self.line(pm, &[(left, style(size))], x0, y);
         }
-        if qr && self.qr.is_some() {
-            let (s, x) = (180.0, w - 96.0 - 180.0);
-            let yq = h - 96.0 - s - 40.0;
-            self.draw_qr(pm, x, yq, s);
-            let small = TextStyle::new(26.0, Face::Sans, SAND);
-            let cap = "www.hhgtholen.nl";
-            let cw = self.measure(&[(cap, small)]);
-            self.line(pm, &[(cap, small)], x + (s - cw) / 2.0, yq + s + 12.0);
+        if !right.is_empty() {
+            let rw = self.measure(&[(right, style(size))]);
+            self.line(pm, &[(right, style(size))], x1 - rw, y);
         }
     }
 
@@ -556,19 +570,12 @@ pub fn write_examples(dir: &std::path::Path) -> anyhow::Result<()> {
     let mut r = Renderer::with_builtin_images("https://www.hhgtholen.nl");
     let p = |v: &[&str]| v.iter().map(|s| s.to_string()).collect::<Vec<_>>();
     let scenes = [
-        ("welkom", Scene::Holding {
+        ("welkom", Scene::Frame { photo: Photo::Outside, left: "Zondag 18 oktober 2026".into(), right: "Middagdienst".into() }),
+        ("einde", Scene::Frame { photo: Photo::Inside, left: "Vanmiddag is er een dienst om 16.00 uur.".into(), right: String::new() }),
+        ("einde-www", Scene::Frame {
             photo: Photo::Inside,
-            label: "Welkom".into(),
-            title: "Zondag 18 oktober 2026".into(),
-            sub: "Middagdienst · ds. A. den Hartog jr.".into(),
-            qr: true,
-        }),
-        ("einde", Scene::Holding {
-            photo: Photo::Outside,
-            label: "Volgende dienst".into(),
-            title: "Zondag 25 oktober om 9.30 uur".into(),
-            sub: "ds. K. Klopstra".into(),
-            qr: true,
+            left: "Voor meer informatie over onze gemeente kijk op www.hhgtholen.nl".into(),
+            right: String::new(),
         }),
         ("balk", Scene::Bar { label: "Slotzang".into(), text: "Psalm 42 : 5".into() }),
         ("gebed", Scene::Bar { label: String::new(), text: "Gebed".into() }),
