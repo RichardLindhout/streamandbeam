@@ -471,8 +471,13 @@ async fn get_settings(State(app): State<App>) -> impl IntoResponse {
 }
 
 async fn save_settings(State(app): State<App>, Json(s): Json<Settings>) -> Response {
+    let slotzang_text = s.slotzang_tekst;
     match app.director.save_settings(s) {
-        Ok(()) => StatusCode::NO_CONTENT.into_response(),
+        Ok(()) => {
+            // The boards follow the setting at once.
+            app.show.set_slotzang_text(slotzang_text).await;
+            StatusCode::NO_CONTENT.into_response()
+        }
         Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
     }
 }

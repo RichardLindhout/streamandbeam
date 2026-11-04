@@ -84,6 +84,7 @@ async fn main() -> anyhow::Result<()> {
     let show = show::Show::new(opts.data_dir.join("liturgie.json"), opts.liturgy_url.clone()).await;
     let engine = stream::Engine::new()?;
     let director = director::Director::new(engine.clone(), &opts.data_dir);
+    show.set_slotzang_text(director.settings().slotzang_tekst).await;
     let listener = listen::Listener::new();
     engine.set_listener(listener.clone());
     if director.settings().autopilot != "uit" {

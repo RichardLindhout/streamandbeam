@@ -121,6 +121,13 @@ export function SettingsDialog({ open, onOpenChange, state, status, onMade }: {
                 {sel("autopilot", "Meeluisteren", [["uit", "Uit"], ["suggestie", "Suggestie"], ["automatisch", "Automatisch"]])}
                 {f("qrLink", "Link in QR-code")}
               </div>
+              <label className="flex min-h-14 items-center gap-3 text-[20px]">
+                <Switch checked={!!s.slotzangTekst} onCheckedChange={(v) => setS({ ...s, slotzangTekst: v })} />
+                <span>
+                  Slotzang: volledige tekst op de borden
+                  <span className="block text-[18px] text-muted-foreground">Ook het lied na de dienst. Uit: alleen welke psalm, in grote letters.</span>
+                </span>
+              </label>
             </Section>
             <Section title="YouTube">
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 bg-background/50 p-3 text-[20px]">

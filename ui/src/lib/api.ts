@@ -140,6 +140,8 @@ export type Settings = {
   youtubeTest: boolean;
   autopilot: string;
   youtubeChannel: string;
+  /** The boards also show the text of the slotzang verses (off: only which psalm). */
+  slotzangTekst: boolean;
   [k: string]: unknown;
 };
 

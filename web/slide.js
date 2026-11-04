@@ -20,9 +20,10 @@ function slideHTML(s) {
     case "vrij":
       return `<div class="rows">${[s.header].concat(s.lines || []).filter((l, i) => i > 0 || l).map((l, i) =>
         `<div class="row${i === 0 && s.header ? " head" : ""}">${typo(l)}</div>`).join("")}</div>`;
-    // The theme during the sermon: every line of text sits on a ledge.
+    // The theme during the sermon: every line of text sits on a ledge. Below it, after an
+    // empty ledge, what is sung after the sermon (the footer), as on the church's PowerPoint.
     case "thema":
-      return `<div class="flow">${s.sub ? `<div class="ref">Tekst: ${typo(s.sub)}</div>` : ""}<div class="t">${typo(s.theme)}</div>${(s.points || []).map((p, i) => `<div>${i + 1}. ${typo(p)}</div>`).join("")}</div>`;
+      return `<div class="flow">${s.sub ? `<div class="ref">Tekst: ${typo(s.sub)}</div>` : ""}<div class="t">${typo(s.theme)}</div>${(s.points || []).map((p, i) => `<div>${i + 1}. ${typo(p)}</div>`).join("")}${s.footer ? `<div class="na">Na de preek:</div><div>${typo(s.footer)}</div>` : ""}</div>`;
     case "welkom":
     case "einde":
       return `<div class="head"><h1>${typo(s.header)}</h1><p>${typo(s.sub)}</p></div>
@@ -34,7 +35,10 @@ function slideHTML(s) {
       if (!s.lines || !s.lines.length) {
         return `<div class="announce"><small>${typo(s.header)}</small><strong>${typo(s.sub)}</strong></div>`;
       }
-    // fall through: verse slides of the slotzang look like a psalm, on the dark screen
+      // A verse with its text (setting "Slotzang: volledige tekst op de borden"): the psalm,
+      // then every line of the verse on a ledge, like the psalm board.
+      return `<div class="rows">${[s.header].concat(s.lines).map((l, i) =>
+        `<div class="row${i === 0 ? " head" : ""}">${typo(l)}</div>`).join("")}</div>`;
     case "psalm":
       return bar + `<div class="body"><div class="fit">${(s.lines || []).map((l) => `<div>${typo(l)}</div>`).join("")}</div></div>`;
     case "lezing":
@@ -68,16 +72,22 @@ function renderSlide(canvas, slide, black, layout) {
 // The psalm board: at least 11 ledges, closer together when there are more lines, and
 // a line that is too long gets smaller letters.
 function fitRows(canvas) {
-  var rows = canvas.querySelectorAll(".bord .row, .vrij .row");
+  var rows = canvas.querySelectorAll(".bord .row, .vrij .row, .slotzang .row");
   if (!rows.length) return;
   var n = Math.max(11, rows.length);
   canvas.style.setProperty("--row", Math.floor((1920 - 140) / n) + "px");
+  var smallest = 1000;
   for (var i = 0; i < rows.length; i++) {
     var r = rows[i], size = parseFloat(getComputedStyle(r).fontSize);
     while (size > 40 && r.scrollWidth > r.clientWidth + 1) {
       size -= 4;
       r.style.fontSize = size + "px";
     }
+    if (i > 0) smallest = Math.min(smallest, size);
+  }
+  // A verse reads as one block: all its lines as small as the longest one.
+  if (/\bslotzang\b/.test(canvas.className)) {
+    for (var j = 1; j < rows.length; j++) rows[j].style.fontSize = smallest + "px";
   }
 }
 
