@@ -61,9 +61,18 @@ impl std::fmt::Display for BibleRef {
     }
 }
 
+/// "Psalm 42", the name of a gezang ("De Tien Geboden"), or "Gezang 5" when the program
+/// does not have that gezang (yet).
+pub fn psalm_name(n: u32) -> String {
+    match crate::texts::psalm(n) {
+        Some(p) => p.naam.clone(),
+        None if n > 150 => format!("Gezang {}", n - 150),
+        None => format!("Psalm {n}"),
+    }
+}
+
 /// "Psalm 42 : 5, 6", or the name of a gezang ("De Tien Geboden : 2").
 pub fn psalm_ref_string(n: u32, verses: &[u32]) -> String {
-    let name = crate::texts::psalm(n).map_or_else(|| format!("Psalm {n}"), |p| p.naam.clone());
     let vs: Vec<String> = verses.iter().map(u32::to_string).collect();
-    format!("{name} : {}", vs.join(", "))
+    format!("{} : {}", psalm_name(n), vs.join(", "))
 }

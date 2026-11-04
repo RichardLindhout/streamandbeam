@@ -1,7 +1,7 @@
 //! The services, their order, and what the screens show right now.
 
 use crate::books::{BibleRef, psalm_ref_string};
-use crate::extract::ExtractedService;
+use crate::extract::{Extracted, ExtractedService};
 use crate::texts::{Verse, read_json, write_json};
 use chrono::{Datelike, Local, NaiveDate, NaiveDateTime};
 use serde::{Deserialize, Serialize};
@@ -10,7 +10,7 @@ use std::sync::Arc;
 use tokio::sync::{Mutex, watch};
 
 /// One part of a service, in the order the predikant uses. All references are numbers
-/// (Claude maps what is typed or on the website onto them), so nothing is parsed later.
+/// (crate::parse maps what is typed or on the website onto them), so nothing is parsed later.
 /// Kinds: welkom, psalm, slotzang, nazang (song after the service), lied (a song not in
 /// the psalm book, e.g. on a children's singing day), lezing, catechismus, gebed,
 /// collecte, preek, belijdenis (NGB, DL, a creed), formulier (baptism, Lord's Supper, …),
@@ -77,10 +77,7 @@ impl Item {
         let verses = self.verses.iter().map(u32::to_string).collect::<Vec<_>>().join(",");
         match self.kind.as_str() {
             "psalm" | "slotzang" | "nazang" if self.psalm > 0 && self.psalm <= 150 => format!("Ps {}:{verses}", self.psalm),
-            "psalm" | "slotzang" | "nazang" if self.psalm > 150 => {
-                let name = crate::texts::psalm(self.psalm).map(|p| p.naam.clone()).unwrap_or_default();
-                format!("{name}:{verses}")
-            }
+            "psalm" | "slotzang" | "nazang" if self.psalm > 150 => format!("{}:{verses}", crate::books::psalm_name(self.psalm)),
             "lezing" => self.passage.map(|p| p.short()).unwrap_or_default(),
             "catechismus" => {
                 let zondag = if self.zondag > 0 { self.zondag } else { crate::catechism::for_item(self).first().map_or(0, |q| q.zondag) };
@@ -107,7 +104,8 @@ pub struct Service {
     pub points: Vec<String>,
     /// e.g. "Zondag 25 oktober om 9.30 uur · ds. K. Klopstra", shown at the end.
     pub next: String,
-    /// Parts of the website's liturgy Claude could not place.
+    /// What to check in the website's liturgy: parts the program could not place, and
+    /// where the AI double check reads it differently.
     pub problems: Vec<String>,
     /// The YouTube broadcast made for this service.
     pub youtube_id: String,
@@ -168,9 +166,16 @@ fn website_signature(svc: &Service) -> String {
 /// A service just read from the website, merged with what is already there: the operator's
 /// own details are kept, and an edited (or protected) service is not replaced; then the
 /// website's version waits beside it when it differs from last time.
+/// `new.website_sig` may already be set: then it is what the program itself read, so a
+/// part read by the AI double check does not count as a change of the website.
 fn merge_fetched(old: Option<&Service>, mut new: Service, protect: bool) -> Service {
-    new.website_sig = website_signature(&new);
+    if new.website_sig.is_empty() {
+        new.website_sig = website_signature(&new);
+    }
     let Some(old) = old else { return new };
+    if new.next.is_empty() {
+        new.next = old.next.clone();
+    }
     new.predikant = old.predikant.clone();
     new.youtube_id = old.youtube_id.clone();
     new.board_custom = old.board_custom.clone();
@@ -259,6 +264,8 @@ pub struct View {
     pub last_fetched: i64,
     /// Why the last reading of the website failed; empty when it worked.
     pub fetch_error: String,
+    /// A quiet note about the last reading: how the AI double check went, or that it is off.
+    pub fetch_note: String,
     /// The screens still show the slide as it was before the service was changed (see `hold`).
     pub held: bool,
     /// While held: the new version of the board on screen, for the console to edit.
@@ -282,6 +289,24 @@ pub struct Show {
     path: PathBuf,
     state: Mutex<View>,
     tx: watch::Sender<View>,
+    check: std::sync::Mutex<AiCheck>,
+}
+
+/// The last page read and what the AI made of it, so the AI reads each version of the
+/// page once.
+#[derive(Default)]
+struct AiCheck {
+    /// Fingerprint of the page's text.
+    page: u64,
+    html: String,
+    own: Extracted,
+    /// Claude's reading of `page`, when done.
+    ai: Option<(u64, Extracted)>,
+    busy: bool,
+}
+
+fn fingerprint(text: &str) -> u64 {
+    text.bytes().fold(0xcbf29ce484222325u64, |h, b| (h ^ b as u64).wrapping_mul(0x100000001b3))
 }
 
 impl Show {
@@ -299,7 +324,7 @@ impl Show {
         migrate(&mut view.services);
         view.board_background = background_version(path.parent().unwrap_or(Path::new(".")));
         let (tx, _) = watch::channel(view.clone());
-        let show = Arc::new(Show { liturgy_url, path, state: Mutex::new(view), tx });
+        let show = Arc::new(Show { liturgy_url, path, state: Mutex::new(view), tx, check: Default::default() });
         let mut st = show.state.lock().await;
         show.changed(&mut st);
         drop(st);
@@ -333,7 +358,8 @@ impl Show {
 
     /// Reads the liturgy from the website and adds/replaces the services; remembers when
     /// that last worked and why it failed. `live` says whether the stream is live: then the
-    /// service on screen is not replaced either.
+    /// service on screen is not replaced either. The program reads the page itself; the AI
+    /// double check (`ai_check`) comes after, when there is a key.
     pub async fn fetch(&self, live: impl Fn() -> bool) -> anyhow::Result<()> {
         let result = self.fetch_services(live).await;
         let mut st = self.state.lock().await;
@@ -349,34 +375,86 @@ impl Show {
     }
 
     async fn fetch_services(&self, live: impl Fn() -> bool) -> anyhow::Result<()> {
-        let ex = crate::extract::extract_liturgy(&self.liturgy_url).await?;
+        let html = crate::extract::http_get(&self.liturgy_url).await?;
+        let own = crate::extract::read_page(&html, Local::now().date_naive());
+        let page = fingerprint(&crate::extract::liturgy_text(&html));
+        // The AI's reading of this same page from before, if there is one.
+        let (checked, note) = {
+            let mut c = self.check.lock().unwrap();
+            c.page = page;
+            c.html = html;
+            c.own = own.clone();
+            match &c.ai {
+                Some((p, ai)) if *p == page => Some(apply_ai_check(&own, ai)),
+                _ => None,
+            }
+            .map_or((own.clone(), None), |(ex, note)| (ex, Some(note)))
+        };
         let mut st = self.state.lock().await;
         let live = live();
-        for e in ex.diensten {
-            let svc = Service {
-                id: format!("{} {}", e.datum, e.tijd),
-                date: e.datum.clone(),
-                label: e.dienst.clone(),
-                time: e.tijd.clone(),
-                text: e.preektekst.clone().into_item(),
-                theme: e.thema.clone(),
-                points: e.punten.clone(),
-                problems: e.niet_herkend.clone(),
-                items: default_items(&e, &st.collecte),
-                ..Default::default()
-            };
-            // The service on screen is not replaced while live or once it has begun.
-            let protect = st.current == svc.id && (live || st.index > 0);
-            let svc = merge_fetched(st.services.iter().find(|s| s.id == svc.id), svc, protect);
-            upsert(&mut st.services, svc);
-        }
+        apply_fetched(&mut st, &own, &checked, live);
         enrich_from_kerktijden(&mut st.services).await;
         if st.current.is_empty() || !st.services.iter().any(|s| s.id == st.current) {
             st.current = upcoming(&st.services);
             st.index = 0;
         }
+        st.fetch_note = match note {
+            Some(note) => note,
+            None if !crate::claude::has_key() => "AI-controle staat uit (geen ANTHROPIC_API_KEY)".into(),
+            None => "AI-controle bezig…".into(),
+        };
+        if !own.notes.is_empty() {
+            st.fetch_note = format!("{} · {}", own.notes.join(" · "), st.fetch_note);
+        }
         self.changed(&mut st);
         Ok(())
+    }
+
+    /// The AI double check of the page read last: Claude reads it too, and every difference
+    /// becomes a warning with the service. Once per version of the page; without a key, or
+    /// when Claude fails, only a quiet note.
+    pub async fn ai_check(&self, live: impl Fn() -> bool) {
+        if !crate::claude::has_key() {
+            return;
+        }
+        loop {
+            let (page, html, own) = {
+                let mut c = self.check.lock().unwrap();
+                let done = c.ai.as_ref().is_some_and(|(p, _)| *p == c.page);
+                if c.busy || done || c.html.is_empty() {
+                    return;
+                }
+                c.busy = true;
+                (c.page, c.html.clone(), c.own.clone())
+            };
+            let result = crate::extract::ask_ai(&html).await;
+            let current = {
+                let mut c = self.check.lock().unwrap();
+                c.busy = false;
+                if let Ok(ai) = &result {
+                    c.ai = Some((page, ai.clone()));
+                }
+                c.page == page
+            };
+            // The page changed meanwhile: check the new one.
+            if !current {
+                continue;
+            }
+            let mut st = self.state.lock().await;
+            match result {
+                Ok(ai) => {
+                    let (checked, note) = apply_ai_check(&own, &ai);
+                    apply_fetched(&mut st, &own, &checked, live());
+                    st.fetch_note = note;
+                }
+                Err(e) => {
+                    eprintln!("AI-controle: {e:#}");
+                    st.fetch_note = "AI-controle overgeslagen (AI niet bereikbaar)".into();
+                }
+            }
+            self.changed(&mut st);
+            return;
+        }
     }
 
     /// A new, empty service the operator fills in by typing.
@@ -553,6 +631,51 @@ impl Show {
     }
 }
 
+/// The program's reading with the AI's differences added, and the quiet note about it.
+fn apply_ai_check(own: &Extracted, ai: &Extracted) -> (Extracted, String) {
+    let mut checked = own.clone();
+    let (n, notes) = crate::compare::double_check(&mut checked, ai);
+    let mut note = match n {
+        0 => "AI-controle: geen verschillen".to_string(),
+        1 => "AI-controle: 1 verschil, zie nakijken".to_string(),
+        n => format!("AI-controle: {n} verschillen, zie nakijken"),
+    };
+    for extra in notes {
+        note.push_str(" · ");
+        note.push_str(&extra);
+    }
+    (checked, note)
+}
+
+/// Puts the services read from the website in the list. `own` is the program's own
+/// reading, `checked` the same with the AI double check (same services, same order): its
+/// fingerprint comes from `own`, so the AI never makes the website look changed.
+fn apply_fetched(st: &mut View, own: &Extracted, checked: &Extracted, live: bool) {
+    for (o, e) in own.diensten.iter().zip(&checked.diensten) {
+        let sig = website_signature(&service_from(o, &st.collecte));
+        let svc = Service { website_sig: sig, ..service_from(e, &st.collecte) };
+        // The service on screen is not replaced while live or once it has begun.
+        let protect = st.current == svc.id && (live || st.index > 0);
+        let svc = merge_fetched(st.services.iter().find(|s| s.id == svc.id), svc, protect);
+        upsert(&mut st.services, svc);
+    }
+}
+
+fn service_from(e: &ExtractedService, collecte: &str) -> Service {
+    Service {
+        id: format!("{} {}", e.datum, e.tijd),
+        date: e.datum.clone(),
+        label: e.dienst.clone(),
+        time: e.tijd.clone(),
+        text: e.preektekst.clone().into_item(),
+        theme: e.thema.clone(),
+        points: e.punten.clone(),
+        problems: e.niet_herkend.clone(),
+        items: default_items(e, collecte),
+        ..Default::default()
+    }
+}
+
 /// Fills in the predikant and the next service from kerktijden.nl. Failing is fine:
 /// the operator can type them in.
 async fn enrich_from_kerktijden(services: &mut [Service]) {
@@ -676,10 +799,27 @@ fn next_of_kind(st: &View, kind: &str) -> usize {
 /// psalms, prayer, reading (and catechism), collecte during the psalm before the sermon,
 /// sermon, tussenzang, sermon, prayer of thanks, slotzang, end. The predikant's own order
 /// can then be made in the operator screen by dragging items around.
+/// Other parts on the website (a hymn, a form, a creed) stay after the psalm they follow
+/// there; a song after the service ("Na de dienst") comes after the blessing.
 fn default_items(e: &ExtractedService, collecte: &str) -> Vec<Item> {
     let parsed: Vec<Item> = e.onderdelen.iter().cloned().map(|r| r.into_item()).collect();
-    let psalms: Vec<&Item> = parsed.iter().filter(|i| i.kind == "psalm" || i.kind == "slotzang").collect();
-    let reading: Vec<&Item> = parsed.iter().filter(|i| i.kind == "lezing" || i.kind == "catechismus").collect();
+    let is_psalm = |i: &Item| i.kind == "psalm" || i.kind == "slotzang";
+    let is_reading = |i: &Item| i.kind == "lezing" || i.kind == "catechismus";
+    let psalms: Vec<&Item> = parsed.iter().filter(|i| is_psalm(i)).collect();
+    let reading: Vec<&Item> = parsed.iter().filter(|i| is_reading(i)).collect();
+    // after[k]: the other parts that follow the k-th psalm (after[0]: before the first).
+    let mut after: Vec<Vec<Item>> = vec![Vec::new(); psalms.len() + 1];
+    let mut at_end: Vec<Item> = Vec::new();
+    let mut seen = 0;
+    for it in &parsed {
+        if is_psalm(it) {
+            seen += 1;
+        } else if it.kind == "nazang" {
+            at_end.push(it.clone());
+        } else if !is_reading(it) {
+            after[seen].push(it.clone());
+        }
+    }
     let mut items: Vec<Item> = Vec::new();
     let simple = |kind: &str, label: &str| Item { kind: kind.into(), label: label.into(), ..Default::default() };
     let sung = |it: &Item, kind: &str, label: &str| {
@@ -693,9 +833,12 @@ fn default_items(e: &ExtractedService, collecte: &str) -> Vec<Item> {
     };
     let n = psalms.len();
     items.push(simple("welkom", "Startscherm"));
+    items.extend(after[0].iter().cloned());
     for (i, p) in psalms.iter().enumerate() {
+        let extra = &after[i + 1];
         if i == 0 {
             items.push(sung(p, "psalm", "Voorzang"));
+            items.extend(extra.iter().cloned());
             if n < 3 {
                 reading_part(&mut items);
                 items.push(simple("preek", "Prediking"));
@@ -703,19 +846,29 @@ fn default_items(e: &ExtractedService, collecte: &str) -> Vec<Item> {
         } else if i + 1 == n {
             items.push(simple("gebed", "Dankgebed"));
             items.push(sung(p, "slotzang", "Slotzang"));
+            items.extend(extra.iter().cloned());
         } else if i + 2 == n {
             items.push(sung(p, "psalm", "Tussenzang"));
+            items.extend(extra.iter().cloned());
             items.push(simple("preek", "Prediking"));
         } else if i + 3 == n {
             reading_part(&mut items);
             items.push(Item { text: collecte.into(), ..simple("collecte", "Collecte") });
             items.push(sung(p, "psalm", "Zingen"));
+            items.extend(extra.iter().cloned());
             items.push(simple("preek", "Prediking"));
         } else {
             items.push(sung(p, "psalm", "Zingen"));
+            items.extend(extra.iter().cloned());
         }
     }
+    // No psalms on the website: the reading and the sermon all the same.
+    if n == 0 && !reading.is_empty() {
+        reading_part(&mut items);
+        items.push(simple("preek", "Prediking"));
+    }
     items.push(simple("zegen", "Zegen"));
+    items.extend(at_end);
     items.push(simple("einde", "Aftiteling"));
     for (i, it) in items.iter_mut().enumerate() {
         it.id = format!("i{}", i + 1);
@@ -1176,6 +1329,72 @@ mod tests {
         assert!(!v.held);
         assert!(v.slides[v.index].header.starts_with("Psalm 5"), "{}", v.slides[v.index].header);
         assert_eq!(v.boards[v.index].list.len(), 3);
+    }
+
+    #[test]
+    fn website_service_in_the_usual_order_with_its_hymn() {
+        let html = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/fixtures/kerkdiensten-2026-11-01.html")).unwrap();
+        let ex = crate::extract::read_page(&html, NaiveDate::from_ymd_opt(2026, 11, 4).unwrap());
+        let morning = service_from(&ex.diensten[0], "1. Diaconie");
+        assert_eq!(kinds(&morning), [
+            "welkom:Startscherm",
+            "psalm:Voorzang",
+            "psalm:Zingen",
+            "psalm:Zingen",
+            "gebed:Gebed",
+            "lezing:Schriftlezing",
+            "collecte:Collecte",
+            "psalm:Zingen",
+            "preek:Prediking",
+            "psalm:Tussenzang",
+            "preek:Prediking",
+            "gebed:Dankgebed",
+            "slotzang:Slotzang",
+            "lied:Een vaste burcht is onze God",
+            "zegen:Zegen",
+            "einde:Aftiteling",
+        ]);
+        assert_eq!(morning.items[12].reference, "Psalm 130 : 3, 4");
+        assert_eq!(morning.text.reference, "1 Samuël 13:11");
+        let afternoon = service_from(&ex.diensten[1], "");
+        assert_eq!(afternoon.items.iter().filter(|i| i.kind == "lezing").count(), 3);
+        assert_eq!((afternoon.text.kind.as_str(), afternoon.text.reference.as_str()), ("catechismus", "vraag 58"));
+        assert_eq!(afternoon.items[1].reference, "Psalm 90 : 1");
+        assert!(afternoon.items.iter().any(|i| i.reference == "Psalm 27 : 3, 7"));
+    }
+
+    #[test]
+    fn ai_double_check_never_makes_the_website_look_changed() {
+        use crate::claude::RawItem;
+        let psalm = |n: u32, v: &[u32], bron: &str| RawItem { soort: "psalm".into(), psalm: n, verzen: v.to_vec(), herkend: true, bron: bron.into(), ..Default::default() };
+        let unknown = RawItem { soort: "mededeling".into(), opschrift: "Ps. 18: Vz".into(), bron: "Ps. 18: Vz".into(), niet_begrepen: true, ..Default::default() };
+        let svc = ExtractedService {
+            datum: "2026-11-08".into(),
+            tijd: "09:30".into(),
+            dienst: "Morgendienst".into(),
+            onderdelen: vec![psalm(90, &[1], "Ps. 90: 1"), unknown, psalm(27, &[3, 7], "Ps. 27: 3-7")],
+            ..Default::default()
+        };
+        let own = Extracted { diensten: vec![svc], ..Default::default() };
+        let mut ai = own.clone();
+        ai.diensten[0].onderdelen[1] = psalm(18, &[1], "");
+        ai.diensten[0].onderdelen[2].verzen = vec![3, 4, 5, 6, 7];
+        let (checked, note) = apply_ai_check(&own, &ai);
+        assert_eq!(note, "AI-controle: 2 verschillen, zie nakijken");
+        // Not edited: the checked version, with the AI's psalm marked and the warning.
+        let mut st = View::default();
+        apply_fetched(&mut st, &own, &own, false);
+        let sig = st.services[0].website_sig.clone();
+        apply_fetched(&mut st, &own, &checked, false);
+        let s = &st.services[0];
+        assert_eq!(s.website_sig, sig);
+        assert!(s.items.iter().any(|i| i.psalm == 18 && i.problem.contains("door AI gelezen")));
+        assert!(s.problems.iter().any(|p| p.starts_with("AI leest 'Ps. 27: 3-7' anders")), "{:?}", s.problems);
+        // Edited by the operator: kept, and no "website changed" because of the AI.
+        st.services[0].edited = true;
+        apply_fetched(&mut st, &own, &own, false);
+        apply_fetched(&mut st, &own, &checked, false);
+        assert!(!st.services[0].website_changed);
     }
 
     #[test]

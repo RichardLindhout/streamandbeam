@@ -164,7 +164,7 @@ export function OrderEditor({ svc, state }: { svc: Service; state: View | null }
         </div>
         {(svc.problems || []).length > 0 && (
           <div className="flex gap-3 rounded-xl border-2 border-warn/50 bg-warn/10 p-3 text-[20px] text-[#7a4a00]">
-            <CircleAlert className="mt-0.5 size-6 shrink-0" /> Niet herkend: {svc.problems.join("; ")}
+            <CircleAlert className="mt-0.5 size-6 shrink-0" /> Nakijken: {svc.problems.join("; ")}
           </div>
         )}
       </div>

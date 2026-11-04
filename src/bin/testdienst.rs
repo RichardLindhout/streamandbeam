@@ -131,12 +131,13 @@ async fn main() -> Result<()> {
     r.check(saved, "instellingen opgeslagen");
 
     println!("\n2. Liturgie van de voorbeeldwebsite");
+    // The program reads the page itself, also without a key.
     let fetched = http.post(format!("{APP}/api/fetch")).send().await?;
     if fetched.status().is_success() {
-        r.check(true, "liturgie opgehaald door Claude");
+        r.check(true, "liturgie gelezen van de voorbeeldwebsite");
     } else {
         let err = fetched.text().await?;
-        println!("     Claude niet beschikbaar ({err}); de liturgie wordt ingeladen zoals Claude hem zou lezen");
+        r.check(false, format!("liturgie lezen lukte niet ({err}); de dienst wordt ingeladen zoals de website hem geeft"));
         http.post(format!("{APP}/api/service")).json(&fallback_service()).send().await?;
         http.post(format!("{APP}/api/select?id=2026-10-18%2016:00")).send().await?;
     }
@@ -426,7 +427,7 @@ where
     }
 }
 
-/// The example website's service, as Claude maps it; used when the Claude API is not available.
+/// The example website's service, as the program reads it; used when reading it failed.
 fn fallback_service() -> Value {
     let simple = |id: &str, kind: &str, label: &str| json!({"id": id, "kind": kind, "label": label});
     let psalm = |id: &str, kind: &str, label: &str, n: u32, verses: &[u32]| {

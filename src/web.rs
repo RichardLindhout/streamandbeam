@@ -181,7 +181,12 @@ async fn fetch(State(app): State<App>, Query(c): Query<Confirmed>) -> Response {
     }
     let live = || is_live(&app);
     match app.show.fetch(live).await {
-        Ok(()) => Json(app.show.view()).into_response(),
+        Ok(()) => {
+            // The AI double check takes a while: it adds its warnings when done.
+            let a = app.clone();
+            tokio::spawn(async move { a.show.ai_check(|| is_live(&a)).await });
+            Json(app.show.view()).into_response()
+        }
         Err(e) => (StatusCode::BAD_GATEWAY, format!("{e:#}")).into_response(),
     }
 }
@@ -261,12 +266,11 @@ struct QuickRequest {
     text: String,
 }
 
-/// Typed liturgy ("ps 42:5, gebed, joh 3:16") → items, mapped by Claude.
+/// Typed liturgy ("ps 42:5, gebed, joh 3:16") → items. The program reads it itself; Claude
+/// only helps with parts it does not understand (when there is a key). What stays unclear
+/// comes back marked, so the console shows it.
 async fn quick(Json(q): Json<QuickRequest>) -> Response {
-    match crate::claude::parse_typed(&q.text).await {
-        Ok(items) => Json(items).into_response(),
-        Err(e) => (StatusCode::BAD_GATEWAY, format!("{e:#}")).into_response(),
-    }
+    Json(crate::parse::typed_items(&q.text).await).into_response()
 }
 
 #[derive(Deserialize)]

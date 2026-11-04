@@ -68,6 +68,8 @@ export type View = {
   lastFetched?: number;
   /** Why the last fetch failed ("" = fine). */
   fetchError?: string;
+  /** A quiet note about the last fetch: how the AI double check went, or that it is off. */
+  fetchNote?: string;
   /** The screens still show the slide as it was before the last change. */
   held?: boolean;
   /** While held: the new version of the board on screen. */
@@ -200,6 +202,8 @@ export const later = () => post("/api/stream/later");
 /** Saves a service. The screens keep what they show, unless `show` (asks to confirm while live). */
 export const saveService = (s: Service, show?: boolean) => post("/api/service" + (show ? "?tonen=1" : ""), s);
 
+/** Typed parts ("ps 42:5, gebed, joh 3:16") → items. The program reads them itself (no key
+ *  needed); what it does not understand comes back with `problem` set. */
 export async function quick(text: string): Promise<Item[]> {
   const r = await post("/api/quick", { text }, { quiet: true });
   if (!r.ok) throw new Error(await errorText(r));
