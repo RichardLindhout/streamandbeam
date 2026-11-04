@@ -5,11 +5,13 @@
 mod books;
 mod catechism;
 mod claude;
+mod compare;
 mod confessions;
 mod director;
 mod extract;
 mod kerktijden;
 mod listen;
+mod parse;
 mod render;
 mod show;
 mod stream;
@@ -48,7 +50,7 @@ fn parse_args() -> Options {
                 println!(
                     "streamandbeam [--poort 8080] [--publiek-poort 8090] [--data data] [--liturgie-url URL] [fetch|scenes]\n\n  \
                      --publiek-poort  alleen-kijken-pagina (bord + uitzending) voor internet, bv. 8090; standaard uit\n  \
-                     fetch            laat zien wat Claude van de website leest\n  \
+                     fetch            laat zien wat het programma van de website leest (en de AI-controle, met sleutel)\n  \
                      scenes           schrijf voorbeelden van de uitzendbeelden naar data/scenes"
                 );
                 std::process::exit(0);
@@ -72,7 +74,13 @@ fn lan_ip() -> String {
 async fn main() -> anyhow::Result<()> {
     let opts = parse_args();
     if opts.command.as_deref() == Some("fetch") {
-        let ex = extract::extract_liturgy(&opts.liturgy_url).await?;
+        let html = extract::http_get(&opts.liturgy_url).await?;
+        let mut ex = extract::read_page(&html, chrono::Local::now().date_naive());
+        if claude::has_key() {
+            let ai = extract::ask_ai(&html).await?;
+            let (n, notes) = compare::double_check(&mut ex, &ai);
+            println!("AI-controle: {n} verschil(len) {notes:?}");
+        }
         println!("{ex:#?}");
         return Ok(());
     }
@@ -96,7 +104,8 @@ async fn main() -> anyhow::Result<()> {
     tokio::spawn(check.clone().run(move || d1.settings().youtube_channel, move || d2.engine.status().mode == stream::Mode::Live));
     tokio::spawn(director.clone().run(show.clone()));
     // The liturgy from the website: at the start and every hour, not while live (then a few
-    // minutes later). A failure (no Claude key, no internet) is only shown quietly.
+    // minutes later). The program reads it itself; with a key the AI double-checks it.
+    // A failure (no internet) is only shown quietly.
     let (s, d) = (show.clone(), director.clone());
     tokio::spawn(async move {
         tokio::time::sleep(std::time::Duration::from_secs(5)).await;
@@ -106,14 +115,15 @@ async fn main() -> anyhow::Result<()> {
                 tokio::time::sleep(std::time::Duration::from_secs(300)).await;
                 continue;
             }
-            if let Err(e) = s.fetch(live).await {
-                eprintln!("website ophalen: {e:#}");
+            match s.fetch(live).await {
+                Ok(()) => s.ai_check(live).await,
+                Err(e) => eprintln!("website ophalen: {e:#}"),
             }
             tokio::time::sleep(std::time::Duration::from_secs(3600)).await;
         }
     });
-    if std::env::var("ANTHROPIC_API_KEY").is_err() {
-        eprintln!("let op: ANTHROPIC_API_KEY is niet gezet; liturgie ophalen van de website werkt dan niet");
+    if !claude::has_key() {
+        eprintln!("let op: ANTHROPIC_API_KEY is niet gezet; de AI-controle van de liturgie staat uit (het programma leest de website en het invoerveld zelf)");
     }
 
     let base = format!("http://{}:{}", lan_ip(), opts.port);

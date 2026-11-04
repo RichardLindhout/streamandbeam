@@ -1,6 +1,7 @@
-//! Claude reads the website and what the operator types, and maps both onto one fixed
-//! format: the service items below. Per item it says whether it understood it; the
-//! program then checks the numbers against its own texts.
+//! The fixed format for service items (`RawItem`), which the program's own reader
+//! (crate::parse) fills in, and Claude as a second reader: it double-checks the website
+//! and helps with typed parts the program does not understand. Per item it says whether
+//! it understood it; the program then checks the numbers against its own texts.
 
 use crate::books::{BOOKS, BibleRef};
 use crate::show::Item;
@@ -8,6 +9,11 @@ use anyhow::{Context, Result, bail};
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
 use serde_json::{Value, json};
+
+/// Whether Claude can be asked at all (the program works without it).
+pub fn has_key() -> bool {
+    std::env::var("ANTHROPIC_API_KEY").is_ok_and(|k| !k.trim().is_empty())
+}
 
 /// Sends one prompt to Claude (no official Rust SDK, so the REST API) and decodes its
 /// schema-constrained JSON answer.
@@ -45,8 +51,8 @@ pub async fn ask_json<T: DeserializeOwned>(prompt: &str, schema: Value) -> Resul
     Ok(serde_json::from_str(text)?)
 }
 
-/// The fixed format for one service item, as Claude returns it.
-#[derive(Debug, Clone, Deserialize)]
+/// The fixed format for one service item, as the program's reader and Claude return it.
+#[derive(Debug, Clone, Default, Deserialize)]
 pub struct RawItem {
     pub soort: String,
     pub opschrift: String,
@@ -63,6 +69,12 @@ pub struct RawItem {
     pub tekst: String,
     pub herkend: bool,
     pub reden: String,
+    /// The text it was read from, as on the website or typed (not asked of Claude).
+    #[serde(default)]
+    pub bron: String,
+    /// The program's reader did not understand (part of) the text: Claude may read it.
+    #[serde(skip)]
+    pub niet_begrepen: bool,
 }
 
 pub const KINDS: [&str; 15] = [
@@ -125,6 +137,10 @@ pub const RULES: &str = r#"Rules for items:
 impl RawItem {
     /// Turns Claude's answer into an item and checks it against the program's own texts.
     pub fn into_item(self) -> Item {
+        // Nothing given (e.g. an empty "Tekst:" on the website).
+        if self.soort.is_empty() {
+            return Item::default();
+        }
         let mut problems: Vec<String> = Vec::new();
         if !self.herkend {
             problems.push(if self.reden.is_empty() { "niet zeker herkend".into() } else { self.reden.clone() });
@@ -137,6 +153,9 @@ impl RawItem {
                 item.psalm = self.psalm;
                 item.verses = self.verzen.clone();
                 match crate::texts::psalm(self.psalm) {
+                    None if self.psalm > 150 && self.psalm <= 162 => {
+                        problems.push(format!("{} staat (nog) niet in het programma", crate::parse::gezang_name(self.psalm - 150)))
+                    }
                     None => problems.push(format!("psalm {} bestaat niet", self.psalm)),
                     Some(p) => {
                         if item.verses.is_empty() {
@@ -191,8 +210,9 @@ struct Items {
     onderdelen: Vec<RawItem>,
 }
 
-/// Quick entry: "ps 42:5, joh 5:16-29, gebed, HC 57" → items.
-pub async fn parse_typed(input: &str) -> Result<Vec<Item>> {
+/// Quick entry, for a part the program's own reader did not understand:
+/// "ps 42:5, joh 5:16-29, gebed, HC 57" → items.
+pub async fn ask_typed(input: &str) -> Result<Vec<RawItem>> {
     let schema = json!({
         "type": "object", "additionalProperties": false, "required": ["onderdelen"],
         "properties": {"onderdelen": {"type": "array", "items": item_schema()}}
@@ -203,6 +223,6 @@ pub async fn parse_typed(input: &str) -> Result<Vec<Item>> {
         reference_lists()
     );
     let parsed: Items = ask_json(&prompt, schema).await?;
-    Ok(parsed.onderdelen.into_iter().map(RawItem::into_item).collect())
+    Ok(parsed.onderdelen)
 }
 
