@@ -38,6 +38,19 @@ impl BibleRef {
             format!("{abbr}{sep}{}:{}-{}", self.chapter, self.from, self.to)
         }
     }
+
+    /// As the church writes a reading in its stream information: "Habakuk 3 : 17-19",
+    /// "1 Samuël 13". Here the dash is a range (only in psalms it means "and").
+    pub fn spaced(&self) -> String {
+        let name = book_name(self.book);
+        if self.from <= 1 && self.to >= 999 {
+            format!("{name} {}", self.chapter)
+        } else if self.to <= self.from {
+            format!("{name} {} : {}", self.chapter, self.from)
+        } else {
+            format!("{name} {} : {}-{}", self.chapter, self.from, self.to)
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Serialize, Deserialize)]
