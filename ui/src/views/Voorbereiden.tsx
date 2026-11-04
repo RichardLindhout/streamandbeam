@@ -1,22 +1,27 @@
 import { useState } from "react";
-import { Ellipsis, Globe, Trash } from "lucide-react";
+import { CalendarPlus, Copy, Ellipsis, Globe, MonitorPlay, Trash } from "lucide-react";
 import { toast } from "sonner";
 import type { StreamStatus, View } from "@/lib/api";
-import { at, hhmm, post } from "@/lib/api";
+import { at, hhmm, longDate, post } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { OrderEditor } from "@/components/OrderEditor";
 import { SermonCard } from "@/components/PrepareCards";
-import { ServiceTiles } from "@/components/ServiceTiles";
+import { ServiceTiles, specialDay } from "@/components/ServiceTiles";
+import { NewServiceDialog } from "@/components/Dialogs";
 import { Confirm } from "@/components/Confirm";
 
 export function Voorbereiden({ state, status, onBack }: { state: View | null; status: StreamStatus; onBack: () => void }) {
   const [openId, setOpenId] = useState<string | null>(null);
-  const [ask, setAsk] = useState<"" | "fetch" | "delete">("");
+  const [ask, setAsk] = useState<"" | "fetch" | "delete" | "select">("");
+  // The new-service dialog, empty or with the liturgy of the open service.
+  const [make, setMake] = useState<{ copy: string } | null>(null);
   const live = status.mode === "live";
   const svc = state?.services?.find((s) => s.id === openId) || state?.services?.find((s) => s.id === state.current);
   const isLive = live && !!svc && svc.id === state?.current;
+  const onScreen = !!svc && svc.id === state?.current;
+  const day = specialDay(svc);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -33,6 +38,9 @@ export function Voorbereiden({ state, status, onBack }: { state: View | null; st
             <Button variant="outline" size="icon" aria-label="Menu" className="shrink-0"><Ellipsis className="size-9" /></Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
+            <DropdownMenuItem onSelect={() => setMake({ copy: "" })}><CalendarPlus /> Nieuwe dienst…</DropdownMenuItem>
+            <DropdownMenuItem disabled={!svc} onSelect={() => svc && setMake({ copy: svc.id })}><Copy /> Kopie van deze dienst…</DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem disabled={!svc} onSelect={() => setAsk("fetch")}><Globe /> Opnieuw ophalen</DropdownMenuItem>
             <DropdownMenuItem disabled={!svc} onSelect={() => setAsk("delete")} className="text-live [&_svg]:text-live"><Trash /> Dienst verwijderen</DropdownMenuItem>
           </DropdownMenuContent>
@@ -49,13 +57,27 @@ export function Voorbereiden({ state, status, onBack }: { state: View | null; st
             className="grid-cols-[repeat(auto-fill,minmax(470px,1fr))]"
           />
           {isLive && <div className="rounded-xl bg-warn px-6 py-4 text-[26px] font-bold text-[#2b1d12]">Deze dienst is nu live</div>}
+          {svc && (day || svc.operator || !onScreen) && (
+            <div className="flex flex-wrap items-center gap-x-8 gap-y-3 rounded-xl border-2 bg-card px-5 py-3 text-[22px]">
+              {day && <span className="hymnal text-[24px] text-[#7a5a1c]">{day}</span>}
+              {svc.operator && <span>Bediening: <b>{svc.operator}</b></span>}
+              {!onScreen && (
+                <>
+                  <span className="min-w-0 flex-1 text-muted-foreground">Op het scherm staat een andere dienst</span>
+                  <Button onClick={() => setAsk("select")}><MonitorPlay /> Deze dienst op het scherm</Button>
+                </>
+              )}
+            </div>
+          )}
+          {/* Each its own key: with the same key for both, picking another service left the
+              order of the previous one standing beside the new one. */}
           <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(340px,1fr)]">
             {svc ? (
-              <OrderEditor key={svc.id} svc={svc} state={state} />
+              <OrderEditor key={"volgorde " + svc.id} svc={svc} state={state} />
             ) : (
               <Card className="grid place-items-center p-12 text-[26px] text-muted-foreground">Geen dienst</Card>
             )}
-            {svc && <SermonCard key={svc.id} svc={svc} />}
+            {svc && <SermonCard key={"preek " + svc.id} svc={svc} />}
           </div>
         </div>
       </main>
@@ -81,6 +103,25 @@ export function Voorbereiden({ state, status, onBack }: { state: View | null; st
           const r = await post("/api/delete-service?id=" + encodeURIComponent(svc.id));
           if (r.ok) setOpenId(null);
         }}
+      />
+      {/* Any service can go on the screens, on any day (asked again while live). */}
+      <Confirm
+        open={ask === "select"}
+        onOpenChange={(o) => !o && setAsk("")}
+        title={svc ? `${svc.label} van ${longDate(svc).toLowerCase()} op het scherm?` : ""}
+        yes="Ja"
+        onYes={async () => {
+          if (!svc) return;
+          const r = await post("/api/select?id=" + encodeURIComponent(svc.id));
+          if (r.ok) toast.success("Op het scherm");
+        }}
+      />
+      <NewServiceDialog
+        open={make !== null}
+        onOpenChange={(o) => !o && setMake(null)}
+        services={state?.services}
+        copyFrom={make?.copy}
+        onMade={(id) => setOpenId(id)}
       />
     </div>
   );

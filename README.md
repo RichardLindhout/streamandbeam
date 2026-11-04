@@ -10,7 +10,11 @@ Open `http://<pc>:8080` op de PC, een laptop of een tablet.
 1. **Dienst kiezen.** Bovenaan staan de diensten. **↻ Van website** haalt ze op van
    hhgtholen.nl: Claude leest de liturgie en zet die in een vast formaat. Wat Claude niet
    kon plaatsen, staat in een oranje blok. De predikant en de volgende dienst komen van
-   kerktijden.nl. Met **+ Nieuwe dienst** maak je er zelf een.
+   kerktijden.nl. Elke dienst, ook op een andere dag, zet je op het scherm met
+   **⋯ → Andere dienst** of in Voorbereiden met **Deze dienst op het scherm**. Met
+   **Nieuwe dienst** (⋯ in Voorbereiden, of de instellingen) maak je er zelf een: één tik
+   voor Morgendienst 09:30, Middagdienst 16:00 of Avonddienst 18:30, en met **Liturgie
+   overnemen van** een kopie van een andere dienst, bijvoorbeeld om op woensdag te oefenen.
 2. **Aanvullen of wijzigen.** Typ in het invoerveld wat er komt, bijvoorbeeld
    `ps 42:5, gebed, joh 3:16-21, HC 57, collecte`, en druk op Enter. Twijfelt het
    programma, dan staat er ⚠ met de reden. Sleep of gebruik ↑↓ voor de volgorde van de
@@ -22,6 +26,16 @@ Open `http://<pc>:8080` op de PC, een laptop of een tablet.
 
 De TV's openen `http://<pc>:8080/beam` en volgen de bediening vanzelf. Geef de PC een vast
 IP-adres in de router.
+
+**Roosters.** De collecte, de voorzang, de bijzondere dagen (Heilig Avondmaal, Biddag,
+Kerst, …) en wie de stream bedient komen uit de Excel van de kerk (Streamupdate.xlsm). De
+collecte van elke dienst komt uit het collecterooster; wat je zelf typt, blijft staan. Een
+nieuwe dienst krijgt de voorzang uit het voorzangrooster (voor 13:00 de ochtend), en wijkt
+de voorzang op de website af, dan staat dat bij de dienst onder *Nakijken*. De bijzondere
+dag en "Bediening: naam" staan bij de dienst. Bijwerken: **Instellingen → Roosters → Roosters
+uit Excel bijwerken**, of `streamandbeam importeer-excel Streamupdate.xlsm` (schrijft
+`data/roosters.json`; zonder dat bestand geldt het ingebouwde rooster). In psalmen en
+gezangen is een streepje "en": Ps. 27: 3-7 is vers 3 en 7.
 
 ## Teksten
 
