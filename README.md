@@ -63,8 +63,21 @@ ook het beeld voor YouTube en draait de PTZOptics-camera naar de juiste positie:
 | Gebed | camera op de doopvont met "Gebed" (TV's zwart) | doopvont |
 | Prediking | eerst het thema met de punten, dan alleen de predikant | preekstoel |
 
-Een rode balk waarschuwt als er geen geluid binnenkomt. **Automatisch live** (minuten vooraf)
-en **automatisch stoppen** (minuten na het eindscherm) staan in de instellingen.
+**Automatisch live** (minuten vooraf) en **automatisch stoppen** (minuten na het eindscherm)
+staan in de instellingen.
+
+### Geluid
+
+Kies de geluidsbron onder **⋯ → Instellingen → Geluid en camera**: de ingangen van de PC staan
+in een lijst, de USB-geluidskaart van de mixer bovenaan. Daar zie je ook wat er nu binnenkomt,
+en naast het beeldje bovenin beweegt een balkje mee met het geluid. Een nieuwe bron gaat meteen
+in (tijdens live na een vraag; de uitzending hapert dan een paar seconden).
+
+- **Rode balk**, ook in het voorbeeld: de gekozen bron is niet aangesloten of stuurt niets.
+  Gaat de USB-kabel er weer in, dan komt het geluid vanzelf terug.
+- **Rode balk tijdens live**: al 10 seconden stilte, of YouTube hoort niets.
+- **Oranje melding**: stilte buiten live (tussen de diensten is dat normaal), of het geluid
+  komt van de standaardingang van Windows terwijl de USB-geluidskaart er wel is.
 
 ### YouTube koppelen (eenmalig, ±15 minuten)
 

@@ -56,7 +56,11 @@ export default function App() {
   function act(a: Alarm) {
     if (a.action === "retry") setStreamMode("live");
     else if (a.action === "begin") step(1);
-    else setSeen((s) => [...s, a.id]);
+    else {
+      // "Geluidsbron" opens the settings; the band stays away until it comes back.
+      setSeen((s) => [...s, a.id]);
+      if (a.action === "settings") setSettings(true);
+    }
   }
 
   return (
@@ -67,7 +71,11 @@ export default function App() {
           setScreen={setScreen} onSettings={() => setSettings(true)}
         />
       )}
-      {alarm ? <AlarmBand alarm={alarm} onAct={act} /> : screen === "dienst" ? <Notice state={state} svc={svc} live={status.mode === "live"} /> : null}
+      {alarm ? (
+        <AlarmBand alarm={alarm} onAct={act} />
+      ) : screen === "dienst" ? (
+        <Notice state={state} svc={svc} status={status} onSettings={() => setSettings(true)} />
+      ) : null}
       {screen === "dienst" ? (
         <Dienst state={state} svc={svc} status={status} lis={lis} />
       ) : (

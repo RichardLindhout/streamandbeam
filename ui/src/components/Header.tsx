@@ -16,6 +16,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Confirm } from "./Confirm";
 import { toast } from "sonner";
 import { ServiceTiles, specialDay } from "./ServiceTiles";
+import { SoundMeter } from "./SoundSource";
 
 export type Screen = "dienst" | "voorbereiden";
 
@@ -387,6 +388,7 @@ export function Header({ state, svc, status, yt, connected, alarm, setScreen, on
       </div>
       <LiveArea status={status} svc={svc} yt={yt} />
       <PreviewThumb status={status} />
+      <SoundMeter status={status} />
       <MainMenu state={state} svc={svc} status={status} setScreen={setScreen} onSettings={onSettings} />
     </header>
   );

@@ -1,6 +1,7 @@
 //! The video engine that replaces OBS: camera + USB sound + our overlay, encoded to H.264
 //! and sent to YouTube and/or recorded to a file. Built on GStreamer.
 
+use crate::audio::{Input, Inputs, Source};
 use crate::render::{HEIGHT, WIDTH};
 use anyhow::{Context, Result, anyhow};
 use gstreamer as gst;
@@ -25,8 +26,9 @@ pub struct Settings {
     pub camera_ip: String,
     /// RTSP address of the camera; empty = rtsp://<camera_ip>:554/1 (PTZOptics main stream).
     pub camera_rtsp: String,
-    /// GStreamer audio source; empty = the default sound input, "test" = test tone.
-    /// On Windows a USB device can be chosen with e.g. `wasapisrc device="..."`.
+    /// The sound input: empty = the default of Windows, "apparaat:<name>" = that input (as
+    /// chosen in the console, e.g. the USB sound card), "test" = test tone, anything else a
+    /// GStreamer source line. See crate::audio::choose.
     pub audio_source: String,
     /// GStreamer H.264 encoder. On Windows `mfh264enc` (any GPU), `nvh264enc` (NVIDIA)
     /// or `qsvh264enc` (Intel) take load off the processor.
@@ -131,10 +133,32 @@ pub struct Status {
     /// Peak sound level in dB (0 = maximum), for the meter in the operator page.
     pub audio_db: f64,
     pub recording: String,
-    /// Shown as a big red warning in the operator page; empty when the sound is fine.
+    /// Shown as a warning in the operator page; empty when the sound is fine.
     pub audio_warning: String,
+    /// What kind of warning that is: the console warns louder for a missing input than for
+    /// silence, which is normal in the preview between services.
+    pub audio_issue: AudioIssue,
+    /// The sound input the pipeline records from, e.g. "Microfoon (USB Audio CODEC)".
+    pub audio_device: String,
     /// When the current mode started (Unix seconds), for the LIVE clock.
     pub since: i64,
+}
+
+/// What is wrong with the sound, most serious first.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum AudioIssue {
+    #[default]
+    #[serde(rename = "")]
+    Goed,
+    /// The chosen input is not connected.
+    NietGevonden,
+    /// No measurements at all come from the input.
+    GeenInvoer,
+    /// Long silence.
+    Stilte,
+    /// The sound comes from the default input of Windows while a USB sound card is there.
+    NietUsb,
 }
 
 /// When the sound input last sent a measurement and when it last heard something.
@@ -142,30 +166,53 @@ struct AudioWatch {
     started: Instant,
     last_level: Option<Instant>,
     last_sound: Option<Instant>,
+    source: Source,
 }
 
 impl AudioWatch {
-    fn new() -> Self {
-        AudioWatch { started: Instant::now(), last_level: None, last_sound: None }
+    fn new(source: Source) -> Self {
+        AudioWatch { started: Instant::now(), last_level: None, last_sound: None, source }
     }
 
-    fn warning(&self) -> String {
+    fn warning(&self) -> (AudioIssue, String) {
         let now = Instant::now();
+        let name = &self.source.name;
+        if self.source.missing {
+            return (
+                AudioIssue::NietGevonden,
+                format!("GELUIDSBRON NIET GEVONDEN — {name} is niet aangesloten. Zit de USB-kabel erin? Daarna komt het geluid vanzelf terug."),
+            );
+        }
         let since_level = now - self.last_level.unwrap_or(self.started);
         if since_level > NO_SIGNAL_WARN {
-            return "GEEN GELUIDSINVOER — er komt geen signaal van de USB-geluidskaart binnen. \
-                    Zit de USB-kabel erin en is de juiste geluidsbron ingesteld?"
-                .into();
+            return (
+                AudioIssue::GeenInvoer,
+                format!("GEEN GELUIDSINVOER — er komt geen signaal binnen van {name}. Zit de USB-kabel erin en is de juiste geluidsbron gekozen?"),
+            );
         }
         let since_sound = now - self.last_sound.unwrap_or(self.started);
         if since_sound > SILENCE_WARN {
-            return format!(
-                "GEEN GELUID — al {} seconden stilte op de USB-geluidsinvoer. Staat de mixer aan en zijn de kanalen open?",
-                since_sound.as_secs()
+            let advice = match &self.source.usb_unused {
+                Some(usb) => format!("Het geluid komt niet van {usb}: kies die bij Instellingen, Geluidsbron."),
+                None => "Staat de mixer aan en zijn de kanalen open?".into(),
+            };
+            return (AudioIssue::Stilte, format!("GEEN GELUID — al {} seconden stilte op {name}. {advice}", since_sound.as_secs()));
+        }
+        if let Some(usb) = &self.source.usb_unused {
+            return (
+                AudioIssue::NietUsb,
+                format!("GELUID NIET VAN USB — het geluid komt van {name}, niet van {usb}. Kies de USB-geluidskaart bij Instellingen, Geluidsbron."),
             );
         }
-        String::new()
+        (AudioIssue::Goed, String::new())
     }
+}
+
+/// Whether new settings change what the pipeline is built from (camera, sound, encoder);
+/// then a running stream starts again with them.
+pub fn pipeline_changed(old: &Settings, new: &Settings) -> bool {
+    (&old.camera_ip, &old.camera_rtsp, old.audio_source.trim(), &old.video_encoder)
+        != (&new.camera_ip, &new.camera_rtsp, new.audio_source.trim(), &new.video_encoder)
 }
 
 struct Running {
@@ -180,6 +227,11 @@ pub struct Engine {
     preview: Mutex<Vec<u8>>,
     audio: Mutex<AudioWatch>,
     listener: Mutex<Option<Arc<crate::listen::Listener>>>,
+    inputs: Inputs,
+    /// The mode and settings the pipeline runs with, to start it again the same way.
+    current: Mutex<Option<(Mode, Settings)>>,
+    /// One change at a time: the operator, a restart after an error, an input that is back.
+    switching: Mutex<()>,
 }
 
 impl Engine {
@@ -193,12 +245,17 @@ impl Engine {
                 audio_db: -100.0,
                 recording: String::new(),
                 audio_warning: String::new(),
+                audio_issue: AudioIssue::Goed,
+                audio_device: String::new(),
                 since: 0,
             }),
             overlay: Mutex::new(None),
             preview: Mutex::new(Vec::new()),
-            audio: Mutex::new(AudioWatch::new()),
+            audio: Mutex::new(AudioWatch::new(Source::default())),
             listener: Mutex::new(None),
+            inputs: Inputs::new(),
+            current: Mutex::new(None),
+            switching: Mutex::new(()),
         });
         // Keep feeding the current overlay: the compositor needs a steady flow of frames.
         let e = engine.clone();
@@ -206,7 +263,73 @@ impl Engine {
             std::thread::sleep(Duration::from_millis(200));
             e.push_overlay();
         });
+        // Is the chosen sound input still there? When it is back (the USB cable in again,
+        // seen twice to let Windows settle), the pipeline starts again to record from it.
+        let e = engine.clone();
+        std::thread::spawn(move || {
+            let mut back = 0;
+            loop {
+                std::thread::sleep(Duration::from_secs(2));
+                back = if e.recheck_source() { back + 1 } else { 0 };
+                if back >= 2 {
+                    back = 0;
+                    e.restart_same();
+                }
+            }
+        });
         Ok(engine)
+    }
+
+    /// The sound inputs of this PC, for choosing the sound source.
+    pub fn inputs(&self) -> Vec<Input> {
+        self.inputs.list()
+    }
+
+    /// Checks the running sound source against the inputs there are now; true when the
+    /// chosen input is back.
+    fn recheck_source(&self) -> bool {
+        if self.current.lock().unwrap().is_none() {
+            return false;
+        }
+        let inputs = self.inputs.list();
+        let mut audio = self.audio.lock().unwrap();
+        let (source, back) = crate::audio::recheck(&audio.source, &inputs);
+        if source.missing && !audio.source.missing {
+            eprintln!("geluidsbron {} is losgekoppeld", source.name);
+        }
+        audio.source = source;
+        back
+    }
+
+    /// Starts the pipeline again in the mode and with the settings it runs with.
+    fn restart_same(self: &Arc<Self>) {
+        let _one = self.switching.lock().unwrap();
+        let Some((mode, settings)) = self.current.lock().unwrap().clone() else { return };
+        println!("geluidsbron weer aangesloten; opnieuw gestart");
+        if let Err(err) = self.switch(mode, &settings) {
+            self.status.lock().unwrap().error = format!("herstart mislukt: {err:#}");
+        }
+    }
+
+    /// New settings while the pipeline runs: another camera, sound source or encoder counts
+    /// at once, in the same mode. Live keeps its YouTube address and key (they belong to the
+    /// broadcast); the stream falters for a few seconds. When the new settings give no
+    /// pipeline (a wrong GStreamer line), it runs on with the old ones.
+    pub fn restart(self: &Arc<Self>, new: &Settings) -> Result<()> {
+        let _one = self.switching.lock().unwrap();
+        let Some((mode, old)) = self.current.lock().unwrap().clone() else { return Ok(()) };
+        let mut s = new.clone();
+        if mode == Mode::Live {
+            s.rtmp_url = old.rtmp_url.clone();
+            s.stream_key = old.stream_key.clone();
+        }
+        let result = self.switch(mode, &s);
+        if result.is_err()
+            && let Err(e) = self.switch(mode, &old)
+        {
+            self.status.lock().unwrap().error = format!("herstart mislukt: {e:#}");
+        }
+        result
     }
 
     /// The listener gets a copy of the sound while the engine runs.
@@ -218,9 +341,10 @@ impl Engine {
         let mut st = self.status.lock().unwrap().clone();
         // Sound is only measured while the engine runs.
         if st.mode != Mode::Stop {
-            st.audio_warning = self.audio.lock().unwrap().warning();
+            (st.audio_issue, st.audio_warning) = self.audio.lock().unwrap().warning();
         } else {
             st.audio_db = -100.0;
+            st.audio_device.clear();
         }
         st
     }
@@ -248,7 +372,14 @@ impl Engine {
 
     /// Stops the current pipeline (finishing the recording) and starts one in the new mode.
     pub fn set_mode(self: &Arc<Self>, mode: Mode, settings: &Settings) -> Result<()> {
+        let _one = self.switching.lock().unwrap();
+        self.switch(mode, settings)
+    }
+
+    /// set_mode, while holding `switching`.
+    fn switch(self: &Arc<Self>, mode: Mode, settings: &Settings) -> Result<()> {
         self.stop();
+        *self.current.lock().unwrap() = None;
         {
             let mut st = self.status.lock().unwrap();
             st.mode = Mode::Stop;
@@ -258,7 +389,11 @@ impl Engine {
         if mode == Mode::Stop {
             return Ok(());
         }
-        let (desc, recording) = pipeline_description(mode, settings)?;
+        let source = crate::audio::choose(&settings.audio_source, &self.inputs.list());
+        if source.missing {
+            eprintln!("geluidsbron {} niet gevonden; stilte tot hij er is", source.name);
+        }
+        let (desc, recording) = pipeline_description(mode, settings, &source.launch)?;
         let pipeline = gst::parse::launch(&desc)
             .with_context(|| format!("pijplijn bouwen mislukt:\n{desc}"))?
             .downcast::<gst::Pipeline>()
@@ -294,13 +429,16 @@ impl Engine {
             );
         }
         self.watch_bus(&pipeline, mode, settings.clone());
-        *self.audio.lock().unwrap() = AudioWatch::new();
+        let device = source.name.clone();
+        *self.audio.lock().unwrap() = AudioWatch::new(source);
         pipeline.set_state(gst::State::Playing)?;
         *self.running.lock().unwrap() = Some(Running { pipeline, overlay });
+        *self.current.lock().unwrap() = Some((mode, settings.clone()));
         let mut st = self.status.lock().unwrap();
         st.mode = mode;
         st.since = chrono::Utc::now().timestamp();
         st.recording = recording;
+        st.audio_device = device;
         drop(st);
         self.push_overlay();
         Ok(())
@@ -333,10 +471,13 @@ impl Engine {
                         let text = format!("{} ({})", err.error(), err.debug().unwrap_or_default());
                         eprintln!("uitzending: {text}");
                         e.status.lock().unwrap().error = text;
-                        let still_ours = e.running.lock().unwrap().as_ref().is_some_and(|r| Some(&r.pipeline) == weak.upgrade().as_ref());
-                        if mode == Mode::Live && still_ours {
+                        if mode == Mode::Live {
                             std::thread::sleep(Duration::from_secs(3));
-                            if let Err(err) = e.set_mode(mode, &settings) {
+                            // Not when the operator (or an input that came back) started
+                            // another pipeline in the meantime.
+                            let _one = e.switching.lock().unwrap();
+                            let still_ours = e.running.lock().unwrap().as_ref().is_some_and(|r| Some(&r.pipeline) == weak.upgrade().as_ref());
+                            if still_ours && let Err(err) = e.switch(mode, &settings) {
                                 e.status.lock().unwrap().error = format!("herstart mislukt: {err:#}");
                             }
                         }
@@ -363,61 +504,13 @@ impl Engine {
     }
 }
 
-/// A sound input the operator can pick, with the pipeline text stored in the settings.
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct AudioDevice {
-    pub name: String,
-    pub source: String,
-    pub default: bool,
-}
-
-/// The sound inputs Windows offers right now (USB sound cards, microphones). Recording what
-/// the PC itself plays (loopback) is left out: that is never the church's sound.
-pub fn audio_devices() -> Vec<AudioDevice> {
-    let monitor = gst::DeviceMonitor::new();
-    monitor.add_filter(Some("Audio/Source"), None);
-    if monitor.start().is_err() {
-        return Vec::new();
-    }
-    let mut list: Vec<AudioDevice> = monitor
-        .devices()
-        .into_iter()
-        .filter_map(|d| {
-            let props = d.properties()?;
-            let get = |k: &str| props.get::<String>(k).ok();
-            let flag = |k: &str| props.get::<bool>(k).unwrap_or(false);
-            // "Default Audio Capture Device" follows the Windows default, which the empty setting
-            // (autoaudiosrc) already offers as "Standaard".
-            if flag("wasapi2.device.loopback") || flag("wasapi.device.loopback") || d.display_name().starts_with("Default Audio") {
-                return None;
-            }
-            let source = match get("device.api")?.as_str() {
-                "wasapi2" => format!("wasapi2src device=\"{}\"", get("device.id")?),
-                "wasapi" => format!("wasapisrc device=\"{}\"", get("device.strid")?),
-                _ => return None,
-            };
-            Some(AudioDevice { name: d.display_name().to_string(), source, default: flag("device.default") })
-        })
-        .collect();
-    monitor.stop();
-    // By name; one entry per device.
-    list.sort_by(|a, b| a.name.cmp(&b.name));
-    list.dedup_by(|a, b| a.source == b.source);
-    list
-}
-
-fn pipeline_description(mode: Mode, s: &Settings) -> Result<(String, String)> {
+/// The pipeline for a mode, with `audio` as the sound source (see crate::audio::choose).
+fn pipeline_description(mode: Mode, s: &Settings, audio: &str) -> Result<(String, String)> {
     let video = if s.camera_ip.is_empty() && s.camera_rtsp.is_empty() {
         "videotestsrc is-live=true pattern=smpte".to_string()
     } else {
         let url = if s.camera_rtsp.is_empty() { format!("rtsp://{}:554/1", s.camera_ip) } else { s.camera_rtsp.clone() };
         format!("rtspsrc location=\"{url}\" latency=300 protocols=tcp ! decodebin")
-    };
-    let audio = match s.audio_source.as_str() {
-        "" => "autoaudiosrc",
-        "test" => "audiotestsrc is-live=true wave=sine volume=0.05",
-        other => other,
     };
     let mut d = format!(
         "{video} ! videoconvert ! videoscale ! videorate ! video/x-raw,width={WIDTH},height={HEIGHT},framerate=25/1 ! queue ! comp.sink_0 \
@@ -465,5 +558,71 @@ pub async fn recall_preset(camera_ip: &str, preset: u32) {
     let result = reqwest::Client::new().get(&url).timeout(Duration::from_secs(3)).send().await;
     if let Err(e) = result {
         eprintln!("camera naar positie {preset}: {e}");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A watch that started `secs` seconds ago, with a measurement and sound just now or never.
+    fn watch(source: Source, secs: u64, level: bool, sound: bool) -> AudioWatch {
+        let now = Instant::now();
+        let started = now.checked_sub(Duration::from_secs(secs)).unwrap_or(now);
+        AudioWatch { started, last_level: level.then_some(now), last_sound: sound.then_some(now), source }
+    }
+
+    fn usb() -> Source {
+        Source { name: "Microfoon (USB Audio CODEC)".into(), chosen: true, ..Default::default() }
+    }
+
+    #[test]
+    fn sound_warnings() {
+        assert_eq!(watch(usb(), 30, true, true).warning(), (AudioIssue::Goed, String::new()));
+        let (issue, text) = watch(usb(), 30, true, false).warning();
+        assert_eq!(issue, AudioIssue::Stilte);
+        assert!(text.starts_with("GEEN GELUID — al 30 seconden stilte op Microfoon (USB Audio CODEC)."), "{text}");
+        let (issue, text) = watch(usb(), 30, false, false).warning();
+        assert_eq!(issue, AudioIssue::GeenInvoer);
+        assert!(text.contains("geen signaal binnen van Microfoon (USB Audio CODEC)"), "{text}");
+        let (issue, text) = watch(Source { missing: true, ..usb() }, 30, true, true).warning();
+        assert_eq!(issue, AudioIssue::NietGevonden);
+        assert!(text.starts_with("GELUIDSBRON NIET GEVONDEN — Microfoon (USB Audio CODEC) is niet aangesloten."), "{text}");
+        // The first seconds after a start are not silence yet.
+        assert_eq!(watch(usb(), 1, false, false).warning().0, AudioIssue::Goed);
+    }
+
+    #[test]
+    fn default_input_while_a_usb_card_is_there() {
+        let laptop = Source {
+            name: "Microphone Array (Realtek(R) Audio)".into(),
+            default: true,
+            usb_unused: Some("Microfoon (USB Audio CODEC)".into()),
+            ..Default::default()
+        };
+        // It hears the room: still say where the sound comes from.
+        let (issue, text) = watch(laptop.clone(), 30, true, true).warning();
+        assert_eq!(issue, AudioIssue::NietUsb);
+        assert!(text.contains("komt van Microphone Array (Realtek(R) Audio), niet van Microfoon (USB Audio CODEC)"), "{text}");
+        // Silence says so too, with the way out.
+        let (issue, text) = watch(laptop, 30, true, false).warning();
+        assert_eq!(issue, AudioIssue::Stilte);
+        assert!(text.contains("kies die bij Instellingen"), "{text}");
+    }
+
+    #[test]
+    fn what_restarts_the_stream() {
+        let old = Settings::default();
+        assert!(!pipeline_changed(&old, &Settings { qr_link: "https://example.org".into(), ..old.clone() }));
+        assert!(!pipeline_changed(&old, &Settings { audio_source: "  ".into(), ..old.clone() }));
+        assert!(pipeline_changed(&old, &Settings { audio_source: "apparaat:Microfoon (USB Audio CODEC)".into(), ..old.clone() }));
+        assert!(pipeline_changed(&old, &Settings { camera_ip: "192.168.2.178".into(), ..old.clone() }));
+    }
+
+    #[test]
+    fn pipeline_records_from_the_chosen_source() {
+        let source = "wasapi2src device=\"{0.0.1.00000000}.{abc}\" continue-on-error=true";
+        let (d, _) = pipeline_description(Mode::Voorbeeld, &Settings::default(), source).unwrap();
+        assert!(d.contains(&format!("{source} ! audioconvert")), "{d}");
     }
 }

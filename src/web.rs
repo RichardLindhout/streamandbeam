@@ -74,7 +74,7 @@ pub fn router(
         .route("/api/stream", get(stream_status).post(stream_mode))
         .route("/api/stream/later", post(stream_later))
         .route("/api/settings", get(get_settings).post(save_settings))
-        .route("/api/audio-devices", get(audio_devices))
+        .route("/api/geluidsbronnen", get(sound_inputs))
         .route("/preview.jpg", get(preview))
         .route("/api/youtube", get(youtube_status))
         .route("/api/youtube/logout", post(youtube_logout))
@@ -445,14 +445,6 @@ async fn stream_status(State(app): State<App>) -> impl IntoResponse {
     Json(v)
 }
 
-/// The sound inputs to choose from in the settings (probing takes a moment, so off the async threads).
-async fn audio_devices() -> Response {
-    match tokio::task::spawn_blocking(crate::stream::audio_devices).await {
-        Ok(list) => Json(list).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
-}
-
 /// For the watch page on the internet: only whether it runs and the sound, never error
 /// texts (they can contain the stream key).
 async fn public_stream_status(State(app): State<App>) -> impl IntoResponse {
@@ -549,11 +541,25 @@ async fn get_settings(State(app): State<App>) -> impl IntoResponse {
     Json(app.director.settings())
 }
 
-async fn save_settings(State(app): State<App>, Json(s): Json<Settings>) -> Response {
-    match app.director.save_settings(s) {
-        Ok(()) => StatusCode::NO_CONTENT.into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+async fn save_settings(State(app): State<App>, Query(c): Query<Confirmed>, Json(s): Json<Settings>) -> Response {
+    // Another sound source or camera starts the stream again: while live it falters.
+    let old = app.director.settings();
+    if crate::stream::pipeline_changed(&old, &s) {
+        let what = if old.audio_source.trim() != s.audio_source.trim() { "De geluidsbron" } else { "De camera" };
+        if let Some(r) = needs_confirmation(&app, c.yes(), &format!("{what} nu wisselen? De uitzending hapert een paar seconden.")) {
+            return r;
+        }
     }
+    match app.director.save_settings(s).await {
+        Ok(()) => StatusCode::NO_CONTENT.into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, format!("{e:#}")).into_response(),
+    }
+}
+
+/// The sound inputs of this PC, USB first, for choosing the sound source.
+async fn sound_inputs(State(app): State<App>) -> impl IntoResponse {
+    let engine = app.director.engine.clone();
+    Json(tokio::task::spawn_blocking(move || engine.inputs()).await.unwrap_or_default())
 }
 
 async fn preview(State(app): State<App>) -> Response {

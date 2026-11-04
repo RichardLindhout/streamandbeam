@@ -107,12 +107,18 @@ export type View = {
 
 export type Mode = "stop" | "voorbeeld" | "opnemen" | "live";
 
+/** What is wrong with the sound ("" = fine), most serious first. */
+export type AudioIssue = "" | "niet-gevonden" | "geen-invoer" | "stilte" | "niet-usb";
+
 export type StreamStatus = {
   mode: Mode;
   error: string;
   audioDb: number;
   recording: string;
   audioWarning: string;
+  audioIssue: AudioIssue;
+  /** The sound input the stream records from, e.g. "Microfoon (USB Audio CODEC)". */
+  audioDevice: string;
   /** Unix seconds the stream started (0 = not running). */
   since: number;
   boards: number;
@@ -146,9 +152,16 @@ export type YouTubeCheck = {
   streaming: boolean;
 };
 
+/** A sound input of the church PC. */
+export type SoundInput = { name: string; usb: boolean; default: boolean };
+
+/** audioSource for an input chosen by name. */
+export const DEVICE = "apparaat:";
+
 export type Settings = {
   cameraIp: string;
   cameraRtsp: string;
+  /** "" = the default of Windows, "apparaat:<name>", "test" = test tone, or a GStreamer line. */
   audioSource: string;
   videoEncoder: string;
   rtmpUrl: string;
