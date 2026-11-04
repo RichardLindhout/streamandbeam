@@ -2,11 +2,12 @@
 
 use crate::books::{BibleRef, psalm_ref_string};
 use crate::extract::{Extracted, ExtractedService};
+use crate::roosters::Roosters;
 use crate::texts::{Verse, read_json, write_json};
 use chrono::{Datelike, Local, NaiveDate, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 use tokio::sync::{Mutex, watch};
 
 /// One part of a service, in the order the predikant uses. All references are numbers
@@ -121,6 +122,12 @@ pub struct Service {
     pub website_changed: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub website: Option<WebsiteVersion>,
+    /// From the church's schedules, worked out again at every change (see `annotate`): the
+    /// special day ("Heilig Avondmaal") and who operates the stream at this service.
+    #[serde(skip_deserializing)]
+    pub special_day: String,
+    #[serde(skip_deserializing)]
+    pub operator: String,
 }
 
 /// The website's version of an edited service, waiting for the operator.
@@ -152,7 +159,8 @@ impl WebsiteVersion {
 }
 
 /// A fingerprint of what the website says about a service (parts, references, text and
-/// theme), to notice when it changes. Not the collecte text: that comes from the operator.
+/// theme), to notice when it changes. Not the collecte text: that comes from the
+/// collecterooster or the operator.
 fn website_signature(svc: &Service) -> String {
     let mut text = format!("{}|{}|{}|{}", svc.label, svc.text.reference, svc.theme, svc.points.join("/"));
     for it in &svc.items {
@@ -237,8 +245,6 @@ struct Saved {
     services: Vec<Service>,
     current: String,
     index: usize,
-    /// Collecte purposes of the last service, used for the next one.
-    collecte: String,
     last_fetched: i64,
 }
 
@@ -274,8 +280,6 @@ pub struct View {
     /// slide, board slide) until the operator moves on or chooses to show the change.
     #[serde(skip)]
     hold: Option<(usize, Slide, Slide)>,
-    #[serde(skip)]
-    collecte: String,
 }
 
 impl View {
@@ -290,6 +294,8 @@ pub struct Show {
     state: Mutex<View>,
     tx: watch::Sender<View>,
     check: std::sync::Mutex<AiCheck>,
+    /// The church's schedules (collectes, voorzang, who operates); see `roosters`.
+    roosters: RwLock<Arc<Roosters>>,
 }
 
 /// The last page read and what the AI made of it, so the AI reads each version of the
@@ -312,19 +318,31 @@ fn fingerprint(text: &str) -> u64 {
 impl Show {
     pub async fn new(path: PathBuf, liturgy_url: String) -> Arc<Show> {
         let saved: Saved = read_json(&path).unwrap_or_default();
+        let dir = path.parent().unwrap_or(Path::new(".")).to_path_buf();
+        let roosters = crate::roosters::load(&dir);
         let view = View {
             services: saved.services,
             current: saved.current,
             index: saved.index,
-            collecte: saved.collecte,
             last_fetched: saved.last_fetched,
             ..Default::default()
         };
         let mut view = view;
         migrate(&mut view.services);
-        view.board_background = background_version(path.parent().unwrap_or(Path::new(".")));
+        // The collecte comes from the collecterooster now, no longer from the service before.
+        for svc in view.services.iter_mut() {
+            follow_collecte(svc, &Roosters::default(), &roosters);
+        }
+        view.board_background = background_version(&dir);
         let (tx, _) = watch::channel(view.clone());
-        let show = Arc::new(Show { liturgy_url, path, state: Mutex::new(view), tx, check: Default::default() });
+        let show = Arc::new(Show {
+            liturgy_url,
+            path,
+            state: Mutex::new(view),
+            tx,
+            check: Default::default(),
+            roosters: RwLock::new(Arc::new(roosters)),
+        });
         let mut st = show.state.lock().await;
         show.changed(&mut st);
         drop(st);
@@ -334,6 +352,25 @@ impl Show {
     /// Folder with the saved liturgy, settings and the board background.
     pub fn data_dir(&self) -> PathBuf {
         self.path.parent().map(Path::to_path_buf).unwrap_or_default()
+    }
+
+    pub fn roosters(&self) -> Arc<Roosters> {
+        self.roosters.read().unwrap().clone()
+    }
+
+    /// New schedules from the church's workbook: kept in the data folder (before the built-in
+    /// ones from then on), and the collecte of every service follows them, unless the operator
+    /// wrote one of his own.
+    pub async fn set_roosters(&self, new: Roosters) -> anyhow::Result<()> {
+        write_json(&self.data_dir().join("roosters.json"), &new)?;
+        let new = Arc::new(new);
+        let old = std::mem::replace(&mut *self.roosters.write().unwrap(), new.clone());
+        let mut st = self.state.lock().await;
+        for svc in st.services.iter_mut() {
+            follow_collecte(svc, &old, &new);
+        }
+        self.changed(&mut st);
+        Ok(())
     }
 
     /// The church's own background picture for the boards, if one was chosen.
@@ -390,9 +427,10 @@ impl Show {
             }
             .map_or((own.clone(), None), |(ex, note)| (ex, Some(note)))
         };
+        let roosters = self.roosters();
         let mut st = self.state.lock().await;
         let live = live();
-        apply_fetched(&mut st, &own, &checked, live);
+        apply_fetched(&mut st, &own, &checked, &roosters, live);
         enrich_from_kerktijden(&mut st.services).await;
         if st.current.is_empty() || !st.services.iter().any(|s| s.id == st.current) {
             st.current = upcoming(&st.services);
@@ -440,11 +478,12 @@ impl Show {
             if !current {
                 continue;
             }
+            let roosters = self.roosters();
             let mut st = self.state.lock().await;
             match result {
                 Ok(ai) => {
                     let (checked, note) = apply_ai_check(&own, &ai);
-                    apply_fetched(&mut st, &own, &checked, live());
+                    apply_fetched(&mut st, &own, &checked, &roosters, live());
                     st.fetch_note = note;
                 }
                 Err(e) => {
@@ -457,18 +496,16 @@ impl Show {
         }
     }
 
-    /// A new, empty service the operator fills in by typing.
-    pub async fn new_service(&self, date: String, time: String, label: String) {
+    /// A new service the operator fills in by typing (with the voorzang from the schedule
+    /// already in it), or a copy of the liturgy of the service `copy_from`.
+    pub async fn new_service(&self, date: String, time: String, label: String, copy_from: Option<String>) {
+        let roosters = self.roosters();
         let mut st = self.state.lock().await;
-        let mut items = vec![
-            Item { kind: "welkom".into(), label: "Startscherm".into(), ..Default::default() },
-            Item { kind: "zegen".into(), label: "Zegen".into(), ..Default::default() },
-            Item { kind: "einde".into(), label: "Aftiteling".into(), ..Default::default() },
-        ];
-        for (i, it) in items.iter_mut().enumerate() {
-            it.id = format!("i{}", i + 1);
-        }
-        let svc = Service { id: format!("{date} {time}"), date, time, label, items, ..Default::default() };
+        let source = copy_from.and_then(|id| st.services.iter().find(|s| s.id == id).cloned());
+        let svc = match source {
+            Some(src) => copied_service(&src, date, time, label, &roosters),
+            None => empty_service(date, time, label, &roosters),
+        };
         st.current = svc.id.clone();
         st.index = 0;
         st.hold = None;
@@ -491,15 +528,19 @@ impl Show {
     /// The operator's version of a service; from now on the website does not replace it.
     /// The screens keep what they show unless `show_now`.
     pub async fn save_service(&self, mut svc: Service, show_now: bool) {
+        let roosters = self.roosters();
         let mut st = self.state.lock().await;
+        // A collecte just added (typed) gets the purposes of that date from the collecterooster.
+        let known: Vec<String> = st.services.iter().find(|s| s.id == svc.id).map(|s| s.items.iter().map(|i| i.id.clone()).collect()).unwrap_or_default();
+        let collecte = roosters.collecte_text(&svc.date);
+        for it in svc.items.iter_mut().filter(|i| i.kind == "collecte" && i.text.trim().is_empty() && !known.contains(&i.id)) {
+            it.text = collecte.clone();
+        }
         for it in &mut svc.items {
             it.refresh();
         }
         svc.text.refresh();
         svc.edited = true;
-        if let Some(c) = svc.items.iter().find(|i| i.kind == "collecte") {
-            st.collecte = c.text.clone();
-        }
         self.store(&mut st, svc, show_now);
     }
 
@@ -516,6 +557,8 @@ impl Show {
         let mut st = self.state.lock().await;
         let Some(mut svc) = st.services.iter().find(|s| s.id == id).cloned() else { return };
         if let (true, Some(w)) = (take, svc.website.take()) {
+            // The collecte as the operator has it stays (the website has none of its own).
+            let own = svc.items.iter().find(|i| i.kind == "collecte" && !i.text.trim().is_empty()).map(|i| i.text.clone());
             svc.label = w.label;
             svc.text = w.text;
             svc.theme = w.theme;
@@ -523,6 +566,11 @@ impl Show {
             svc.problems = w.problems;
             svc.items = w.items;
             svc.edited = false;
+            if let Some(own) = own {
+                for it in svc.items.iter_mut().filter(|i| i.kind == "collecte") {
+                    it.text = own.clone();
+                }
+            }
         }
         svc.website = None;
         svc.website_changed = false;
@@ -609,6 +657,7 @@ impl Show {
     }
 
     fn changed(&self, st: &mut View) {
+        annotate(&mut st.services, &self.roosters());
         st.slides = st.service().map(build_slides).unwrap_or_default();
         st.boards = st.service().map(|svc| board_slides(svc, &st.slides)).unwrap_or_default();
         st.index = st.index.min(st.slides.len().saturating_sub(1));
@@ -621,7 +670,6 @@ impl Show {
             services: st.services.clone(),
             current: st.current.clone(),
             index: st.index,
-            collecte: st.collecte.clone(),
             last_fetched: st.last_fetched,
         };
         if let Err(e) = write_json(&self.path, &saved) {
@@ -649,30 +697,16 @@ fn apply_ai_check(own: &Extracted, ai: &Extracted) -> (Extracted, String) {
 
 /// Puts the services read from the website in the list. `own` is the program's own
 /// reading, `checked` the same with the AI double check (same services, same order): its
-/// fingerprint comes from `own`, so the AI never makes the website look changed.
-fn apply_fetched(st: &mut View, own: &Extracted, checked: &Extracted, live: bool) {
+/// fingerprint comes from `own`, so the AI never makes the website look changed. The
+/// collecte and the voorzang check come from the schedules (see `website_service`).
+fn apply_fetched(st: &mut View, own: &Extracted, checked: &Extracted, roosters: &Roosters, live: bool) {
     for (o, e) in own.diensten.iter().zip(&checked.diensten) {
-        let sig = website_signature(&service_from(o, &st.collecte));
-        let svc = Service { website_sig: sig, ..service_from(e, &st.collecte) };
+        let sig = website_signature(&website_service(o, roosters));
+        let svc = Service { website_sig: sig, ..website_service(e, roosters) };
         // The service on screen is not replaced while live or once it has begun.
         let protect = st.current == svc.id && (live || st.index > 0);
         let svc = merge_fetched(st.services.iter().find(|s| s.id == svc.id), svc, protect);
         upsert(&mut st.services, svc);
-    }
-}
-
-fn service_from(e: &ExtractedService, collecte: &str) -> Service {
-    Service {
-        id: format!("{} {}", e.datum, e.tijd),
-        date: e.datum.clone(),
-        label: e.dienst.clone(),
-        time: e.tijd.clone(),
-        text: e.preektekst.clone().into_item(),
-        theme: e.thema.clone(),
-        points: e.punten.clone(),
-        problems: e.niet_herkend.clone(),
-        items: default_items(e, collecte),
-        ..Default::default()
     }
 }
 
@@ -697,6 +731,101 @@ async fn enrich_from_kerktijden(services: &mut [Service]) {
             let when = format!("{} om {} uur", long_date_no_year(next.start.date()), next.start.format("%-H.%M"));
             svc.next = if next.preacher.is_empty() { when } else { format!("{when} · {}", next.preacher) };
         }
+    }
+}
+
+/// A service as the website gives it, with the collecte from the collecterooster; when the
+/// website's voorzang is not the one in the voorzangrooster, that is among its problems.
+fn website_service(e: &ExtractedService, roosters: &Roosters) -> Service {
+    let mut problems = e.niet_herkend.clone();
+    if let Some(z) = roosters.voorzang(&e.datum, &e.tijd)
+        && let Some(site) = website_voorzang(e)
+        && let Some(w) = z.differs(&site)
+    {
+        problems.push(w);
+    }
+    Service {
+        id: format!("{} {}", e.datum, e.tijd),
+        date: e.datum.clone(),
+        label: e.dienst.clone(),
+        time: e.tijd.clone(),
+        text: e.preektekst.clone().into_item(),
+        theme: e.thema.clone(),
+        points: e.punten.clone(),
+        problems,
+        items: default_items(e, &roosters.collecte_text(&e.datum)),
+        ..Default::default()
+    }
+}
+
+/// The website's voorzang: the part called so, else the first song.
+fn website_voorzang(e: &ExtractedService) -> Option<Item> {
+    let parsed: Vec<Item> = e.onderdelen.iter().cloned().map(|r| r.into_item()).collect();
+    let sung = |i: &&Item| matches!(i.kind.as_str(), "psalm" | "slotzang" | "lied");
+    parsed.iter().find(|i| i.label.to_lowercase().contains("voorzang")).or_else(|| parsed.iter().find(sung)).cloned()
+}
+
+/// A new service to fill in: start screen, the voorzang from the voorzangrooster (morning or
+/// afternoon by its time), blessing and end screen.
+fn empty_service(date: String, time: String, label: String, roosters: &Roosters) -> Service {
+    let mut items = vec![Item { kind: "welkom".into(), label: "Startscherm".into(), ..Default::default() }];
+    items.extend(roosters.voorzang(&date, &time).map(|z| z.item()));
+    items.push(Item { kind: "zegen".into(), label: "Zegen".into(), ..Default::default() });
+    items.push(Item { kind: "einde".into(), label: "Aftiteling".into(), ..Default::default() });
+    for (i, it) in items.iter_mut().enumerate() {
+        it.id = format!("i{}", i + 1);
+    }
+    Service { id: format!("{date} {time}"), date, time, label, items, ..Default::default() }
+}
+
+/// The liturgy of `src` (parts, text, theme and points, own boards) at another moment, e.g.
+/// Sunday's afternoon service again on a Wednesday to try things out. The collecte is the one
+/// of the new date when the collecterooster has it.
+fn copied_service(src: &Service, date: String, time: String, label: String, roosters: &Roosters) -> Service {
+    let mut items = src.items.clone();
+    let collecte = roosters.collecte_text(&date);
+    if !collecte.is_empty() {
+        for it in items.iter_mut().filter(|i| i.kind == "collecte") {
+            it.text = collecte.clone();
+        }
+    }
+    Service {
+        id: format!("{date} {time}"),
+        date,
+        time,
+        label,
+        text: src.text.clone(),
+        theme: src.theme.clone(),
+        points: src.points.clone(),
+        board_custom: src.board_custom.clone(),
+        items,
+        // Made by the operator: the website does not replace it.
+        edited: true,
+        ..Default::default()
+    }
+}
+
+/// The collecte of a service after the collecterooster changed (`old` → `new`): the new
+/// purposes, unless the operator changed the service and wrote a collecte of his own (one that
+/// is not empty and not the old schedule's).
+fn follow_collecte(svc: &mut Service, old: &Roosters, new: &Roosters) {
+    let (was, now) = (old.collecte_text(&svc.date), new.collecte_text(&svc.date));
+    let edited = svc.edited;
+    if now.is_empty() {
+        return;
+    }
+    for it in svc.items.iter_mut().filter(|i| i.kind == "collecte") {
+        if !edited || it.text.trim().is_empty() || it.text == was {
+            it.text = now.clone();
+        }
+    }
+}
+
+/// Puts the special day and who operates the stream, from the schedules, beside each service.
+fn annotate(services: &mut [Service], roosters: &Roosters) {
+    for svc in services {
+        svc.special_day = roosters.special_day(&svc.date, &svc.time);
+        svc.operator = roosters.operator(&svc.date, &svc.time);
     }
 }
 
@@ -892,6 +1021,14 @@ pub(crate) fn long_date_no_year(d: NaiveDate) -> String {
 pub fn long_date(date: &str) -> String {
     match NaiveDate::parse_from_str(date, "%Y-%m-%d") {
         Ok(d) => format!("{} {}", long_date_no_year(d), d.year()),
+        Err(_) => date.to_string(),
+    }
+}
+
+/// "18 oktober 2026"
+pub(crate) fn day_month_year(date: &str) -> String {
+    match NaiveDate::parse_from_str(date, "%Y-%m-%d") {
+        Ok(d) => format!("{} {} {}", d.day(), MONTHS[d.month0() as usize], d.year()),
         Err(_) => date.to_string(),
     }
 }
@@ -1331,11 +1468,194 @@ mod tests {
         assert_eq!(v.boards[v.index].list.len(), 3);
     }
 
+    fn raw_psalm(label: &str, psalm: u32, verses: &[u32]) -> crate::claude::RawItem {
+        crate::claude::RawItem { soort: "psalm".into(), opschrift: label.into(), psalm, verzen: verses.to_vec(), herkend: true, ..Default::default() }
+    }
+
+    /// Sunday 1 November 2026 as on the website: "Voorzang: Ps.31: 19", "Ps. 74: 8-11", …
+    fn website_morning(voorzang: &[u32]) -> ExtractedService {
+        ExtractedService {
+            datum: "2026-11-01".into(),
+            tijd: "09:30".into(),
+            dienst: "Morgendienst".into(),
+            onderdelen: vec![
+                raw_psalm("Voorzang", 31, voorzang),
+                raw_psalm("Zingen", 74, &[8, 11]),
+                raw_psalm("Zingen", 77, &[7]),
+                raw_psalm("Zingen", 51, &[6, 7]),
+                raw_psalm("Zingen", 27, &[7]),
+                raw_psalm("Zingen", 130, &[3, 4]),
+            ],
+            preektekst: raw_psalm("Tekst", 0, &[]),
+            thema: String::new(),
+            punten: vec![],
+            niet_herkend: vec![],
+        }
+    }
+
+    #[test]
+    fn website_service_gets_the_collecte_and_the_voorzang_is_checked() {
+        let r = crate::roosters::builtin();
+        let svc = website_service(&website_morning(&[19]), &r);
+        let collecte = svc.items.iter().find(|i| i.kind == "collecte").unwrap();
+        assert_eq!(collecte.text, "1. Najaarszendingscollecte\n2. Pastoraat & Catechese\n3. Aflossing Bouwfonds");
+        assert!(svc.problems.is_empty(), "{:?}", svc.problems);
+        // Another voorzang than in the voorzangrooster: a warning with the service.
+        let svc = website_service(&website_morning(&[18]), &r);
+        assert_eq!(svc.problems, ["Voorzang op de website (Psalm 31 : 18) is anders dan in het voorzangrooster (Psalm 31 : 19)"]);
+        // A date the collecterooster does not have: no collecte text, not the one of the service before.
+        let mut later = website_morning(&[19]);
+        later.datum = "2027-03-07".into();
+        assert_eq!(website_service(&later, &r).items.iter().find(|i| i.kind == "collecte").unwrap().text, "");
+    }
+
+    #[test]
+    fn empty_service_has_the_voorzang_from_the_schedule() {
+        let r = crate::roosters::builtin();
+        let morning = empty_service("2026-11-08".into(), "09:30".into(), "Morgendienst".into(), &r);
+        assert_eq!(kinds(&morning), ["welkom:Startscherm", "psalm:Voorzang", "zegen:Zegen", "einde:Aftiteling"]);
+        assert_eq!(morning.items[1].reference, "Psalm 34 : 11");
+        assert_eq!(morning.items.iter().map(|i| i.id.as_str()).collect::<Vec<_>>(), ["i1", "i2", "i3", "i4"]);
+        let afternoon = empty_service("2026-11-08".into(), "16:00".into(), "Middagdienst".into(), &r);
+        assert_eq!(afternoon.items[1].reference, "Psalm 43 : 3");
+        // A gezang the program has no text of yet: its name, to fill in.
+        let advent = empty_service("2026-12-13".into(), "09:30".into(), "Morgendienst".into(), &r);
+        assert_eq!(kinds(&advent)[1], "lied:Lofzang van Maria : 1");
+        // Nothing in the schedule: only the fixed parts.
+        assert_eq!(empty_service("2027-09-01".into(), "19:30".into(), "Bidstond".into(), &r).items.len(), 3);
+    }
+
+    #[test]
+    fn copied_service_keeps_the_liturgy_with_the_collecte_of_its_own_date() {
+        let r = crate::roosters::builtin();
+        let mut src = service();
+        src.theme = "Verrast door vreugde".into();
+        src.points = vec!["Nu al".into(), "Straks volkomen".into()];
+        src.predikant = "ds. A".into();
+        src.youtube_id = "abc".into();
+        src.items.insert(4, Item { id: "i6".into(), kind: "collecte".into(), label: "Collecte".into(), text: "Eigen tekst".into(), ..Default::default() });
+        let copy = copied_service(&src, "2026-11-25".into(), "19:30".into(), "Test".into(), &r);
+        assert_eq!((copy.id.as_str(), copy.label.as_str(), copy.theme.as_str(), copy.points.len()), ("2026-11-25 19:30", "Test", "Verrast door vreugde", 2));
+        assert_eq!(kinds(&copy), kinds(&src));
+        assert_eq!(copy.items[4].text, "1. Diaconie (oogstcollecte)\n2. Oogstcollecte");
+        assert!(copy.edited && copy.predikant.is_empty() && copy.youtube_id.is_empty());
+        // A date without a collecte in the schedule: the copied text stays.
+        let copy = copied_service(&src, "2027-09-01".into(), "19:30".into(), "Test".into(), &r);
+        assert_eq!(copy.items[4].text, "Eigen tekst");
+    }
+
+    #[test]
+    fn the_operators_own_collecte_wins_over_the_schedule() {
+        let old = crate::roosters::Roosters::default();
+        let new = crate::roosters::builtin();
+        let with = |text: &str, edited: bool| Service {
+            date: "2026-11-01".into(),
+            edited,
+            items: vec![Item { kind: "collecte".into(), text: text.into(), ..Default::default() }],
+            ..Default::default()
+        };
+        let schedule = new.collecte_text("2026-11-01");
+        for (text, edited, after) in [("", true, schedule.as_str()), ("Eigen doel", true, "Eigen doel"), ("1. Vorige week", false, schedule.as_str())] {
+            let mut svc = with(text, edited);
+            follow_collecte(&mut svc, &old, &new);
+            assert_eq!(svc.items[0].text, after, "{text}");
+        }
+        // The old schedule's text follows the new schedule; the operator's own does not.
+        let mut svc = with(&schedule, true);
+        let changed = Roosters { collectes: vec![crate::roosters::CollecteDag { datum: "2026-11-01".into(), dag: String::new(), doelen: vec!["Nieuw".into()] }], ..Default::default() };
+        follow_collecte(&mut svc, &new, &changed);
+        assert_eq!(svc.items[0].text, "1. Nieuw");
+    }
+
+    #[tokio::test]
+    async fn a_typed_collecte_gets_the_schedule_and_the_operator_can_clear_it() {
+        let mut svc = service();
+        svc.id = "2026-11-08 09:30".into();
+        svc.date = "2026-11-08".into();
+        let show = show_with(svc).await;
+        let mut svc = show.view().service().unwrap().clone();
+        svc.items.insert(3, Item { id: "i77".into(), kind: "collecte".into(), label: "Collecte".into(), ..Default::default() });
+        show.save_service(svc, false).await;
+        let mut svc = show.view().service().unwrap().clone();
+        assert_eq!(svc.items[3].text, "1. Diaconie\n2. Instandhouding predikantsplaats\n3. Plaatselijk jeugdwerk");
+        svc.items[3].text = String::new();
+        show.save_service(svc, false).await;
+        assert_eq!(show.view().service().unwrap().items[3].text, "");
+    }
+
+    #[tokio::test]
+    async fn taking_the_website_version_keeps_the_own_collecte() {
+        let mut svc = service();
+        svc.items.insert(3, Item { id: "i9".into(), kind: "collecte".into(), label: "Collecte".into(), text: "Eigen doel".into(), ..Default::default() });
+        let mut site = service();
+        site.items.insert(3, Item { id: "i9".into(), kind: "collecte".into(), label: "Collecte".into(), text: "1. Rooster".into(), ..Default::default() });
+        svc.website = Some(WebsiteVersion::of(&site));
+        svc.website_changed = true;
+        let show = show_with(svc).await;
+        show.website_choice("2026-10-18 09:30", true).await;
+        let v = show.view();
+        let svc = v.service().unwrap();
+        assert!(!svc.website_changed && svc.website.is_none());
+        assert_eq!(svc.items[3].text, "Eigen doel");
+    }
+
+    #[tokio::test]
+    async fn services_show_the_special_day_and_who_operates() {
+        let mut svc = service();
+        (svc.id, svc.date, svc.time) = ("2026-12-20 16:00".into(), "2026-12-20".into(), "16:00".into());
+        let show = show_with(svc).await;
+        let v = show.view();
+        assert_eq!(v.service().unwrap().special_day, "Dankzegging Heilig Avondmaal");
+        assert_eq!(v.service().unwrap().operator, "");
+        let mut svc = service();
+        (svc.id, svc.date, svc.time) = ("2024-07-14 09:30".into(), "2024-07-14".into(), "09:30".into());
+        show.save_service(svc, false).await;
+        let v = show.view();
+        assert_eq!(v.services.iter().find(|s| s.id == "2024-07-14 09:30").unwrap().operator, "Bediener 3/Bediener 4");
+    }
+
+    #[tokio::test]
+    async fn any_service_can_be_chosen_by_hand() {
+        let show = show_with(service()).await;
+        let mut other = service();
+        (other.id, other.date, other.time) = ("2026-11-04 19:30".into(), "2026-11-04".into(), "19:30".into());
+        show.save_service(other, false).await;
+        let mut old = service();
+        (old.id, old.date) = ("2025-01-05 09:30".into(), "2025-01-05".into());
+        show.save_service(old, false).await;
+        for id in ["2026-11-04 19:30", "2025-01-05 09:30", "2026-10-18 09:30"] {
+            show.select(id.into()).await;
+            let v = show.view();
+            assert_eq!(v.current, id);
+            assert_eq!((v.index, v.slides.is_empty()), (0, false));
+        }
+    }
+
+    #[tokio::test]
+    async fn at_start_the_collecte_comes_from_the_schedule() {
+        let dir = std::env::temp_dir().join(format!("sb-test-{}-{}", std::process::id(), rand_suffix()));
+        std::fs::create_dir_all(&dir).unwrap();
+        // Saved by an older version: the collecte of the service before, copied.
+        let mut svc = service();
+        (svc.id, svc.date) = ("2026-11-01 09:30".into(), "2026-11-01".into());
+        svc.items.insert(3, Item { id: "i9".into(), kind: "collecte".into(), label: "Collecte".into(), text: "1. Vorige week".into(), ..Default::default() });
+        let mut edited = svc.clone();
+        (edited.id, edited.time, edited.edited) = ("2026-11-01 16:00".into(), "16:00".into(), true);
+        edited.items[3].text = "Eigen doel".into();
+        let saved = serde_json::json!({ "services": [svc, edited], "collecte": "1. Vorige week" });
+        std::fs::write(dir.join("liturgie.json"), serde_json::to_vec(&saved).unwrap()).unwrap();
+        let show = Show::new(dir.join("liturgie.json"), String::new()).await;
+        let v = show.view();
+        assert_eq!(v.services[0].items[3].text, "1. Najaarszendingscollecte\n2. Pastoraat & Catechese\n3. Aflossing Bouwfonds");
+        assert_eq!(v.services[1].items[3].text, "Eigen doel");
+    }
+
     #[test]
     fn website_service_in_the_usual_order_with_its_hymn() {
         let html = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/fixtures/kerkdiensten-2026-11-01.html")).unwrap();
         let ex = crate::extract::read_page(&html, NaiveDate::from_ymd_opt(2026, 11, 4).unwrap());
-        let morning = service_from(&ex.diensten[0], "1. Diaconie");
+        let r = crate::roosters::builtin();
+        let morning = website_service(&ex.diensten[0], &r);
         assert_eq!(kinds(&morning), [
             "welkom:Startscherm",
             "psalm:Voorzang",
@@ -1356,11 +1676,20 @@ mod tests {
         ]);
         assert_eq!(morning.items[12].reference, "Psalm 130 : 3, 4");
         assert_eq!(morning.text.reference, "1 Samuël 13:11");
-        let afternoon = service_from(&ex.diensten[1], "");
+        // The program's own reading also gets the collecte from the collecterooster, and its
+        // voorzang is the one in the voorzangrooster (Ps. 31: 19), so nothing to check.
+        assert_eq!(morning.items[6].text, "1. Najaarszendingscollecte\n2. Pastoraat & Catechese\n3. Aflossing Bouwfonds");
+        assert!(morning.problems.iter().all(|p| !p.contains("voorzangrooster")), "{:?}", morning.problems);
+        let afternoon = website_service(&ex.diensten[1], &r);
         assert_eq!(afternoon.items.iter().filter(|i| i.kind == "lezing").count(), 3);
         assert_eq!((afternoon.text.kind.as_str(), afternoon.text.reference.as_str()), ("catechismus", "vraag 58"));
         assert_eq!(afternoon.items[1].reference, "Psalm 90 : 1");
         assert!(afternoon.items.iter().any(|i| i.reference == "Psalm 27 : 3, 7"));
+        assert!(afternoon.problems.iter().all(|p| !p.contains("voorzangrooster")), "{:?}", afternoon.problems);
+        // Another voorzang on the website than in the voorzangrooster: a warning.
+        let mut other = ex.diensten[1].clone();
+        other.onderdelen[0].verzen = vec![2];
+        assert!(website_service(&other, &r).problems.iter().any(|p| p.contains("voorzangrooster (Psalm 90 : 1)")));
     }
 
     #[test]
@@ -1383,17 +1712,18 @@ mod tests {
         assert_eq!(note, "AI-controle: 2 verschillen, zie nakijken");
         // Not edited: the checked version, with the AI's psalm marked and the warning.
         let mut st = View::default();
-        apply_fetched(&mut st, &own, &own, false);
+        let r = Roosters::default();
+        apply_fetched(&mut st, &own, &own, &r, false);
         let sig = st.services[0].website_sig.clone();
-        apply_fetched(&mut st, &own, &checked, false);
+        apply_fetched(&mut st, &own, &checked, &r, false);
         let s = &st.services[0];
         assert_eq!(s.website_sig, sig);
         assert!(s.items.iter().any(|i| i.psalm == 18 && i.problem.contains("door AI gelezen")));
         assert!(s.problems.iter().any(|p| p.starts_with("AI leest 'Ps. 27: 3-7' anders")), "{:?}", s.problems);
         // Edited by the operator: kept, and no "website changed" because of the AI.
         st.services[0].edited = true;
-        apply_fetched(&mut st, &own, &own, false);
-        apply_fetched(&mut st, &own, &checked, false);
+        apply_fetched(&mut st, &own, &own, &r, false);
+        apply_fetched(&mut st, &own, &checked, &r, false);
         assert!(!st.services[0].website_changed);
     }
 

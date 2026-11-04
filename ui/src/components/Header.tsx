@@ -15,7 +15,7 @@ import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, Dia
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Confirm } from "./Confirm";
 import { toast } from "sonner";
-import { ServiceTiles } from "./ServiceTiles";
+import { ServiceTiles, specialDay } from "./ServiceTiles";
 
 export type Screen = "dienst" | "voorbereiden";
 
@@ -309,8 +309,8 @@ function when(t?: number) {
 }
 
 /** Quietly under the service name: when the website was last read. Tap for what to check
- *  (not understood, or read differently by the AI double check), a newer website version,
- *  and fetching now. */
+ *  (not understood, read differently by the AI double check, or another voorzang than in
+ *  the voorzangrooster), a newer website version, and fetching now. */
 function WebsiteInfo({ state, svc }: { state: View | null; svc?: Service }) {
   const [busy, setBusy] = useState(false);
   const last = when(state?.lastFetched);
@@ -376,8 +376,14 @@ export function Header({ state, svc, status, yt, connected, alarm, setScreen, on
     <header className="flex h-24 shrink-0 items-center gap-4 border-b-2 border-walnut/15 bg-[#efe5cc] px-4">
       <StatusLight status={status} yt={yt} connected={connected} alarm={alarm} />
       <div className="flex min-w-0 flex-1 flex-col items-center leading-tight">
-        <div className="max-w-full truncate text-[22px]">{svc ? `${longDate(svc)} · ${svc.label}` : "Geen dienst"}</div>
-        <WebsiteInfo state={state} svc={svc} />
+        <div className="max-w-full truncate text-[22px]">
+          {svc ? `${longDate(svc)} · ${svc.label}` : "Geen dienst"}
+          {specialDay(svc) && <span className="hymnal ml-3 text-[20px] text-[#7a5a1c]">{specialDay(svc)}</span>}
+        </div>
+        <div className="flex max-w-full min-w-0 items-center gap-3">
+          {svc?.operator && <span className="shrink-0 text-[18px] text-muted-foreground">Bediening: <b className="font-semibold text-foreground">{svc.operator}</b></span>}
+          <WebsiteInfo state={state} svc={svc} />
+        </div>
       </div>
       <LiveArea status={status} svc={svc} yt={yt} />
       <PreviewThumb status={status} />

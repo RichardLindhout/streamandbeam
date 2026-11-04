@@ -34,8 +34,37 @@ export type Service = {
   /** The website has a newer version, waiting in `website`. */
   websiteChanged?: boolean;
   website?: { summary: string; problems: string[] } | null;
+  /** From the church's schedules: the special day ("Heilig Avondmaal"), "" on other days. */
+  specialDay?: string;
+  /** Who operates the stream at this service, from the roster; "" when nobody is in it. */
+  operator?: string;
   [k: string]: unknown;
 };
+
+/** How many dates a schedule has, from when to when (YYYY-MM-DD). */
+export type Span = { aantal: number; van: string; tot: string };
+export type ScheduleSummary = { collectes: Span; dagen: Span; voorzang: Span; bediening: Span };
+
+/** One date in the coming weeks, from the schedules. */
+export type Upcoming = {
+  datum: string;
+  dag: string;
+  collectes: string[];
+  voorzangMorgen: string;
+  voorzangMiddag: string;
+  bedieningMorgen: string;
+  bedieningMiddag: string;
+  notities: string[];
+};
+
+/** GET /api/roosters: where the schedules come from (eigen = imported here) and what is coming. */
+export type Schedules = { bron: string; ingelezen: string; eigen: boolean; samenvatting: ScheduleSummary; komend: Upcoming[] };
+
+/** What an import of the church's workbook found. */
+export type ImportReport = { bron: string; samenvatting: ScheduleSummary; behouden: string[]; waarschuwingen: string[] };
+
+/** GET /api/roosters/dag: what the schedules say about one date and time. */
+export type ScheduleDay = { dag: string; voorzang: string; collectes: string[]; bediening: string };
 
 export type BoardTheme = { tekst: string; thema: string; punten: string[] };
 export type BoardCustom = { liturgie?: string[] | null; thema?: BoardTheme | null; slotzang?: string | null };
@@ -249,9 +278,27 @@ export function longDate(s: Service) {
 
 /** "Zo 25 okt" */
 export function shortDate(s: Service) {
-  const d = new Date(s.date + "T12:00:00");
-  if (isNaN(+d)) return s.date;
+  return shortDay(s.date);
+}
+
+/** "2026-10-25" → "Zo 25 okt" */
+export function shortDay(date: string) {
+  const d = new Date(date + "T12:00:00");
+  if (isNaN(+d)) return date;
   return cap(`${DAYS[d.getDay()].slice(0, 2)} ${d.getDate()} ${SHORT[d.getMonth()]}`);
+}
+
+/** "2026-10-25" → "25 okt 2026" */
+export function dayMonthYear(date: string) {
+  const d = new Date(date + "T12:00:00");
+  if (isNaN(+d)) return date;
+  return `${d.getDate()} ${SHORT[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+/** Today as YYYY-MM-DD, in local time. */
+export function today() {
+  const d = new Date();
+  return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
 }
 
 declare global {
