@@ -14,18 +14,18 @@ const PSALMS = new Set(["psalm", "slotzang", "nazang"]);
 /** Parts whose psalm or text can be swapped by typing a new one. */
 const CHANGEABLE = new Set(["psalm", "slotzang", "nazang", "lezing", "catechismus", "belijdenis"]);
 
-/** "1-3, 5" → [1, 2, 3, 5] */
+/** "3-7, 9" → [3, 7, 9]: in the church's psalm notation a dash means "and", not a range. */
 function verses(s: string) {
   const out: number[] = [];
-  for (const part of s.split(/[,;\s]+/).filter(Boolean)) {
-    const [a, b] = part.split("-").map((x) => parseInt(x, 10));
-    if (!a) return null;
-    for (let v = a; v <= (b && b >= a && b - a < 40 ? b : a); v++) out.push(v);
+  for (const part of s.split(/[,;\s-]+/).filter(Boolean)) {
+    const v = parseInt(part, 10);
+    if (!v) return null;
+    out.push(v);
   }
   return out.length ? out : null;
 }
 
-/** "84:3", "ps 84 : 3,5", "Psalm 84:1-3" → psalm and verses, without asking Claude. */
+/** "84:3", "ps 84 : 3,5", "Psalm 84:1-3" (verses 1 and 3) → psalm and verses, without asking Claude. */
 export function parsePsalm(s: string): { psalm: number; verses: number[] } | null {
   const m = s.trim().match(/^(?:ps(?:alm)?\.?\s*)?(\d{1,3})\s*:\s*([\d\s,;-]+)$/i);
   if (!m) return null;

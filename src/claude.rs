@@ -85,7 +85,7 @@ pub fn item_schema() -> Value {
             "soort": {"type": "string", "enum": KINDS},
             "opschrift": {"type": "string", "description": "Short label, e.g. Voorzang, Zingen, Schriftlezing, Gebed, Dankgebed, Slotzang"},
             "psalm": int("Psalm number 1-150, or 151-160 for the gezangen listed below; 0 if not a psalm"),
-            "verzen": {"type": "array", "items": {"type": "integer"}, "description": "Verse numbers, ranges expanded (5-6 → [5,6])"},
+            "verzen": {"type": "array", "items": {"type": "integer"}, "description": "Verse numbers exactly as listed; a dash between psalm verses means 'and', not a range (3-7 → [3,7])"},
             "boek": int("Bible book number from the list below; 0 if not a reading"),
             "hoofdstuk": int("Chapter of a reading, or the Dordtse Leerregels hoofdstuk (1-5); else 0"),
             "van": int("First verse; 1 for a whole chapter"),
@@ -109,7 +109,8 @@ pub fn reference_lists() -> String {
 }
 
 pub const RULES: &str = r#"Rules for items:
-- "Ps. 86: 5-6" or "86:5,6" is psalm 86, verses [5, 6] of the 1773 rhyming. soort "psalm"; "slotzang" only when it is called the last/closing psalm.
+- "Ps. 86: 5,6" is psalm 86, verses [5, 6] of the 1773 rhyming. soort "psalm"; "slotzang" only when it is called the last/closing psalm.
+- In psalms and gezangen a dash is NOT a range: it separates the verses that are sung. "Ps. 27: 3-7" is verses [3, 7] (not 3, 4, 5, 6, 7); "Ps. 119: 1-3-5" is [1, 3, 5]. Only in readings is a dash a range.
 - A song sung after the service ("na de dienst", "nazang", "lied na de dienst") is soort "nazang": a psalm with psalm/verzen, or for another song the title in tekst.
 - A song that is not one of the psalms or gezangen listed below (a hymn, a children's song, "lied: Hoe groot zijt Gij") is soort "lied" with its title as opschrift.
 - A reading ("Joh. 5: 16-29", "1 Korinthe 6 vers 15 t/m 20") is soort "lezing" with boek/hoofdstuk/van/tot.
