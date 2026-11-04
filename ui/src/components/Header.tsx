@@ -34,16 +34,19 @@ function StatusLight({ status, yt, connected, alarm }: { status: StreamStatus; y
       <PopoverTrigger asChild>
         <button className="flex h-[72px] shrink-0 items-center gap-3 rounded-xl px-4 text-[22px] font-semibold transition hover:bg-accent">
           <span className="size-5 rounded-full" style={{ background: l.dot }} />
-          {l.word}
+          {h.silent && h.level === "warn" ? "Geen geluid" : l.word}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-auto min-w-72 p-5">
+      <PopoverContent align="start" className="w-auto min-w-72 max-w-xl p-5">
         <div className="grid gap-3">
           {h.lines.map((x) => (
-            <div key={x.label} className="flex items-center gap-4 text-[24px]">
-              <span className="size-4 rounded-full" style={{ background: x.ok ? LIGHT.ok.dot : x.label.startsWith("Borden") ? LIGHT.warn.dot : LIGHT.bad.dot }} />
-              <span className="flex-1">{x.label}</span>
-              <span className="font-semibold">{x.ok ? "goed" : "niet goed"}</span>
+            <div key={x.label} className="grid gap-1">
+              <div className="flex items-center gap-4 text-[24px]">
+                <span className="size-4 rounded-full" style={{ background: x.ok ? LIGHT.ok.dot : x.warn ? LIGHT.warn.dot : LIGHT.bad.dot }} />
+                <span className="flex-1">{x.label}</span>
+                <span className="font-semibold">{x.ok ? "goed" : "niet goed"}</span>
+              </div>
+              {!x.ok && x.detail && <div className="pl-8 text-[18px] text-muted-foreground">{x.detail}</div>}
             </div>
           ))}
         </div>

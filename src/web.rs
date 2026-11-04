@@ -74,6 +74,7 @@ pub fn router(
         .route("/api/stream", get(stream_status).post(stream_mode))
         .route("/api/stream/later", post(stream_later))
         .route("/api/settings", get(get_settings).post(save_settings))
+        .route("/api/audio-devices", get(audio_devices))
         .route("/preview.jpg", get(preview))
         .route("/api/youtube", get(youtube_status))
         .route("/api/youtube/logout", post(youtube_logout))
@@ -372,6 +373,14 @@ async fn stream_status(State(app): State<App>) -> impl IntoResponse {
         obj.extend(auto);
     }
     Json(v)
+}
+
+/// The sound inputs to choose from in the settings (probing takes a moment, so off the async threads).
+async fn audio_devices() -> Response {
+    match tokio::task::spawn_blocking(crate::stream::audio_devices).await {
+        Ok(list) => Json(list).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+    }
 }
 
 /// For the watch page on the internet: only whether it runs and the sound, never error

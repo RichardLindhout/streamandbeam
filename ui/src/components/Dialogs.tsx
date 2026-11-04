@@ -29,9 +29,12 @@ export function SettingsDialog({ open, onOpenChange, state, status, onMade }: {
   const [error, setError] = useState("");
   const [fetching, setFetching] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
+  const [devices, setDevices] = useState<{ name: string; source: string; default: boolean }[] | null>(null);
   useEffect(() => {
     if (!open) return;
     setError("");
+    setDevices(null);
+    fetch("/api/audio-devices").then((r) => r.json()).then(setDevices).catch(() => setDevices([]));
     fetch("/api/settings")
       .then((r) => r.json())
       .then((v: Settings) =>
@@ -100,7 +103,7 @@ export function SettingsDialog({ open, onOpenChange, state, status, onMade }: {
               <div className="grid gap-3 sm:grid-cols-2">
                 {f("cameraIp", "IP-adres camera (leeg = testbeeld)")}
                 {f("cameraRtsp", "Camera RTSP-adres (leeg = standaard)")}
-                {f("audioSource", "Geluidsbron (leeg = standaard)")}
+                {s && <AudioSource value={s.audioSource} devices={devices} onChange={(v) => setS({ ...s, audioSource: v })} />}
                 {f("videoEncoder", "Video-encoder")}
               </div>
               <div className="grid gap-1.5">
@@ -171,6 +174,33 @@ export function SettingsDialog({ open, onOpenChange, state, status, onMade }: {
       </DialogContent>
       <NewServiceDialog open={newOpen} onOpenChange={setNewOpen} onMade={onMade} />
     </Dialog>
+  );
+}
+
+/** The sound input as a list of the devices on this PC; the setting keeps the pipeline text. */
+function AudioSource({ value, devices, onChange }: {
+  value: string; devices: { name: string; source: string; default: boolean }[] | null; onChange: (v: string) => void;
+}) {
+  // A Select item cannot have an empty value, so "standard" gets a stand-in.
+  const STANDARD = "standaard";
+  const known = !value || value === "test" || devices?.some((d) => d.source === value);
+  const opts: [string, string][] = [
+    [STANDARD, "Standaard geluidsinvoer van Windows"],
+    ...(devices || []).map((d): [string, string] => [d.source, d.name + (d.default ? " (standaard)" : "")]),
+    ["test", "Testtoon"],
+    ...(!known && devices ? [[value, "Niet gevonden: niet aangesloten?"] as [string, string]] : []),
+  ];
+  return (
+    <div className="grid gap-1.5">
+      <Label>Geluidsbron{devices === null ? " (zoeken…)" : ""}</Label>
+      <Select value={value || STANDARD} onValueChange={(v) => onChange(v === STANDARD ? "" : v)}>
+        <SelectTrigger><SelectValue /></SelectTrigger>
+        <SelectContent>{opts.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+      </Select>
+      {devices && (
+        <span className="text-[18px] text-muted-foreground">Staat de USB-geluidskaart er niet tussen? Kabel controleren en dit venster opnieuw openen.</span>
+      )}
+    </div>
   );
 }
 

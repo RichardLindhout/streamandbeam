@@ -4,22 +4,25 @@ import { serviceStart } from "./api";
 /** The number of TVs in church. */
 export const BOARDS = 2;
 
-/** One line in the status light's popover. */
-export type Health = { label: string; ok: boolean };
+/** One line in the status light's popover; `warn` lines only make the light amber. */
+export type Health = { label: string; ok: boolean; warn?: boolean; detail?: string };
 
-/** The status light: green, amber (only the boards) or red, with its lines. */
+/** The status light: green, amber (boards, or no sound in the preview) or red, with its lines. */
 export function health(status: StreamStatus, yt: YouTubeCheck | null, connected: boolean, alarm: boolean) {
   const live = status.mode === "live";
   const lines: Health[] = [];
   if (!connected) lines.push({ label: "Verbinding", ok: false });
   if (live) lines.push({ label: "YouTube", ok: !status.error });
-  // Only while live: in the preview between services silence is normal.
-  if (live) lines.push({ label: "Geluid", ok: !status.audioWarning && !(live && yt?.at && yt.live && !yt.audio) });
+  // Live, no sound is a problem; in the preview it is a warning, so a missing USB sound card
+  // is noticed before the service instead of during it.
+  if (live) lines.push({ label: "Geluid", ok: !status.audioWarning && !(yt?.at && yt.live && !yt.audio), detail: status.audioWarning });
+  else if (status.mode !== "stop") lines.push({ label: "Geluid", ok: !status.audioWarning, warn: true, detail: status.audioWarning });
   const boards = status.boards || 0;
-  lines.push({ label: `Borden ${Math.min(boards, 99)} van ${BOARDS}`, ok: boards >= BOARDS });
-  const bad = !connected || alarm || lines.some((l) => !l.ok && !l.label.startsWith("Borden"));
+  lines.push({ label: `Borden ${Math.min(boards, 99)} van ${BOARDS}`, ok: boards >= BOARDS, warn: true });
+  const bad = !connected || alarm || lines.some((l) => !l.ok && !l.warn);
   const level: "ok" | "warn" | "bad" = bad ? "bad" : lines.some((l) => !l.ok) ? "warn" : "ok";
-  return { level, lines };
+  const silent = lines.some((l) => l.label === "Geluid" && !l.ok);
+  return { level, lines, silent };
 }
 
 /** Something the volunteer must act on now. At most one is shown, the first in this list. */

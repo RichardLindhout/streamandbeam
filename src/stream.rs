@@ -363,6 +363,50 @@ impl Engine {
     }
 }
 
+/// A sound input the operator can pick, with the pipeline text stored in the settings.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AudioDevice {
+    pub name: String,
+    pub source: String,
+    pub default: bool,
+}
+
+/// The sound inputs Windows offers right now (USB sound cards, microphones). Recording what
+/// the PC itself plays (loopback) is left out: that is never the church's sound.
+pub fn audio_devices() -> Vec<AudioDevice> {
+    let monitor = gst::DeviceMonitor::new();
+    monitor.add_filter(Some("Audio/Source"), None);
+    if monitor.start().is_err() {
+        return Vec::new();
+    }
+    let mut list: Vec<AudioDevice> = monitor
+        .devices()
+        .into_iter()
+        .filter_map(|d| {
+            let props = d.properties()?;
+            let get = |k: &str| props.get::<String>(k).ok();
+            let flag = |k: &str| props.get::<bool>(k).unwrap_or(false);
+            // "Default Audio Capture Device" follows the Windows default, which the empty setting
+            // (autoaudiosrc) already offers as "Standaard".
+            if flag("wasapi2.device.loopback") || flag("wasapi.device.loopback") || d.display_name().starts_with("Default Audio") {
+                return None;
+            }
+            let source = match get("device.api")?.as_str() {
+                "wasapi2" => format!("wasapi2src device=\"{}\"", get("device.id")?),
+                "wasapi" => format!("wasapisrc device=\"{}\"", get("device.strid")?),
+                _ => return None,
+            };
+            Some(AudioDevice { name: d.display_name().to_string(), source, default: flag("device.default") })
+        })
+        .collect();
+    monitor.stop();
+    // By name; one entry per device.
+    list.sort_by(|a, b| a.name.cmp(&b.name));
+    list.dedup_by(|a, b| a.source == b.source);
+    list
+}
+
 fn pipeline_description(mode: Mode, s: &Settings) -> Result<(String, String)> {
     let video = if s.camera_ip.is_empty() && s.camera_rtsp.is_empty() {
         "videotestsrc is-live=true pattern=smpte".to_string()
