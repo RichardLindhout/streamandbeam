@@ -417,39 +417,44 @@ impl Show {
         if !crate::claude::has_key() {
             return;
         }
-        let (page, html, own) = {
-            let mut c = self.check.lock().unwrap();
-            let done = c.ai.as_ref().is_some_and(|(p, _)| *p == c.page);
-            if c.busy || done || c.html.is_empty() {
-                return;
+        loop {
+            let (page, html, own) = {
+                let mut c = self.check.lock().unwrap();
+                let done = c.ai.as_ref().is_some_and(|(p, _)| *p == c.page);
+                if c.busy || done || c.html.is_empty() {
+                    return;
+                }
+                c.busy = true;
+                (c.page, c.html.clone(), c.own.clone())
+            };
+            let result = crate::extract::ask_ai(&html).await;
+            let current = {
+                let mut c = self.check.lock().unwrap();
+                c.busy = false;
+                if let Ok(ai) = &result {
+                    c.ai = Some((page, ai.clone()));
+                }
+                c.page == page
+            };
+            // The page changed meanwhile: check the new one.
+            if !current {
+                continue;
             }
-            c.busy = true;
-            (c.page, c.html.clone(), c.own.clone())
-        };
-        let result = crate::extract::ask_ai(&html).await;
-        let current = {
-            let mut c = self.check.lock().unwrap();
-            c.busy = false;
-            if let Ok(ai) = &result {
-                c.ai = Some((page, ai.clone()));
+            let mut st = self.state.lock().await;
+            match result {
+                Ok(ai) => {
+                    let (checked, note) = apply_ai_check(&own, &ai);
+                    apply_fetched(&mut st, &own, &checked, live());
+                    st.fetch_note = note;
+                }
+                Err(e) => {
+                    eprintln!("AI-controle: {e:#}");
+                    st.fetch_note = "AI-controle overgeslagen (AI niet bereikbaar)".into();
+                }
             }
-            c.page == page
-        };
-        let mut st = self.state.lock().await;
-        match result {
-            // The page changed meanwhile: the next check reads the new one.
-            _ if !current => return,
-            Ok(ai) => {
-                let (checked, note) = apply_ai_check(&own, &ai);
-                apply_fetched(&mut st, &own, &checked, live());
-                st.fetch_note = note;
-            }
-            Err(e) => {
-                eprintln!("AI-controle: {e:#}");
-                st.fetch_note = "AI-controle overgeslagen (AI niet bereikbaar)".into();
-            }
+            self.changed(&mut st);
+            return;
         }
-        self.changed(&mut st);
     }
 
     /// A new, empty service the operator fills in by typing.

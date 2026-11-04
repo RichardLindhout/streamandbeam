@@ -77,9 +77,13 @@ async fn main() -> anyhow::Result<()> {
         let html = extract::http_get(&opts.liturgy_url).await?;
         let mut ex = extract::read_page(&html, chrono::Local::now().date_naive());
         if claude::has_key() {
-            let ai = extract::ask_ai(&html).await?;
-            let (n, notes) = compare::double_check(&mut ex, &ai);
-            println!("AI-controle: {n} verschil(len) {notes:?}");
+            match extract::ask_ai(&html).await {
+                Ok(ai) => {
+                    let (n, notes) = compare::double_check(&mut ex, &ai);
+                    println!("AI-controle: {n} verschil(len) {notes:?}");
+                }
+                Err(e) => println!("AI-controle overgeslagen: {e:#}"),
+            }
         }
         println!("{ex:#?}");
         return Ok(());

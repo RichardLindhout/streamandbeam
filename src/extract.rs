@@ -523,6 +523,32 @@ mod tests {
     }
 
     #[test]
+    fn example_website_of_the_testdienst() {
+        // As nepcamera serves it (src/bin/nepcamera.rs).
+        let html = "<h1>Kerkdiensten</h1><p>Op deze pagina kunt u de liturgie voor de aankomende diensten vinden.</p>\
+            <h2>Liturgie zondag 18 oktober 2026</h2><h3>Middagdienst 16:00 uur</h3>\
+            <p>Voorzang: Ps. 55: 1<br>Ps. 49: 6<br>Ps. 16: 6<br>Ps. 73: 12-13<br>Ps. 17: 8<br>Ps. 73: 14</p>\
+            <p>Schriftlezing: 1 Korinthe 6 vers 15 t/m 20</p><p>Tekst: Heidelbergse Catechismus vraag en antwoord 57</p>\
+            <p>Thema: Dit mijn lichaam<br>1. Nu ik leef<br>2. Als ik sterf<br>3. Als Jezus terugkomt</p>\
+            <p>Vragen<br>Hoe kijk jij naar je lichaam?</p><h2>Komende diensten</h2>";
+        let ex = read_page(html, NaiveDate::from_ymd_opt(2026, 10, 14).unwrap());
+        assert_eq!(ex.diensten.len(), 1);
+        let s = &ex.diensten[0];
+        assert_eq!(parts(&s.onderdelen), [
+            "psalm 55 [1]",
+            "psalm 49 [6]",
+            "psalm 16 [6]",
+            "psalm 73 [12, 13]",
+            "psalm 17 [8]",
+            "psalm 73 [14]",
+            "lezing 46 6:15-20",
+        ]);
+        assert_eq!(desc(&s.preektekst), "catechismus [57] zondag 0");
+        assert_eq!((s.thema.as_str(), s.punten.len()), ("Dit mijn lichaam", 3));
+        assert!(s.niet_herkend.is_empty(), "{:?}", s.niet_herkend);
+    }
+
+    #[test]
     fn other_shapes_of_the_page() {
         let lines = |s: &str| s.lines().map(str::trim).filter(|l| !l.is_empty()).map(String::from).collect::<Vec<_>>();
         let reader = Reader::default();

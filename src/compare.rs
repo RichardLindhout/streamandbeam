@@ -64,8 +64,10 @@ fn details(r: &RawItem) -> String {
     match r.soort.as_str() {
         "psalm" | "slotzang" | "nazang" if r.psalm > 0 => format!("{:?}", r.verzen),
         "lezing" => {
-            let whole = r.van <= 1 && r.tot >= 999;
-            if whole { "heel".into() } else { format!("{}-{}", r.van, r.tot.max(r.van)) }
+            // "13:1-23" is the whole of a chapter of 23 verses, like "13" (1-999).
+            let last = crate::parse::last_verse(r.boek, r.hoofdstuk);
+            let to = r.tot.max(r.van).min(last);
+            if r.van <= 1 && to >= last { "heel".into() } else { format!("{}-{to}", r.van) }
         }
         "catechismus" => {
             let mut q = r.vragen.clone();
@@ -254,10 +256,12 @@ mod tests {
 
     #[test]
     fn same_reading_no_warnings() {
-        let s = service(vec![psalm(90, &[1], "Ps. 90: 1"), reading(35, 3, 17, 19)]);
+        let s = service(vec![psalm(90, &[1], "Ps. 90: 1"), reading(35, 3, 17, 19), reading(9, 13, 1, 999)]);
         let mut ai = s.clone();
         ai.tijd = "16:00".into();
         ai.onderdelen[0].opschrift = "Voorzang".into();
+        // The whole chapter, written as its verses (1 Samuël 13 has 23).
+        ai.onderdelen[2].tot = 23;
         let (own, n, notes) = pages(s, ai);
         assert_eq!(n, 0, "{:?}", own.diensten[0].niet_herkend);
         assert!(notes.is_empty() && own.diensten[0].niet_herkend.is_empty());

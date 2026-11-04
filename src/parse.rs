@@ -301,7 +301,7 @@ fn book_at(toks: &[Tok], i: usize) -> Option<(u32, usize)> {
 }
 
 /// The last verse of a chapter (999 when the program does not have it).
-fn last_verse(book: u32, chapter: u32) -> u32 {
+pub fn last_verse(book: u32, chapter: u32) -> u32 {
     crate::texts::passage(BibleRef { book, chapter, from: 1, to: 999 })
         .ok()
         .and_then(|v| v.last().map(|v| v.number))
