@@ -8,13 +8,18 @@ YouTube-uitzending (in plaats van PowerPoint en OBS).
 Open `http://<pc>:8080` op de PC, een laptop of een tablet.
 
 1. **Dienst kiezen.** Bovenaan staan de diensten. **↻ Van website** haalt ze op van
-   hhgtholen.nl: Claude leest de liturgie en zet die in een vast formaat. Wat Claude niet
-   kon plaatsen, staat in een oranje blok. De predikant en de volgende dienst komen van
-   kerktijden.nl. Met **+ Nieuwe dienst** maak je er zelf een.
+   hhgtholen.nl: het programma leest de liturgie zelf (psalmen, lezingen, tekst, thema en
+   punten). Met een `ANTHROPIC_API_KEY` leest Claude de pagina ook, als controle. Wat het
+   programma niet kon plaatsen en elk verschil met Claude staan in een oranje blok
+   (**Nakijken**); het programma houdt zijn eigen lezing aan. De predikant en de volgende
+   dienst komen van kerktijden.nl. Met **+ Nieuwe dienst** maak je er zelf een.
 2. **Aanvullen of wijzigen.** Typ in het invoerveld wat er komt, bijvoorbeeld
-   `ps 42:5, gebed, joh 3:16-21, HC 57, collecte`, en druk op Enter. Twijfelt het
-   programma, dan staat er ⚠ met de reden. Sleep of gebruik ↑↓ voor de volgorde van de
-   predikant.
+   `ps 42:5, gebed, joh 3:16-21, HC 57, collecte`, en druk op Enter. Ook gezangen
+   (`gez 3:1`, `LvM: 2`, `Morgenzang: 1`), `NGB art. 14`, `doopformulier` en `lied: …`.
+   Zoals in de kerk is een streepje bij psalmen "en": `ps 27: 3-7` is vers 3 en 7; bij
+   lezingen is het een reeks. Begrijpt het programma iets niet, dan staat er ⚠ met de
+   reden (met een sleutel vraagt het eerst Claude). Sleep of gebruik ↑↓ voor de volgorde
+   van de predikant.
 3. **Vrij aanpassen.** ✎ bij een onderdeel toont de dia's als gewone tekst. Wat je daar
    typt, komt op de TV's en in de stream. **Herstel origineel** zet het terug.
 4. **Tijdens de dienst:** **Volgende** (→, spatie of een presentatie-clicker). **Preek**,
@@ -70,7 +75,9 @@ instellingen.
    **runtime** én de **development** installer, optie "Complete".
 2. Rust van https://rustup.rs.
 3. `cargo build --release`, daarna `target\release\streamandbeam.exe`.
-4. Zet `ANTHROPIC_API_KEY` (voor het lezen van de website en het typen van onderdelen).
+4. Niet nodig, wel handig: `ANTHROPIC_API_KEY`, voor de AI-controle van de website en hulp
+   bij getypte onderdelen die het programma niet begrijpt. Zonder sleutel werkt alles,
+   alleen zonder die controle.
 5. Minder belasting: video-encoder `mfh264enc bitrate=4500` (elke videokaart),
    `nvh264enc bitrate=4500` (NVIDIA) of `qsvh264enc bitrate=4500` (Intel).
 
@@ -88,4 +95,6 @@ target/release/testdienst --youtube  # echt live op het kanaal, privé, met TEST
 ```
 
 Nodig: `ffmpeg`/`ffprobe`. `streamandbeam scenes` schrijft voorbeelden van de
-YouTube-beelden naar `data/scenes`.
+YouTube-beelden naar `data/scenes`; `streamandbeam fetch` laat zien hoe het programma de
+website leest (en met een sleutel wat de AI-controle anders leest). `cargo test` controleert
+het lezen van de website met opgeslagen pagina's uit `fixtures/`.
