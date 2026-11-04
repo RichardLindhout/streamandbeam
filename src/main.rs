@@ -7,10 +7,12 @@ mod catechism;
 mod claude;
 mod confessions;
 mod director;
+mod excel;
 mod extract;
 mod kerktijden;
 mod listen;
 mod render;
+mod roosters;
 mod show;
 mod stream;
 mod texts;
@@ -27,6 +29,8 @@ struct Options {
     /// Port for the read-only watch page (for a Cloudflare tunnel); 0 = off (the default).
     public_port: u16,
     command: Option<String>,
+    /// What follows the command, e.g. the workbook for importeer-excel.
+    args: Vec<String>,
 }
 
 fn parse_args() -> Options {
@@ -36,6 +40,7 @@ fn parse_args() -> Options {
         liturgy_url: extract::LITURGY_URL.into(),
         public_port: 0,
         command: None,
+        args: Vec::new(),
     };
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
@@ -46,17 +51,37 @@ fn parse_args() -> Options {
             "--publiek-poort" => opts.public_port = args.next().and_then(|p| p.parse().ok()).unwrap_or(0),
             "-h" | "--help" => {
                 println!(
-                    "streamandbeam [--poort 8080] [--publiek-poort 8090] [--data data] [--liturgie-url URL] [fetch|scenes]\n\n  \
+                    "streamandbeam [--poort 8080] [--publiek-poort 8090] [--data data] [--liturgie-url URL] [fetch|scenes|importeer-excel <bestand>]\n\n  \
                      --publiek-poort  alleen-kijken-pagina (bord + uitzending) voor internet, bv. 8090; standaard uit\n  \
                      fetch            laat zien wat Claude van de website leest\n  \
-                     scenes           schrijf voorbeelden van de uitzendbeelden naar data/scenes"
+                     scenes           schrijf voorbeelden van de uitzendbeelden naar data/scenes\n  \
+                     importeer-excel  lees collecte-, voorzang- en bedieningsrooster uit de Excel van de kerk\n                   \
+                     (Streamupdate.xlsm) naar data/roosters.json"
                 );
                 std::process::exit(0);
             }
-            other => opts.command = Some(other.to_string()),
+            other if opts.command.is_none() => opts.command = Some(other.to_string()),
+            other => opts.args.push(other.to_string()),
         }
     }
     opts
+}
+
+/// `importeer-excel <bestand>`: the schedules from the church's workbook into
+/// <data>/roosters.json, with what was found.
+fn import_excel(opts: &Options) -> anyhow::Result<()> {
+    let Some(file) = opts.args.first() else { anyhow::bail!("gebruik: streamandbeam importeer-excel <bestand.xlsm>") };
+    let bytes = std::fs::read(file).map_err(|e| anyhow::anyhow!("{file}: {e}"))?;
+    let name = std::path::Path::new(file).file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+    let old = roosters::load(&opts.data_dir);
+    let (new, report) = roosters::import(&bytes)?.apply(&old, &name, chrono::Local::now().date_naive());
+    let out = opts.data_dir.join("roosters.json");
+    texts::write_json(&out, &new)?;
+    for line in report.lines() {
+        println!("{line}");
+    }
+    println!("Opgeslagen in {}", out.display());
+    Ok(())
 }
 
 /// The address of this PC on the church network, for the TVs.
@@ -79,6 +104,10 @@ async fn main() -> anyhow::Result<()> {
 
     if opts.command.as_deref() == Some("scenes") {
         return render::write_examples(&opts.data_dir.join("scenes"));
+    }
+
+    if opts.command.as_deref() == Some("importeer-excel") {
+        return import_excel(&opts);
     }
 
     let show = show::Show::new(opts.data_dir.join("liturgie.json"), opts.liturgy_url.clone()).await;

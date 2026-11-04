@@ -92,6 +92,8 @@ pub fn router(
                 .delete(reset_board_background)
                 .layer(axum::extract::DefaultBodyLimit::max(12 * 1024 * 1024)),
         )
+        .route("/api/roosters", get(roosters).post(import_roosters).layer(axum::extract::DefaultBodyLimit::max(20 * 1024 * 1024)))
+        .route("/api/roosters/dag", get(roosters_day))
         .with_state(App { boards: Arc::default(), show, director, listener, check, screen_url, port })
 }
 
@@ -231,18 +233,82 @@ struct NewService {
     date: String,
     time: String,
     label: String,
+    /// The service whose liturgy is copied; empty = a new, empty service.
+    #[serde(default, rename = "copyFrom")]
+    copy_from: String,
 }
 
 async fn new_service(State(app): State<App>, Query(c): Query<Confirmed>, Json(n): Json<NewService>) -> Response {
     let id = format!("{} {}", n.date, n.time);
-    if app.show.view().services.iter().any(|s| s.id == id) {
+    let view = app.show.view();
+    if view.services.iter().any(|s| s.id == id) {
         return conflict("Er is al een dienst op dat moment");
+    }
+    if !n.copy_from.is_empty() && !view.services.iter().any(|s| s.id == n.copy_from) {
+        return (StatusCode::NOT_FOUND, "De dienst om over te nemen bestaat niet meer").into_response();
     }
     if let Some(r) = needs_confirmation(&app, c.yes(), "Een nieuwe dienst maken en op het scherm zetten?") {
         return r;
     }
-    app.show.new_service(n.date, n.time, n.label).await;
+    let copy = (!n.copy_from.is_empty()).then_some(n.copy_from);
+    app.show.new_service(n.date, n.time, n.label, copy).await;
     Json(app.show.view()).into_response()
+}
+
+/// The church's schedules: where they come from, how far they go, and the coming eight weeks.
+async fn roosters(State(app): State<App>) -> impl IntoResponse {
+    let r = app.show.roosters();
+    Json(serde_json::json!({
+        "bron": r.bron,
+        "ingelezen": r.ingelezen,
+        // Imported here (data/roosters.json) rather than the copy built into the program.
+        "eigen": app.show.data_dir().join("roosters.json").exists(),
+        "samenvatting": r.summary(),
+        "komend": r.upcoming(chrono::Local::now().date_naive(), 56),
+    }))
+}
+
+#[derive(Deserialize, Default)]
+struct ImportQuery {
+    /// The file name of the workbook, to show where the schedules came from.
+    #[serde(default)]
+    naam: String,
+}
+
+/// "Roosters uit Excel bijwerken": the church's workbook as the request body.
+async fn import_roosters(State(app): State<App>, Query(q): Query<ImportQuery>, body: axum::body::Bytes) -> Response {
+    if body.is_empty() {
+        return (StatusCode::BAD_REQUEST, "Leeg bestand.").into_response();
+    }
+    let imported = match crate::roosters::import(&body) {
+        Ok(i) => i,
+        Err(e) => return (StatusCode::BAD_REQUEST, format!("{e:#}")).into_response(),
+    };
+    let name = if q.naam.is_empty() { "Excel".to_string() } else { q.naam };
+    let (new, report) = imported.apply(&app.show.roosters(), &name, chrono::Local::now().date_naive());
+    if let Err(e) = app.show.set_roosters(new).await {
+        return (StatusCode::INTERNAL_SERVER_ERROR, format!("Opslaan mislukt: {e:#}")).into_response();
+    }
+    Json(report).into_response()
+}
+
+#[derive(Deserialize)]
+struct DayQuery {
+    datum: String,
+    #[serde(default)]
+    tijd: String,
+}
+
+/// For a new service: what the schedules say about that date and time.
+async fn roosters_day(State(app): State<App>, Query(q): Query<DayQuery>) -> impl IntoResponse {
+    let r = app.show.roosters();
+    let time = if q.tijd.is_empty() { "09:30" } else { q.tijd.as_str() };
+    Json(serde_json::json!({
+        "dag": r.special_day(&q.datum, time),
+        "voorzang": r.voorzang(&q.datum, time).map(|z| z.display()).unwrap_or_default(),
+        "collectes": r.collecte(&q.datum).map(|c| c.doelen.clone()).unwrap_or_default(),
+        "bediening": r.operator(&q.datum, time),
+    }))
 }
 
 async fn delete_service(State(app): State<App>, Query(q): Query<SelectQuery>, Query(c): Query<Confirmed>) -> Response {
