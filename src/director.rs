@@ -218,10 +218,23 @@ impl Director {
         self.settings.lock().unwrap().clone()
     }
 
-    pub fn save_settings(&self, s: Settings) -> anyhow::Result<()> {
+    /// Saves the settings. Another camera, sound source or encoder counts at once: a running
+    /// stream starts again with it in the same mode. When that does not work, the old
+    /// settings stay (the stream runs on with them).
+    pub async fn save_settings(&self, s: Settings) -> anyhow::Result<()> {
+        let old = self.settings();
         write_json(&self.path, &s)?;
-        *self.settings.lock().unwrap() = s;
+        *self.settings.lock().unwrap() = s.clone();
         self.settings_changed.notify_one();
+        if crate::stream::pipeline_changed(&old, &s) {
+            let engine = self.engine.clone();
+            if let Err(e) = tokio::task::spawn_blocking(move || engine.restart(&s)).await? {
+                write_json(&self.path, &old)?;
+                *self.settings.lock().unwrap() = old;
+                self.settings_changed.notify_one();
+                anyhow::bail!("Niet opgeslagen: zo start de uitzending niet ({})", e.root_cause());
+            }
+        }
         Ok(())
     }
 

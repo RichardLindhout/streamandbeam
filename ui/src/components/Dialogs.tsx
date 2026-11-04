@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import type { Settings, StreamStatus, View } from "@/lib/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { BoardBackground, StreamControls } from "./PrepareCards";
+import { SoundSourcePicker } from "./SoundSource";
 import { errorText, post } from "@/lib/api";
 import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
@@ -25,6 +26,8 @@ export function SettingsDialog({ open, onOpenChange, state, status, onMade }: {
   open: boolean; onOpenChange: (b: boolean) => void; state: View | null; status: StreamStatus; onMade?: () => void;
 }) {
   const [s, setS] = useState<Settings | null>(null);
+  // The sound source as saved, to say that a new one counts at once.
+  const [savedSource, setSavedSource] = useState<string | undefined>(undefined);
   const [yt, setYt] = useState<{ configured: boolean; channel: string } | null>(null);
   const [error, setError] = useState("");
   const [fetching, setFetching] = useState(false);
@@ -34,10 +37,11 @@ export function SettingsDialog({ open, onOpenChange, state, status, onMade }: {
     setError("");
     fetch("/api/settings")
       .then((r) => r.json())
-      .then((v: Settings) =>
+      .then((v: Settings) => {
         // Older programs keep minutes after the end; show them as seconds.
-        setS({ ...v, autoStopSeconds: v.autoStopSeconds ?? (v.autoStopMinutes !== undefined ? v.autoStopMinutes * 60 : 0) }),
-      )
+        setS({ ...v, autoStopSeconds: v.autoStopSeconds ?? (v.autoStopMinutes !== undefined ? v.autoStopMinutes * 60 : 0) });
+        setSavedSource(v.audioSource);
+      })
       .catch(() => setError("Geen verbinding met de kerk-PC"));
     fetch("/api/youtube").then((r) => r.json()).then(setYt).catch(() => {});
   }, [open]);
@@ -96,11 +100,11 @@ export function SettingsDialog({ open, onOpenChange, state, status, onMade }: {
                 <Button variant="outline" onClick={() => setNewOpen(true)}><CalendarPlus /> Nieuwe dienst</Button>
               </div>
             </Section>
-            <Section title="Camera en geluid">
+            <Section title="Geluid en camera">
+              <SoundSourcePicker value={s.audioSource} saved={savedSource} status={status} onChange={(v) => setS({ ...s, audioSource: v })} />
               <div className="grid gap-3 sm:grid-cols-2">
                 {f("cameraIp", "IP-adres camera (leeg = testbeeld)")}
                 {f("cameraRtsp", "Camera RTSP-adres (leeg = standaard)")}
-                {f("audioSource", "Geluidsbron (leeg = standaard)")}
                 {f("videoEncoder", "Video-encoder")}
               </div>
               <div className="grid gap-1.5">
@@ -158,7 +162,9 @@ export function SettingsDialog({ open, onOpenChange, state, status, onMade }: {
             disabled={!s}
             onClick={async () => {
               // settingsVersion goes back as it came: a save over someone else's newer one is refused (409).
+              // While live a new sound source or camera is asked first (the stream falters).
               const r = await post("/api/settings", s, { quiet: true });
+              if (r.status === 499) return;
               if (r.ok) onOpenChange(false);
               else setError(await errorText(r));
             }}

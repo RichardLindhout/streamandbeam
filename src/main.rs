@@ -2,6 +2,7 @@
 //! screens in church. The TVs open http://<this-pc>:8080/beam and follow the operator,
 //! who works from http://<this-pc>:8080.
 
+mod audio;
 mod books;
 mod catechism;
 mod claude;

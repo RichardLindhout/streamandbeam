@@ -16,6 +16,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Confirm } from "./Confirm";
 import { toast } from "sonner";
 import { ServiceTiles } from "./ServiceTiles";
+import { SoundMeter } from "./SoundSource";
 
 export type Screen = "dienst" | "voorbereiden";
 
@@ -41,7 +42,7 @@ function StatusLight({ status, yt, connected, alarm }: { status: StreamStatus; y
         <div className="grid gap-3">
           {h.lines.map((x) => (
             <div key={x.label} className="flex items-center gap-4 text-[24px]">
-              <span className="size-4 rounded-full" style={{ background: x.ok ? LIGHT.ok.dot : x.label.startsWith("Borden") ? LIGHT.warn.dot : LIGHT.bad.dot }} />
+              <span className="size-4 rounded-full" style={{ background: x.ok ? LIGHT.ok.dot : x.warn ? LIGHT.warn.dot : LIGHT.bad.dot }} />
               <span className="flex-1">{x.label}</span>
               <span className="font-semibold">{x.ok ? "goed" : "niet goed"}</span>
             </div>
@@ -376,6 +377,7 @@ export function Header({ state, svc, status, yt, connected, alarm, setScreen, on
       </div>
       <LiveArea status={status} svc={svc} yt={yt} />
       <PreviewThumb status={status} />
+      <SoundMeter status={status} />
       <MainMenu state={state} svc={svc} status={status} setScreen={setScreen} onSettings={onSettings} />
     </header>
   );

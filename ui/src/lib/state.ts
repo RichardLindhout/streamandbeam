@@ -4,7 +4,9 @@ import type { ListenStatus, StreamStatus, View, YouTubeCheck } from "./api";
 /** Everything the console shows: the show (via SSE from slide.js) and the polled statuses. */
 export function useConsole() {
   const [state, setState] = useState<View | null>(null);
-  const [status, setStatus] = useState<StreamStatus>({ mode: "stop", error: "", audioDb: -100, recording: "", audioWarning: "", since: 0, boards: 0 });
+  const [status, setStatus] = useState<StreamStatus>({
+    mode: "stop", error: "", audioDb: -100, recording: "", audioWarning: "", audioIssue: "", audioDevice: "", since: 0, boards: 0,
+  });
   const [lis, setLis] = useState<ListenStatus | null>(null);
   const [yt, setYt] = useState<YouTubeCheck | null>(null);
   const [connected, setConnected] = useState(true);
