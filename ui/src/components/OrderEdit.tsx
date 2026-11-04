@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { ArrowDown, ArrowUp, GripVertical, LoaderCircle, Lock, Plus, X } from "lucide-react";
+import { ArrowDown, ArrowUp, CircleAlert, GripVertical, LoaderCircle, Lock, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import type { Item, Service } from "@/lib/api";
 import { quick, saveService } from "@/lib/api";
@@ -25,7 +25,7 @@ function verses(s: string) {
   return out.length ? out : null;
 }
 
-/** "84:3", "ps 84 : 3,5", "Psalm 84:1-3" (verses 1 and 3) → psalm and verses, without asking Claude. */
+/** "84:3", "ps 84 : 3,5", "Psalm 84:1-3" (verses 1 and 3) → psalm and verses, right here without asking the program. */
 export function parsePsalm(s: string): { psalm: number; verses: number[] } | null {
   const m = s.trim().match(/^(?:ps(?:alm)?\.?\s*)?(\d{1,3})\s*:\s*([\d\s,;-]+)$/i);
   if (!m) return null;
@@ -133,6 +133,8 @@ export function OrderEdit({ svc, cur }: { svc: Service; cur: number }) {
       try {
         const [got] = await quick(change.text);
         if (!got) throw new Error("Niet herkend");
+        // Not understood (the program keeps it as a named part): say why, keep the part as it is.
+        if (got.problem && got.kind === "mededeling" && it.kind !== "mededeling") throw new Error(got.problem);
         const same = got.kind === it.kind || (PSALMS.has(got.kind) && PSALMS.has(it.kind));
         next = { ...got, id: it.id, ...(same ? { kind: it.kind, label: it.label } : {}) };
       } catch (e) {
@@ -270,6 +272,11 @@ export function OrderEdit({ svc, cur }: { svc: Service; cur: number }) {
                     </>
                   )}
                 </div>
+                {it.problem && !ch && (
+                  <div className="flex items-center gap-2 px-3 pb-2 pl-16 text-[20px] text-[#9a5a00]">
+                    <CircleAlert className="size-5 shrink-0" /> <span className="min-w-0 truncate">{it.problem}</span>
+                  </div>
+                )}
                 {ch && (
                   <div className="flex flex-wrap items-center gap-3 px-3 pb-3 pl-16">
                     <Input

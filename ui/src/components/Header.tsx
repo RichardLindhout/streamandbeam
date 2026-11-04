@@ -305,8 +305,9 @@ function when(t?: number) {
   return `${name} ${hhmm(d)}`;
 }
 
-/** Quietly under the service name: when the website was last read. Tap for what was not
- *  understood, a newer website version, and fetching now. */
+/** Quietly under the service name: when the website was last read. Tap for what to check
+ *  (not understood, or read differently by the AI double check), a newer website version,
+ *  and fetching now. */
 function WebsiteInfo({ state, svc }: { state: View | null; svc?: Service }) {
   const [busy, setBusy] = useState(false);
   const last = when(state?.lastFetched);
@@ -330,7 +331,7 @@ function WebsiteInfo({ state, svc }: { state: View | null; svc?: Service }) {
         {svc?.websiteChanged && <WebsiteChanged svc={svc} />}
         {problems.length > 0 && (
           <div className="grid gap-1">
-            <div className="font-semibold">Niet herkend</div>
+            <div className="font-semibold">Nakijken</div>
             {problems.map((p) => <div key={p} className="text-[#7a4a00]">{p}</div>)}
           </div>
         )}
@@ -340,6 +341,7 @@ function WebsiteInfo({ state, svc }: { state: View | null; svc?: Service }) {
             <div className="line-clamp-3 text-[18px] break-words text-muted-foreground">{state.fetchError}</div>
           </div>
         )}
+        {state?.fetchNote && <div className="text-[18px] text-muted-foreground">{state.fetchNote}</div>}
         <Button variant="outline" disabled={busy} onClick={fetchNow}>
           {busy ? <LoaderCircle className="animate-spin" /> : <Globe />} Nu ophalen
         </Button>
