@@ -20,9 +20,10 @@ function slideHTML(s) {
     case "vrij":
       return `<div class="rows">${[s.header].concat(s.lines || []).filter((l, i) => i > 0 || l).map((l, i) =>
         `<div class="row${i === 0 && s.header ? " head" : ""}">${typo(l)}</div>`).join("")}</div>`;
-    // The theme during the sermon: every line of text sits on a ledge.
+    // The theme during the sermon: every line of text sits on a ledge. The point the
+    // operator tapped (active) stands out, the other points step back.
     case "thema":
-      return `<div class="flow">${s.sub ? `<div class="ref">Tekst: ${typo(s.sub)}</div>` : ""}<div class="t">${typo(s.theme)}</div>${(s.points || []).map((p, i) => `<div>${i + 1}. ${typo(p)}</div>`).join("")}</div>`;
+      return `<div class="flow${s.active != null ? " picked" : ""}">${s.sub ? `<div class="ref">Tekst: ${typo(s.sub)}</div>` : ""}<div class="t">${typo(s.theme)}</div>${(s.points || []).map((p, i) => `<div class="pt${i === s.active ? " now" : ""}">${i + 1}. ${typo(p)}</div>`).join("")}</div>`;
     case "welkom":
     case "einde":
       return `<div class="head"><h1>${typo(s.header)}</h1><p>${typo(s.sub)}</p></div>
@@ -41,7 +42,7 @@ function slideHTML(s) {
       return bar + `<div class="body"><div class="fit">${(s.verses || []).map((v) => `<p><sup>${v.verse}</sup>${typo(v.text)}</p>`).join("")}${(s.lines || []).map(esc).join("<br>")}</div></div>`;
     case "preek": {
       const verse = (s.verses || []).map((v) => typo(v.text)).join(" ");
-      const points = (s.points || []).map((p) => `<li>${typo(p)}</li>`).join("");
+      const points = (s.points || []).map((p, i) => `<li${i === s.active ? ' class="now"' : ""}>${typo(p)}</li>`).join("");
       return bar + `<div class="body"><div class="fit">
         ${verse ? `<div class="verse">${verse}</div>` : ""}
         ${(s.lines || []).map((l) => `<div>${typo(l)}</div>`).join("")}

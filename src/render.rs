@@ -232,21 +232,31 @@ impl Renderer {
         to_straight_rgba(pm)
     }
 
-    /// Lower-third card: a small label above the main text, a warm stripe on the left.
+    /// Lower-third card: a small label above the main text, a warm stripe on the left. A long
+    /// text (a point of the theme, the theme as label) gets smaller letters to stay on screen.
     fn bar(&mut self, pm: &mut Pixmap, label: &str, text: &str) {
-        let main = TextStyle::new(56.0, Face::SansBold, [255; 3]);
-        let small = TextStyle { tracking: 0.16, ..TextStyle::new(24.0, Face::SansBold, SAND) };
+        let (x, pad) = (80.0, 140.0);
+        let room = WIDTH as f32 - 2.0 * x - pad;
         let label = label.to_uppercase();
-        let width = self.measure(&[(text, main)]).max(self.measure(&[(&label, small)])) + 140.0;
-        let (x, h) = (80.0, if label.is_empty() { 112.0 } else { 140.0 });
+        let mut main = TextStyle::new(56.0, Face::SansBold, [255; 3]);
+        while main.size > 36.0 && self.measure(&[(text, main)]) > room {
+            main.size -= 2.0;
+        }
+        let mut small = TextStyle { tracking: 0.16, ..TextStyle::new(24.0, Face::SansBold, SAND) };
+        while small.size > 18.0 && self.measure(&[(&label, small)]) > room {
+            small.size -= 1.0;
+        }
+        let width = (self.measure(&[(text, main)]).max(self.measure(&[(&label, small)])) + pad).min(WIDTH as f32 - 2.0 * x);
+        let h = if label.is_empty() { 112.0 } else { 140.0 };
         let y = HEIGHT as f32 - 90.0 - h;
         fill_round_rect(pm, x, y, width, h, 16.0, TEAL, 238);
         fill_round_rect(pm, x, y, 12.0, h, 0.0, SAND, 255);
         if label.is_empty() {
-            self.line(pm, &[(text, main)], x + 60.0, y + (h - 56.0 * 1.25) / 2.0);
+            self.line(pm, &[(text, main)], x + 60.0, y + (h - main.size * 1.25) / 2.0);
         } else {
-            self.line(pm, &[(&label, small)], x + 60.0, y + 22.0);
-            self.line(pm, &[(text, main)], x + 60.0, y + 52.0);
+            self.line(pm, &[(&label, small)], x + 60.0, y + 22.0 + (24.0 - small.size) / 2.0);
+            // Smaller letters sit lower, in the middle of the room for the text.
+            self.line(pm, &[(text, main)], x + 60.0, y + 52.0 + (56.0 - main.size) * 0.6);
         }
     }
 
@@ -579,6 +589,9 @@ pub fn write_examples(dir: &std::path::Path) -> anyhow::Result<()> {
         }),
         ("balk", Scene::Bar { label: "Slotzang".into(), text: "Psalm 42 : 5".into() }),
         ("gebed", Scene::Bar { label: String::new(), text: "Gebed".into() }),
+        // A point of the theme the operator tapped during the sermon, short and long.
+        ("punt", Scene::Bar { label: "Verrast door vreugde".into(), text: "2. Straks volkomen".into() }),
+        ("punt-lang", Scene::Bar { label: LONG_THEME.into(), text: LONG_POINT.into() }),
         ("psalm", Scene::Panel {
             label: "Zingen".into(),
             title: "Psalm 49 : 6".into(),
@@ -635,4 +648,31 @@ pub fn write_examples(dir: &std::path::Path) -> anyhow::Result<()> {
     }
     println!("scenes geschreven naar {}", dir.display());
     Ok(())
+}
+
+/// A long theme and point, as some predikanten have them.
+const LONG_THEME: &str = "De Goede Herder Die Zijn leven geeft voor de schapen van Zijn kudde";
+const LONG_POINT: &str = "3. Hij kent de Zijnen en Hij wordt gekend van de Zijnen, tot in eeuwigheid";
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The columns with anything drawn in them, as (leftmost, rightmost).
+    fn drawn(rgba: &[u8]) -> (u32, u32) {
+        let xs = rgba.chunks_exact(4).enumerate().filter(|(_, px)| px[3] > 0).map(|(i, _)| i as u32 % WIDTH);
+        xs.fold((WIDTH, 0), |(lo, hi), x| (lo.min(x), hi.max(x)))
+    }
+
+    #[test]
+    fn a_long_point_stays_on_screen() {
+        let mut r = Renderer::with_builtin_images("");
+        let short = drawn(&r.render(&Scene::Bar { label: "Verrast door vreugde".into(), text: "2. Straks volkomen".into() }));
+        assert_eq!(short.0, 80);
+        assert!(short.1 < 1000, "{short:?}");
+        // Smaller letters, the card as wide as the picture allows and the text inside it.
+        let long = drawn(&r.render(&Scene::Bar { label: LONG_THEME.into(), text: LONG_POINT.into() }));
+        assert_eq!(long.0, 80);
+        assert!(long.1 > 1500 && long.1 < WIDTH - 80, "{long:?}");
+    }
 }

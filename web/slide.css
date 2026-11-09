@@ -68,6 +68,7 @@
 .preek .verse { font-style: italic; color: #ccc; margin-bottom: .6em; }
 .preek .theme { font: 600 1em "Source Sans 3", Arial, sans-serif; color: var(--accent); }
 .preek ol { margin: .3em 0 0 1.2em; padding: 0; }
+.preek li.now { color: var(--accent); font-weight: 600; }
 
 /* Slotzang: its own screen, with a coloured frame so everyone sees it is the last psalm */
 .canvas.slotzang { box-shadow: inset 0 0 0 18px var(--teal-2); }
@@ -197,5 +198,10 @@
 }
 .thema .flow .ref { color: rgba(255, 255, 255, .78); font-weight: 400; }
 .thema .flow .t { font-weight: 700; font-size: calc(var(--row) * .6); }
+/* The point the predikant is at (tapped by the operator): gold with a marker in the margin. */
+.thema .flow .pt { position: relative; }
+.thema .flow.picked .pt { opacity: .5; }
+.thema .flow.picked .pt.now { opacity: 1; color: #ffd978; font-weight: 700; }
+.thema .flow .pt.now::before { content: "\25B6"; position: absolute; left: -48px; font-size: .55em; }
 
 .canvas.portrait .announce { position: absolute; }

@@ -50,6 +50,7 @@ export type Slide = {
   theme?: string;
   points?: string[];
   list?: string[];
+  /** On the sermon slide and theme board on screen: the point the operator tapped. */
   active?: number | null;
   footer?: string;
 };
@@ -59,6 +60,8 @@ export type View = {
   current: string;
   index: number;
   black: boolean;
+  /** During the sermon: the point of the theme on screen (null = the whole theme). */
+  point?: number | null;
   slides: Slide[];
   boards: Slide[];
   overrideBoard: Slide | null;
@@ -191,6 +194,10 @@ export function step(delta: 1 | -1) {
   go({ delta });
   return true;
 }
+
+/** During the sermon: a point of the theme (0 = the first) on the boards and, for a moment,
+ *  in the stream; null = the whole theme again. */
+export const setPoint = (point: number | null) => post("/api/point", { point });
 
 export const setStreamMode = (mode: Mode) => post("/api/stream", { mode });
 
