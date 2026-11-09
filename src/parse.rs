@@ -38,7 +38,7 @@ pub fn fold(s: &str) -> String {
 }
 
 /// Only the letters and digits of `fold(s)`: "Geb.d.H" → "gebdh", "L v Maria" → "lvmaria".
-fn compact(s: &str) -> String {
+pub fn compact(s: &str) -> String {
     fold(s).chars().filter(|c| c.is_alphanumeric()).collect()
 }
 
@@ -306,6 +306,11 @@ pub fn last_verse(book: u32, chapter: u32) -> u32 {
         .ok()
         .and_then(|v| v.last().map(|v| v.number))
         .unwrap_or(999)
+}
+
+/// The verses in "1, 6", "3-7" (3 and 7) or "1 t/m 3", as `sung_verses` reads them; for a song.
+pub fn sung_verse_list(text: &str) -> Vec<u32> {
+    sung_verses(&tokens(&fold(text))).0
 }
 
 /// "vers 3, 7 en 9-11" after a psalm or gezang number: in the church's notation a dash

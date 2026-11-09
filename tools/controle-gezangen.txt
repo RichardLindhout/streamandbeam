@@ -1,0 +1,89 @@
+Controle Enige Gezangen (berijming 1773, GBS-uitgave); gemaakt door tools/bouw_gezangen.mjs
+56 verzen in 12 gezangen; per vers de woorden die liturgie.nu of online-bijbel.nl anders heeft (GBS -> bron).
+
+151 = gezang 1, De Tien Geboden des HEEREN
+  verzen: GBS 9  liturgie.nu 9  online-bijbel.nl 9
+  vers 5: online-bijbel.nl sabbat -> sabbath
+  vers 5: online-bijbel.nl sabbat -> sabbath
+      GBS: Den sabbat, na zesdaagse vlijt;
+      online-bijbel.nl: Den Sabbath, na zesdaagse vlijt
+      GBS: En heeft den sabbat Zich gewijd.
+      online-bijbel.nl: En heeft den Sabbath Zich gewijd."
+
+152 = gezang 2, De Lofzang van Maria
+  verzen: GBS 7  liturgie.nu 7  online-bijbel.nl 7
+  vers 3: online-bijbel.nl tezaam -> te zaam  (alleen aaneen/los)
+      GBS: Laat volk bij volk tezaam
+      online-bijbel.nl: Laat volk bij volk te zaam
+
+153 = gezang 3, De Lofzang van Zacharias
+  verzen: GBS 5  liturgie.nu 5  online-bijbel.nl 5
+  vers 1: liturgie.nu      teweeggebracht -> teweeg gebracht  (alleen aaneen/los)
+      GBS: Verlossing heeft teweeggebracht;
+      liturgie.nu: Verlossing heeft teweeg gebracht;
+  vers 1: online-bijbel.nl teweeggebracht -> teweeg gebracht  (alleen aaneen/los)
+      GBS: Verlossing heeft teweeggebracht;
+      online-bijbel.nl: Verlossing heeft teweeg gebracht;
+  vers 2: online-bijbel.nl vanouds -> van ouds  (alleen aaneen/los)
+      GBS: Vanouds den vaad'ren toegezeid;
+      online-bijbel.nl: Van ouds den vaad'ren toegezeid,
+
+154 = gezang 4, De Lofzang van Simeon
+  verzen: GBS 2  liturgie.nu 2  online-bijbel.nl 2
+
+155 = gezang 5, Het Gebed des HEEREN
+  verzen: GBS 10  liturgie.nu 10  online-bijbel.nl 10
+  vers 1: online-bijbel.nl genoeggedaan -> genoeg gedaan  (alleen aaneen/los)
+      GBS: Die voor ons heeft genoeggedaan,
+      online-bijbel.nl: Die voor ons heeft genoeg gedaan,
+  vers 5: online-bijbel.nl blij -> blijd
+      GBS: Die maakt alleen ons blij en rijk.
+      online-bijbel.nl: Die maakt alleen ons blijd' en rijk.
+  vers 6: liturgie.nu      wie -> die
+      GBS: Wij schelden kwijt, wie ons misdeên.
+      liturgie.nu: Wij schelden kwijt, die ons misdeên.
+  vers 6: online-bijbel.nl wie -> die
+      GBS: Wij schelden kwijt, wie ons misdeên.
+      online-bijbel.nl: Wij schelden kwijt, die ons misdeen.
+  vers 6: besluit: 'wie ons misdeên' (liturgie.nu en online-bijbel.nl: 'die ons misdeên', zoals 1773): eigen lezing van de GBS, de gemeente zingt uit het GBS-boek; gehouden
+
+156 = gezang 6, De Twaalf Artikelen des Geloofs (eerste berijming)
+  verzen: GBS 2  liturgie.nu 2  online-bijbel.nl 2
+  vers 2: liturgie.nu      heilsgemeenschap -> heilgemeenschap
+      GBS: Dat Christus' volk in heilsgemeenschap leeft;
+      liturgie.nu: Dat Christus' volk in heilgemeenschap leeft,
+  vers 2: online-bijbel.nl heilsgemeenschap -> heilgemeenschap
+      GBS: Dat Christus' volk in heilsgemeenschap leeft;
+      online-bijbel.nl: Dat Christus' volk in heilgemeenschap leeft,
+  vers 2: besluit: 'heilsgemeenschap' (anderen: 'heilgemeenschap', zoals 1773): hedendaagse spelling van de GBS; gehouden
+
+157 = gezang 7, De Twaalf Artikelen des Geloofs (tweede berijming)
+  verzen: GBS 4  liturgie.nu 4  online-bijbel.nl 4
+  vers 4: liturgie.nu      tzelfde -> t zelfde  (alleen aaneen/los)
+  vers 4: liturgie.nu      weeropgewekt -> weer opgewekt  (alleen aaneen/los)
+      GBS: Van 'tzelfde heil is deelgenoot;
+      liturgie.nu: Van 't zelfde heil is deelgenoot;
+      GBS: En dat mijn vlees, weêropgewekt,
+      liturgie.nu: En dat mijn vlees, weer opgewekt,
+  vers 4: online-bijbel.nl tzelfde -> t zelfde  (alleen aaneen/los)
+  vers 4: online-bijbel.nl weeropgewekt -> weer opgewekt  (alleen aaneen/los)
+      GBS: Van 'tzelfde heil is deelgenoot;
+      online-bijbel.nl: Van 't zelfde heil is deelgenoot;
+      GBS: En dat mijn vlees, weêropgewekt,
+      online-bijbel.nl: En dat mijn vlees, weer opgewekt,
+
+158 = gezang 8, Bedezang voor de predikatie
+  verzen: GBS 1  liturgie.nu 1  online-bijbel.nl 1
+
+159 = gezang 9, Morgenzang
+  verzen: GBS 7  liturgie.nu 7  online-bijbel.nl 7
+
+160 = gezang 10, Bedezang voor het eten
+  verzen: GBS 1  liturgie.nu 1  online-bijbel.nl 1
+
+161 = gezang 11, Dankzang na het eten
+  verzen: GBS 1  liturgie.nu 1  online-bijbel.nl 1
+
+162 = gezang 12, Avondzang
+  verzen: GBS 7  liturgie.nu 7  online-bijbel.nl 7
+

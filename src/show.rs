@@ -3,6 +3,7 @@
 use crate::books::{BibleRef, psalm_ref_string};
 use crate::extract::{Extracted, ExtractedService};
 use crate::roosters::Roosters;
+use crate::songs::{Library, Song};
 use crate::texts::{Verse, read_json, write_json};
 use chrono::{Datelike, Local, NaiveDate, NaiveDateTime};
 use serde::{Deserialize, Serialize};
@@ -42,6 +43,13 @@ pub struct Item {
     /// The operator's own version of this item's slides, replacing the generated ones
     /// (to fix or change anything by hand). Empty = use the generated slides.
     pub custom: Vec<CustomSlide>,
+    /// For a song not in the psalm book ("lied", "nazang" without a psalm): its title in the
+    /// song library ("" when it is not in there), and whether the program has its words.
+    /// Worked out again at every change (see `annotate`), not read back.
+    #[serde(skip_deserializing)]
+    pub song: String,
+    #[serde(skip_deserializing, rename = "songText")]
+    pub song_text: bool,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -74,7 +82,7 @@ impl Item {
 
     /// The title of a song that is not in the psalm book. A song after the service has it in
     /// its text when the label only says when it is sung ("Na de dienst").
-    fn song_title(&self) -> String {
+    pub(crate) fn song_title(&self) -> String {
         let label = self.label.trim();
         let first = self.text.lines().map(str::trim).find(|l| !l.is_empty()).unwrap_or_default();
         let only_when = label.is_empty() || label.to_lowercase().contains("na de dienst") || label.eq_ignore_ascii_case("nazang");
@@ -87,8 +95,8 @@ impl Item {
     pub fn short(&self) -> String {
         let verses = self.verses.iter().map(u32::to_string).collect::<Vec<_>>().join(",");
         match self.kind.as_str() {
-            "psalm" | "slotzang" | "nazang" if self.psalm > 0 && self.psalm <= 150 => format!("Ps {}:{verses}", self.psalm),
-            "psalm" | "slotzang" | "nazang" if self.psalm > 150 => format!("{}:{verses}", crate::books::psalm_name(self.psalm)),
+            "psalm" | "slotzang" | "nazang" if crate::texts::is_gezang(self.psalm) => format!("{}:{verses}", crate::books::psalm_name(self.psalm)),
+            "psalm" | "slotzang" | "nazang" if self.psalm > 0 => format!("Ps {}:{verses}", self.psalm),
             "lezing" => self.passage.map(|p| p.short()).unwrap_or_default(),
             "catechismus" => {
                 let zondag = if self.zondag > 0 { self.zondag } else { crate::catechism::for_item(self).first().map_or(0, |q| q.zondag) };
@@ -139,6 +147,10 @@ pub struct Service {
     pub special_day: String,
     #[serde(skip_deserializing)]
     pub operator: String,
+    /// The song of the special day, as the church's Excel has it ("U zij de Glorie" at Easter);
+    /// empty on other days. Also worked out at every change.
+    #[serde(skip_deserializing)]
+    pub feast_song: String,
 }
 
 /// The website's version of an edited service, waiting for the operator.
@@ -310,6 +322,8 @@ pub struct Show {
     check: std::sync::Mutex<AiCheck>,
     /// The church's schedules (collectes, voorzang, who operates); see `roosters`.
     roosters: RwLock<Arc<Roosters>>,
+    /// The songs that are not in the psalm book (see `crate::songs`).
+    songs: RwLock<Arc<Library>>,
 }
 
 /// The last page read and what the AI made of it, so the AI reads each version of the
@@ -334,6 +348,7 @@ impl Show {
         let saved: Saved = read_json(&path).unwrap_or_default();
         let dir = path.parent().unwrap_or(Path::new(".")).to_path_buf();
         let roosters = crate::roosters::load(&dir);
+        let songs = Library::load(&dir);
         let view = View {
             services: saved.services,
             current: saved.current,
@@ -356,6 +371,7 @@ impl Show {
             tx,
             check: Default::default(),
             roosters: RwLock::new(Arc::new(roosters)),
+            songs: RwLock::new(Arc::new(songs)),
         });
         let mut st = show.state.lock().await;
         show.changed(&mut st);
@@ -383,6 +399,19 @@ impl Show {
         for svc in st.services.iter_mut() {
             follow_collecte(svc, &old, &new);
         }
+        self.changed(&mut st);
+        Ok(())
+    }
+
+    pub fn songs(&self) -> Arc<Library> {
+        self.songs.read().unwrap().clone()
+    }
+
+    /// The operator's own songs: kept in the data folder, and the slides follow at once.
+    pub async fn set_songs(&self, new: Library) -> anyhow::Result<()> {
+        new.save(&self.data_dir())?;
+        *self.songs.write().unwrap() = Arc::new(new);
+        let mut st = self.state.lock().await;
         self.changed(&mut st);
         Ok(())
     }
@@ -607,7 +636,8 @@ impl Show {
         }
         upsert(&mut st.services, svc);
         if let Some((id, offset)) = keep {
-            st.slides = st.service().map(build_slides).unwrap_or_default();
+            let songs = self.songs();
+            st.slides = st.service().map(|s| build_slides(s, &songs)).unwrap_or_default();
             let item = st.service().and_then(|s| s.items.iter().position(|i| i.id == id));
             if let Some(item) = item {
                 let mine: Vec<usize> = st.slides.iter().enumerate().filter(|(_, s)| s.item == item).map(|(i, _)| i).collect();
@@ -681,8 +711,9 @@ impl Show {
 
     /// Rebuilds the slides after the services changed.
     fn changed(&self, st: &mut View) {
-        annotate(&mut st.services, &self.roosters());
-        st.slides = st.service().map(build_slides).unwrap_or_default();
+        let songs = self.songs();
+        annotate(&mut st.services, &self.roosters(), &songs);
+        st.slides = st.service().map(|s| build_slides(s, &songs)).unwrap_or_default();
         st.boards = st.service().map(|svc| board_slides(svc, &st.slides, st.slotzang_text)).unwrap_or_default();
         st.index = st.index.min(st.slides.len().saturating_sub(1));
         apply_hold(st);
@@ -768,6 +799,9 @@ fn website_service(e: &ExtractedService, roosters: &Roosters) -> Service {
     {
         problems.push(w);
     }
+    let mut items = default_items(e, &roosters.collecte_text(&e.datum));
+    add_feast_song(&mut items, &roosters.feast_song(&e.datum, &e.tijd));
+    number_items(&mut items);
     Service {
         id: format!("{} {}", e.datum, e.tijd),
         date: e.datum.clone(),
@@ -777,7 +811,7 @@ fn website_service(e: &ExtractedService, roosters: &Roosters) -> Service {
         theme: e.thema.clone(),
         points: e.punten.clone(),
         problems,
-        items: default_items(e, &roosters.collecte_text(&e.datum)),
+        items,
         ..Default::default()
     }
 }
@@ -796,9 +830,8 @@ fn empty_service(date: String, time: String, label: String, roosters: &Roosters)
     items.extend(roosters.voorzang(&date, &time).map(|z| z.item()));
     items.push(Item { kind: "zegen".into(), label: "Zegen".into(), ..Default::default() });
     items.push(Item { kind: "einde".into(), label: "Aftiteling".into(), ..Default::default() });
-    for (i, it) in items.iter_mut().enumerate() {
-        it.id = format!("i{}", i + 1);
-    }
+    add_feast_song(&mut items, &roosters.feast_song(&date, &time));
+    number_items(&mut items);
     Service { id: format!("{date} {time}"), date, time, label, items, ..Default::default() }
 }
 
@@ -846,11 +879,29 @@ fn follow_collecte(svc: &mut Service, old: &Roosters, new: &Roosters) {
 }
 
 /// Puts the special day and who operates the stream, from the schedules, beside each service.
-fn annotate(services: &mut [Service], roosters: &Roosters) {
+fn annotate(services: &mut [Service], roosters: &Roosters, songs: &Library) {
     for svc in services {
         svc.special_day = roosters.special_day(&svc.date, &svc.time);
         svc.operator = roosters.operator(&svc.date, &svc.time);
+        svc.feast_song = roosters.feast_song(&svc.date, &svc.time);
+        for it in &mut svc.items {
+            let found = songs.resolve(it).map(|(s, _)| s);
+            it.song = found.map(|s| s.titel.clone()).unwrap_or_default();
+            it.song_text = found.is_some_and(Song::has_words);
+        }
     }
+}
+
+/// On a special day with a song of its own (the Excel's "Speciale dagen": "U zij de Glorie" at
+/// Easter) that song comes after the service, unless the service already has a song there.
+fn add_feast_song(items: &mut Vec<Item>, song: &str) {
+    if song.is_empty() || items.iter().any(|i| i.kind == "nazang" || i.kind == "lied") {
+        return;
+    }
+    let mut it = Item { kind: "nazang".into(), label: "Na de dienst".into(), text: song.into(), ..Default::default() };
+    it.refresh();
+    let at = items.iter().position(|i| i.kind == "einde").unwrap_or(items.len());
+    items.insert(at, it);
 }
 
 /// Keeps the held slide and board on the screens (see `View::hold`), as long as the index is
@@ -1023,10 +1074,15 @@ fn default_items(e: &ExtractedService, collecte: &str) -> Vec<Item> {
     items.push(simple("zegen", "Zegen"));
     items.extend(at_end);
     items.push(simple("einde", "Aftiteling"));
+    number_items(&mut items);
+    items
+}
+
+/// The ids of a new service's parts: "i1", "i2", …
+fn number_items(items: &mut [Item]) {
     for (i, it) in items.iter_mut().enumerate() {
         it.id = format!("i{}", i + 1);
     }
-    items
 }
 
 const DAYS: [&str; 7] = ["maandag", "dinsdag", "woensdag", "donderdag", "vrijdag", "zaterdag", "zondag"];
@@ -1072,9 +1128,29 @@ pub fn service_title(svc: &Service) -> String {
     parts.join(" · ")
 }
 
-fn build_slides(svc: &Service) -> Vec<Slide> {
+fn build_slides(svc: &Service, songs: &Library) -> Vec<Slide> {
     let mut slides = Vec::new();
     for (idx, it) in svc.items.iter().enumerate() {
+        // A song from the song library with its words: verse by verse, like a psalm.
+        if it.custom.is_empty()
+            && let Some((song, verses)) = songs.resolve(it)
+            && song.has_words()
+        {
+            let sub = if it.kind == "lied" { "Lied".to_string() } else { it.label.clone() };
+            for v in verses {
+                let header = if song.verzen.len() > 1 { format!("{} : {v}", song.titel) } else { song.titel.clone() };
+                let lines = song.verzen.get((v as usize).wrapping_sub(1)).filter(|l| !l.is_empty());
+                slides.push(Slide {
+                    item: idx,
+                    kind: it.kind.clone(),
+                    header: header.clone(),
+                    sub: if lines.is_some() { sub.clone() } else { format!("{header}: tekst nog invullen") },
+                    lines: lines.cloned().unwrap_or_default(),
+                    ..Default::default()
+                });
+            }
+            continue;
+        }
         if !it.custom.is_empty() {
             for c in &it.custom {
                 slides.push(Slide {
@@ -1457,7 +1533,7 @@ pub(crate) mod tests {
     #[test]
     fn theme_board_names_the_psalm_after_the_sermon() {
         let svc = middagdienst();
-        let boards = board_slides(&svc, &build_slides(&svc), false);
+        let boards = board_slides(&svc, &build_slides(&svc, &Library::default()), false);
         let themes: Vec<&Slide> = boards.iter().filter(|b| b.kind == "thema").collect();
         assert_eq!(themes.len(), 2);
         assert_eq!((themes[0].sub.as_str(), themes[0].theme.as_str()), ("Zondag 22", "Verrast door vreugde"));
@@ -1467,7 +1543,7 @@ pub(crate) mod tests {
         // Nothing sung after the sermon: no line.
         let mut short = middagdienst();
         short.items.retain(|i| !matches!(i.id.as_str(), "i12" | "i13" | "i14" | "i15"));
-        let boards = board_slides(&short, &build_slides(&short), false);
+        let boards = board_slides(&short, &build_slides(&short, &Library::default()), false);
         assert_eq!(boards.iter().find(|b| b.kind == "thema").unwrap().footer, "");
     }
 
@@ -1482,7 +1558,7 @@ pub(crate) mod tests {
             board_rows(&svc),
             ["Ps 90:1", "Ps 147:1", "Ps 32:6", "Hab.3:17-19", "1 Petr.1:3-9", "Openb.7:9-12", "", "Ps 27:3,7", "Ps 42:1,5", "Ps 43:4", "", "Na de dienst:", "U zij de glorie"]
         );
-        let slides = build_slides(&svc);
+        let slides = build_slides(&svc, &Library::default());
         assert!(slides[0].list.iter().any(|l| l == "Na de dienst: U zij de glorie"), "{:?}", slides[0].list);
         let boards = board_slides(&svc, &slides, false);
         let last = boards.iter().rev().find(|b| b.kind == "slotzang").unwrap();
@@ -1495,7 +1571,7 @@ pub(crate) mod tests {
     #[test]
     fn slotzang_with_its_text_on_the_boards_when_set() {
         let svc = middagdienst();
-        let slides = build_slides(&svc);
+        let slides = build_slides(&svc, &Library::default());
         let slotzang = |boards: Vec<Slide>| -> Vec<Slide> { boards.into_iter().zip(&slides).filter(|(_, s)| s.kind == "slotzang").map(|(b, _)| b).collect() };
         // Off (the default): only which psalm, also during the verse.
         let off = slotzang(board_slides(&svc, &slides, false));
@@ -1558,7 +1634,7 @@ pub(crate) mod tests {
         let mut svc = service();
         svc.items.insert(4, Item { kind: "preek".into(), label: "Prediking".into(), ..Default::default() });
         svc.items.insert(5, Item { psalm: 3, verses: vec![1], kind: "slotzang".into(), label: "Slotzang".into(), ..Default::default() });
-        let slides = build_slides(&svc);
+        let slides = build_slides(&svc, &Library::default());
         let auto = board_slides(&svc, &slides, false);
         assert_eq!(auto[0].list, ["Ps 1:1,2", "Ps 2:1", "Ps 3:1"]);
         svc.board_custom = BoardCustom {

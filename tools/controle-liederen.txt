@@ -1,0 +1,35 @@
+Controle liederen; gemaakt door tools/bouw_liederen.mjs
+
+Wilhelmus: koninklijkhuis.nl 15 coupletten, nl.wikipedia.org 15, nl.wikisource.org 15
+  Een couplet krijgt de tekst van koninklijkhuis.nl als nl.wikipedia.org of nl.wikisource.org woord voor woord
+  hetzelfde heeft (leestekens tellen niet); anders blijft het leeg (tekst nog invullen).
+  couplet 1: gelijk in nl.wikipedia.org en nl.wikisource.org
+  couplet 2: gelijk in nl.wikipedia.org en nl.wikisource.org
+  couplet 3: gelijk in nl.wikipedia.org en nl.wikisource.org
+  couplet 4: LEEG, woorden verschillen
+    koninklijkhuis.nl:  Lijf ende goed tezamen / heb ik u niet verschoond, / mijn broeders, hoog van namen / hebben 't u ook vertoond / Graaf Adolf is gebleven / in Friesland in den slag, / zijn ziel in 't eeuwig leven / verwacht den jongsten dag.
+    nl.wikipedia.org:   Lijf en goed al te samen / heb ik u niet verschoond, / mijn broeders hoog van namen / hebben 't u ook vertoond: / Graaf Adolf is gebleven / in Friesland in den slag, / zijn ziel in 't eeuwig leven / verwacht den jongsten dag.
+    nl.wikisource.org:  Lijf en goed al te samen / heb ik u niet verschoond, / mijn broeders hoog van namen / hebben 't u ook vertoond: / Graaf Adolf is gebleven / in Friesland in den slag, / zijn ziel in 't eeuwig leven / verwacht den jongsten dag.
+  couplet 5: gelijk in nl.wikipedia.org en nl.wikisource.org
+  couplet 6: gelijk in nl.wikisource.org
+  couplet 7: LEEG, woorden verschillen
+    koninklijkhuis.nl:  Van al die mij bezwaren / en mijn vervolgers zijn, / mijn God, wil doch bewaren / den trouwen dienaar Dijn, / dat zij mij niet verrassen / in haren bozen moed, / hun handen niet en wassen / in mijn onschuldig bloed.
+    nl.wikipedia.org:   Van al die mij bezwaren / en mijn vervolgers zijn, / mijn God, wil doch bewaren / den trouwen dienaar Dijn, / dat zij mij niet verrassen / in hunnen bozen moed, / hun handen niet en wassen / in mijn onschuldig bloed.
+    nl.wikisource.org:  Van al die mij bezwaren / en mijn vervolgers zijn, / mijn God, wil doch bewaren / den trouwen dienaar dijn, / dat zij mij niet verrassen / in hunnen bozen moed, / hun handen niet en wassen / in mijn onschuldig bloed.
+  couplet 8: gelijk in nl.wikipedia.org en nl.wikisource.org
+  couplet 9: LEEG, woorden verschillen
+    koninklijkhuis.nl:  Na 't zuur zal ik ontvangen / van God, mijn Heer, het zoet, / daar na zo doet verlangen / mijn vorstelijk gemoed: / welk is, dat ik mag sterven / met ere in het veld, / een eeuwig rijk verwerven / als een getrouwen held.
+    nl.wikipedia.org:   Na 't zuur zal ik ontvangen / van God mijn Heer dat zoet, / daarna zo doet verlangen / mijn vorstelijk gemoed: / dat is, dat ik mag sterven / met eren in dat veld, / een eeuwig rijk verwerven / als een getrouwen held.
+    nl.wikisource.org:  Na 't zuur zal ik ontvangen / van God mijn Heer dat zoet, / daarna zo doet verlangen / mijn vorstelijk gemoed: / dat is, dat ik mag sterven / met eren in dat veld, / een eeuwig rijk verwerven / als een getrouwen held.
+  couplet 10: gelijk in nl.wikipedia.org en nl.wikisource.org
+  couplet 11: LEEG, woorden verschillen
+    koninklijkhuis.nl:  Als een prins opgezeten / met mijner heireskracht, / van den tiran vermeten / heb ik den slag verwacht, / die, bij Maastricht begraven, / bevreesde mijn geweld; / mijn ruiters zag men draven / zeer moedig in dat veld.
+    nl.wikipedia.org:   Als een prins opgezeten / met mijner heires-kracht, / van den tiran vermeten / heb ik den slag verwacht, / die, bij Maastricht begraven, / bevreesde mijn geweld; / mijn ruiters zag men draven / zeer moedig door dat veld.
+    nl.wikisource.org:  Als een prins opgezeten / met mijner heires-kracht, / van den tiran vermeten / heb ik den slag verwacht, / die, bij Maastricht begraven, / bevreesde mijn geweld; / mijn ruiters zag men draven / zeer moedig door dat veld.
+  couplet 12: gelijk in nl.wikipedia.org en nl.wikisource.org
+  couplet 13: gelijk in nl.wikipedia.org en nl.wikisource.org
+  couplet 14: gelijk in nl.wikipedia.org en nl.wikisource.org
+  couplet 15: LEEG, woorden verschillen
+    koninklijkhuis.nl:  Voor God wil ik belijden / en Zijner groten macht, / dat ik tot genen tijden / den Koning heb veracht, / dan dat ik God den Heere, / der hoogsten Majesteit, / heb moeten obediëren / in den gerechtigheid.
+    nl.wikipedia.org:   Voor God wil ik belijden / en Zijner groten macht, / dat ik tot genen tijden / den Koning heb veracht, / dan dat ik God den Heere, / der hoogsten Majesteit, / heb moeten obediëren / in der gerechtigheid.
+    nl.wikisource.org:  Voor God wil ik belijden / en zijner groten macht, / dat ik tot genen tijden / den Koning heb veracht, / dan dat ik God den Heere, / der hoogsten Majesteit, / heb moeten obediëren / in der gerechtigheid.
