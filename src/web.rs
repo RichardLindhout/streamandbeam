@@ -550,8 +550,13 @@ async fn save_settings(State(app): State<App>, Query(c): Query<Confirmed>, Json(
             return r;
         }
     }
+    let slotzang_text = s.slotzang_tekst;
     match app.director.save_settings(s).await {
-        Ok(()) => StatusCode::NO_CONTENT.into_response(),
+        Ok(()) => {
+            // The boards follow the setting at once.
+            app.show.set_slotzang_text(slotzang_text).await;
+            StatusCode::NO_CONTENT.into_response()
+        }
         Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, format!("{e:#}")).into_response(),
     }
 }

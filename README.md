@@ -30,7 +30,10 @@ Open `http://<pc>:8080` op de PC, een laptop of een tablet.
    **Gebed** en **Slotzang** springen direct; **Zwart** maakt de TV's zwart.
 
 De TV's openen `http://<pc>:8080/beam` en volgen de bediening vanzelf. Geef de PC een vast
-IP-adres in de router.
+IP-adres in de router. Op de borden staat het psalmbord (met het lied na de dienst apart
+onderaan), tijdens de preek het thema met de punten en "Na de preek: Psalm 42 : 1, 5", en aan
+het eind de slotzang. Met **Slotzang: volledige tekst op de borden** (instellingen) komen ook de
+verzen van de slotzang met hun tekst op de borden.
 
 **Roosters.** De collecte, de voorzang, de bijzondere dagen (Heilig Avondmaal, Biddag,
 Kerst, …) en wie de stream bedient komen uit de Excel van de kerk (Streamupdate.xlsm). De
@@ -57,7 +60,7 @@ ook het beeld voor YouTube en draait de PTZOptics-camera naar de juiste positie:
 | Onderdeel | Op YouTube | Camera |
 |---|---|---|
 | Welkom / Einde | kerkfoto met datum, predikant, volgende dienst, QR-code | overzicht |
-| Psalm | eerst orgel met "Psalm 42 : 5" (voorspel), dan het vers met camera in de uitsparing | orgel |
+| Psalm | eerst alle verzen, "Psalm 27 : 3, 7" (voorspel), dan het vers met camera in de uitsparing | orgel |
 | Lezing, Catechismus | tekst met camera in de uitsparing ("Zondag 22" eronder) | preekstoel |
 | Collecte | doelen met QR-code | orgel |
 | Gebed | camera op de doopvont met "Gebed" (TV's zwart) | doopvont |
@@ -93,7 +96,8 @@ in (tijdens live na een vraag; de uitzending hapert dan een paar seconden).
    kanaalaccount.
 
 Daarna maakt het programma bij **Live** zelf de uitzending aan, met titel en beschrijving uit
-de liturgie, en sluit die af bij **Stop**. Zonder login werkt de streamsleutel uit de
+de liturgie (zoals de streaminformatie uit de Excel: voorganger, de psalmen, schriftlezing,
+tekst en thema), en sluit die af bij **Stop**. Zonder login werkt de streamsleutel uit de
 instellingen.
 
 ## Installeren (Windows)

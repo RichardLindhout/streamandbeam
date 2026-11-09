@@ -67,6 +67,9 @@ pub struct Settings {
     /// Areas of the stream panel the text keeps clear of; a camera area is cut out so the
     /// camera shows through. Default: the large camera circle.
     pub overlay_zones: Vec<crate::render::Zone>,
+    /// The boards also show the full text of the slotzang verses (and of the song after the
+    /// service), as the church's PowerPoint did. Off: only which psalm, in large letters.
+    pub slotzang_tekst: bool,
 }
 
 /// PTZOptics camera positions (preset numbers as saved in the camera).
@@ -109,6 +112,7 @@ impl Default for Settings {
             autopilot: "uit".into(),
             youtube_channel: "UCv0FTJ5pf3aXF7fhVYLwe2g".into(),
             overlay_zones: vec![crate::render::Zone::camera_circle()],
+            slotzang_tekst: false,
         }
     }
 }

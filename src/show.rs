@@ -65,10 +65,20 @@ impl Item {
             }
             "catechismus" => format!("zondag {}", self.zondag),
             "lied" => self.label.clone(),
+            "nazang" => self.song_title(),
             "belijdenis" => crate::confessions::short(&self.doc, self.chapter, &self.articles),
             "formulier" => crate::confessions::form(&self.doc).map(|f| f.kort.clone()).unwrap_or_default(),
             _ => String::new(),
         };
+    }
+
+    /// The title of a song that is not in the psalm book. A song after the service has it in
+    /// its text when the label only says when it is sung ("Na de dienst").
+    fn song_title(&self) -> String {
+        let label = self.label.trim();
+        let first = self.text.lines().map(str::trim).find(|l| !l.is_empty()).unwrap_or_default();
+        let only_when = label.is_empty() || label.to_lowercase().contains("na de dienst") || label.eq_ignore_ascii_case("nazang");
+        if only_when && !first.is_empty() { first.to_string() } else { label.to_string() }
     }
 }
 
@@ -84,7 +94,8 @@ impl Item {
                 let zondag = if self.zondag > 0 { self.zondag } else { crate::catechism::for_item(self).first().map_or(0, |q| q.zondag) };
                 if zondag > 0 { format!("Zondag {zondag}") } else { String::new() }
             }
-            "lied" | "nazang" => self.label.clone(),
+            "lied" => self.label.clone(),
+            "nazang" => self.song_title(),
             "belijdenis" => crate::confessions::short(&self.doc, self.chapter, &self.articles),
             _ => String::new(),
         }
@@ -280,6 +291,9 @@ pub struct View {
     /// slide, board slide) until the operator moves on or chooses to show the change.
     #[serde(skip)]
     hold: Option<(usize, Slide, Slide)>,
+    /// The boards show the full text of the slotzang verses (a setting, see `set_slotzang_text`).
+    #[serde(skip)]
+    slotzang_text: bool,
 }
 
 impl View {
@@ -647,7 +661,6 @@ impl Show {
         self.publish(&st);
     }
 
-    /// Rebuilds the slides after the services changed.
     /// Puts the operator's own text on the boards right away (None = back to normal).
     pub async fn set_override(&self, slide: Option<Slide>, stream: bool) {
         let mut st = self.state.lock().await;
@@ -656,10 +669,21 @@ impl Show {
         self.publish(&st);
     }
 
+    /// The setting "Slotzang: volledige tekst op de borden": the boards then show the slotzang
+    /// verses with their text, as the church's PowerPoint did, instead of only which psalm.
+    pub async fn set_slotzang_text(&self, on: bool) {
+        let mut st = self.state.lock().await;
+        if st.slotzang_text != on {
+            st.slotzang_text = on;
+            self.changed(&mut st);
+        }
+    }
+
+    /// Rebuilds the slides after the services changed.
     fn changed(&self, st: &mut View) {
         annotate(&mut st.services, &self.roosters());
         st.slides = st.service().map(build_slides).unwrap_or_default();
-        st.boards = st.service().map(|svc| board_slides(svc, &st.slides)).unwrap_or_default();
+        st.boards = st.service().map(|svc| board_slides(svc, &st.slides, st.slotzang_text)).unwrap_or_default();
         st.index = st.index.min(st.slides.len().saturating_sub(1));
         apply_hold(st);
         self.publish(st);
@@ -1209,16 +1233,32 @@ fn liturgy(svc: &Service) -> Vec<(usize, String)> {
 }
 
 /// The psalm board as it hangs in church: one line per ledge — the psalms and the
-/// reading in order, an empty ledge after the reading, and the catechism Sunday at the
-/// bottom ("Zondag 21"). No headings, no texts.
+/// reading in order, an empty ledge after the reading, the song after the service as a
+/// group of its own under "Na de dienst:" (as on the church's PowerPoint), and the catechism
+/// Sunday at the bottom ("Zondag 21"). No other headings, no texts.
 fn board_rows(svc: &Service) -> Vec<String> {
     let mut rows: Vec<String> = Vec::new();
     let mut zondag = String::new();
+    let mut after_service = false;
     let last_reading = svc.items.iter().rposition(|i| i.kind == "lezing");
     for (i, it) in svc.items.iter().enumerate() {
         match it.kind.as_str() {
             "catechismus" => zondag = it.short(),
-            "psalm" | "slotzang" | "nazang" | "lezing" | "lied" | "belijdenis" => {
+            "nazang" => {
+                let line = it.short();
+                if line.is_empty() {
+                    continue;
+                }
+                if !after_service {
+                    after_service = true;
+                    if rows.last().is_some_and(|r| !r.is_empty()) {
+                        rows.push(String::new());
+                    }
+                    rows.push("Na de dienst:".into());
+                }
+                rows.push(line);
+            }
+            "psalm" | "slotzang" | "lezing" | "lied" | "belijdenis" => {
                 let line = it.short();
                 if !line.is_empty() {
                     rows.push(line);
@@ -1238,13 +1278,23 @@ fn board_rows(svc: &Service) -> Vec<String> {
 
 /// What the boards show, as the church wants it: the psalm board, the theme during the
 /// sermon, and the last psalm (and any song after the service). Not every text, so
-/// people keep using their own Bible and psalter.
-fn board_slides(svc: &Service, slides: &[Slide]) -> Vec<Slide> {
+/// people keep using their own Bible and psalter; only with `slotzang_text` (a setting)
+/// the verses of the slotzang and of the song after the service come with their text.
+fn board_slides(svc: &Service, slides: &[Slide], slotzang_text: bool) -> Vec<Slide> {
     let custom = &svc.board_custom;
     let rows = custom.liturgie.clone().unwrap_or_else(|| board_rows(svc));
     let mut out: Vec<Slide> = Vec::with_capacity(slides.len());
     for sl in slides {
         let board = match sl.kind.as_str() {
+            // A verse with its text, like a psalm in the stream. A song after the service that is
+            // only a title (one line) keeps the large announcement below.
+            "slotzang" | "nazang"
+                if slotzang_text
+                    && !sl.lines.is_empty()
+                    && (sl.lines.len() > 1 || svc.items.get(sl.item).is_some_and(|i| i.psalm > 0)) =>
+            {
+                Slide { kind: "slotzang".into(), ..sl.clone() }
+            }
             // The last psalm and the song after the service: only which one, in large letters.
             "slotzang" | "nazang" => Slide {
                 item: sl.item,
@@ -1256,18 +1306,23 @@ fn board_slides(svc: &Service, slides: &[Slide]) -> Vec<Slide> {
                 },
                 ..Default::default()
             },
-            // During the sermon: the text and the theme with its points.
-            "preek" => match &custom.thema {
-                Some(own) => Slide { item: sl.item, kind: "thema".into(), sub: own.tekst.clone(), theme: own.thema.clone(), points: own.punten.clone(), ..Default::default() },
-                None => Slide {
-                    item: sl.item,
-                    kind: "thema".into(),
-                    sub: if svc.text.kind == "catechismus" { svc.text.short() } else { svc.text.passage.map(|p| p.short()).unwrap_or_default() },
-                    theme: sl.theme.clone(),
-                    points: sl.points.clone(),
-                    ..Default::default()
-                },
-            },
+            // During the sermon: the text and the theme with its points, and under them what is
+            // sung after the sermon ("Na de preek: Psalm 42 : 1, 5"; the footer).
+            "preek" => {
+                let footer = after_sermon(svc, sl.item);
+                match &custom.thema {
+                    Some(own) => Slide { item: sl.item, kind: "thema".into(), sub: own.tekst.clone(), theme: own.thema.clone(), points: own.punten.clone(), footer, ..Default::default() },
+                    None => Slide {
+                        item: sl.item,
+                        kind: "thema".into(),
+                        sub: if svc.text.kind == "catechismus" { svc.text.short() } else { svc.text.passage.map(|p| p.short()).unwrap_or_default() },
+                        theme: sl.theme.clone(),
+                        points: sl.points.clone(),
+                        footer,
+                        ..Default::default()
+                    },
+                }
+            }
             // The blessing: the boards keep what they showed (the slotzang stays up).
             "zegen" if !out.is_empty() => Slide { item: sl.item, ..out[out.len() - 1].clone() },
             _ => Slide { item: sl.item, kind: "bord".into(), list: rows.clone(), ..Default::default() },
@@ -1275,6 +1330,22 @@ fn board_slides(svc: &Service, slides: &[Slide]) -> Vec<Slide> {
         out.push(board);
     }
     out
+}
+
+/// What is sung right after the sermon at item `at`, for the theme board: the first song
+/// after it, also when the prayer of thanks comes first (then the slotzang), as the church's
+/// PowerPoint had it ("Na de preek: Psalm 42 : 1, 5"). Empty when nothing is sung before the
+/// blessing.
+fn after_sermon(svc: &Service, at: usize) -> String {
+    for it in svc.items.iter().skip(at + 1) {
+        match it.kind.as_str() {
+            "psalm" | "slotzang" if it.psalm > 0 => return psalm_ref_string(it.psalm, &it.verses),
+            "lied" => return it.label.clone(),
+            "zegen" | "einde" | "nazang" => break,
+            _ => {}
+        }
+    }
+    String::new()
 }
 
 /// Splits paragraphs into slides of roughly max_chars characters (a long paragraph stays
@@ -1332,11 +1403,120 @@ fn background_version(dir: &Path) -> u64 {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
 
     fn item(id: &str, kind: &str, label: &str) -> Item {
         Item { id: id.into(), kind: kind.into(), label: label.into(), ..Default::default() }
+    }
+
+    fn reading(id: &str, book: u32, chapter: u32, from: u32, to: u32) -> Item {
+        let mut it = Item { passage: Some(BibleRef { book, chapter, from, to }), ..item(id, "lezing", "Schriftlezing") };
+        it.refresh();
+        it
+    }
+
+    /// The middagdienst of 1 November 2026 (hhgtholen.nl), in the order the program makes:
+    /// "Ps. 27: 3-7" and "Ps. 42: 1-5" are verses 3 and 7, 1 and 5.
+    pub(crate) fn middagdienst() -> Service {
+        let mut text = Item { kind: "catechismus".into(), questions: vec![58], ..Default::default() };
+        text.refresh();
+        let mut slotzang = psalm("i15", "Slotzang", 43, &[4]);
+        slotzang.kind = "slotzang".into();
+        Service {
+            id: "2026-11-01 16:00".into(),
+            date: "2026-11-01".into(),
+            time: "16:00".into(),
+            label: "Middagdienst".into(),
+            text,
+            theme: "Verrast door vreugde".into(),
+            points: vec!["Nu al".into(), "Straks volkomen".into()],
+            items: vec![
+                item("i1", "welkom", "Startscherm"),
+                psalm("i2", "Voorzang", 90, &[1]),
+                psalm("i3", "Zingen", 147, &[1]),
+                psalm("i4", "Zingen", 32, &[6]),
+                item("i5", "gebed", "Gebed"),
+                reading("i6", 35, 3, 17, 19),
+                reading("i7", 60, 1, 3, 9),
+                reading("i8", 66, 7, 9, 12),
+                item("i9", "collecte", "Collecte"),
+                psalm("i10", "Zingen", 27, &[3, 7]),
+                item("i11", "preek", "Prediking"),
+                psalm("i12", "Tussenzang", 42, &[1, 5]),
+                item("i13", "preek", "Prediking"),
+                item("i14", "gebed", "Dankgebed"),
+                slotzang,
+                item("i16", "zegen", "Zegen"),
+                item("i17", "einde", "Aftiteling"),
+            ],
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn theme_board_names_the_psalm_after_the_sermon() {
+        let svc = middagdienst();
+        let boards = board_slides(&svc, &build_slides(&svc), false);
+        let themes: Vec<&Slide> = boards.iter().filter(|b| b.kind == "thema").collect();
+        assert_eq!(themes.len(), 2);
+        assert_eq!((themes[0].sub.as_str(), themes[0].theme.as_str()), ("Zondag 22", "Verrast door vreugde"));
+        // The first part: the tussenzang; the second, with the prayer of thanks first: the slotzang.
+        assert_eq!(themes[0].footer, "Psalm 42 : 1, 5");
+        assert_eq!(themes[1].footer, "Psalm 43 : 4");
+        // Nothing sung after the sermon: no line.
+        let mut short = middagdienst();
+        short.items.retain(|i| !matches!(i.id.as_str(), "i12" | "i13" | "i14" | "i15"));
+        let boards = board_slides(&short, &build_slides(&short), false);
+        assert_eq!(boards.iter().find(|b| b.kind == "thema").unwrap().footer, "");
+    }
+
+    #[test]
+    fn psalm_board_puts_the_song_after_the_service_apart() {
+        let mut svc = middagdienst();
+        let mut song = Item { text: "U zij de glorie".into(), ..item("i18", "nazang", "Na de dienst") };
+        song.refresh();
+        assert_eq!(song.reference, "U zij de glorie");
+        svc.items.insert(16, song);
+        assert_eq!(
+            board_rows(&svc),
+            ["Ps 90:1", "Ps 147:1", "Ps 32:6", "Hab.3:17-19", "1 Petr.1:3-9", "Openb.7:9-12", "", "Ps 27:3,7", "Ps 42:1,5", "Ps 43:4", "", "Na de dienst:", "U zij de glorie"]
+        );
+        let slides = build_slides(&svc);
+        assert!(slides[0].list.iter().any(|l| l == "Na de dienst: U zij de glorie"), "{:?}", slides[0].list);
+        let boards = board_slides(&svc, &slides, false);
+        let last = boards.iter().rev().find(|b| b.kind == "slotzang").unwrap();
+        assert_eq!((last.header.as_str(), last.sub.as_str()), ("Na de dienst", "U zij de glorie"));
+        // A title as the label stays the title.
+        let named = Item { kind: "nazang".into(), label: "Ere zij God".into(), ..Default::default() };
+        assert_eq!(named.short(), "Ere zij God");
+    }
+
+    #[test]
+    fn slotzang_with_its_text_on_the_boards_when_set() {
+        let svc = middagdienst();
+        let slides = build_slides(&svc);
+        let slotzang = |boards: Vec<Slide>| -> Vec<Slide> { boards.into_iter().zip(&slides).filter(|(_, s)| s.kind == "slotzang").map(|(b, _)| b).collect() };
+        // Off (the default): only which psalm, also during the verse.
+        let off = slotzang(board_slides(&svc, &slides, false));
+        assert_eq!(off.len(), 2);
+        assert!(off.iter().all(|b| b.lines.is_empty() && b.sub == "Ps 43:4"));
+        // On: the announcement, then the verse with its text, as the church's PowerPoint had it.
+        let on = slotzang(board_slides(&svc, &slides, true));
+        assert!(on[0].lines.is_empty() && on[0].sub == "Ps 43:4");
+        assert_eq!((on[1].kind.as_str(), on[1].header.as_str()), ("slotzang", "Psalm 43 : 4"));
+        assert_eq!(on[1].lines, crate::texts::psalm_verse(43, 4).unwrap());
+    }
+
+    #[tokio::test]
+    async fn the_slotzang_setting_changes_the_boards_at_once() {
+        let show = show_with(middagdienst()).await;
+        let verse = show.view().slides.iter().position(|s| s.kind == "slotzang" && !s.lines.is_empty()).unwrap();
+        assert!(show.view().boards[verse].lines.is_empty());
+        show.set_slotzang_text(true).await;
+        assert!(!show.view().boards[verse].lines.is_empty());
+        show.set_slotzang_text(false).await;
+        assert!(show.view().boards[verse].lines.is_empty());
     }
 
     fn kinds(svc: &Service) -> Vec<String> {
@@ -1379,17 +1559,19 @@ mod tests {
         svc.items.insert(4, Item { kind: "preek".into(), label: "Prediking".into(), ..Default::default() });
         svc.items.insert(5, Item { psalm: 3, verses: vec![1], kind: "slotzang".into(), label: "Slotzang".into(), ..Default::default() });
         let slides = build_slides(&svc);
-        let auto = board_slides(&svc, &slides);
+        let auto = board_slides(&svc, &slides, false);
         assert_eq!(auto[0].list, ["Ps 1:1,2", "Ps 2:1", "Ps 3:1"]);
         svc.board_custom = BoardCustom {
             liturgie: Some(vec!["Ps 84:3".into(), "".into(), "Zondag 5".into()]),
             thema: Some(BoardTheme { tekst: "Joh.3:16".into(), thema: "Gods liefde".into(), punten: vec!["groot".into()] }),
             slotzang: Some("Ps 134:3".into()),
         };
-        let own = board_slides(&svc, &slides);
+        let own = board_slides(&svc, &slides, false);
         assert_eq!(own[0].list, ["Ps 84:3", "", "Zondag 5"]);
         let thema = own.iter().find(|b| b.kind == "thema").unwrap();
         assert_eq!((thema.sub.as_str(), thema.theme.as_str(), thema.points.len()), ("Joh.3:16", "Gods liefde", 1));
+        // The psalm after the sermon still comes from the order.
+        assert_eq!(thema.footer, "Psalm 3 : 1");
         assert!(own.iter().any(|b| b.kind == "slotzang" && b.sub == "Ps 134:3"));
     }
 
