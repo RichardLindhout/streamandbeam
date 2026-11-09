@@ -149,7 +149,11 @@ export function SettingsDialog({ open, onOpenChange, state, status, onMade }: {
                 Testuitzending
               </label>
             </Section>
-            <Section title="Opnames">{f("recordDir", "Map voor opnames")}</Section>
+            <Section title="Opnames">
+              {f("recordDir", "Map voor opnames")}
+              {/* Live and Opnemen always record: mp4 with picture and sound. */}
+              {status.recordDir && <div className="text-[18px] break-all text-muted-foreground">Bij Live en Opnemen komt een mp4 met beeld en geluid in {status.recordDir}</div>}
+            </Section>
           </DialogBody>
         ) : (
           <DialogBody><div className="text-[20px] text-muted-foreground">{error || "Laden…"}</div></DialogBody>

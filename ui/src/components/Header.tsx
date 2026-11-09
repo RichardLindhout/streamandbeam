@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { CalendarDays, Ellipsis, ExternalLink, Eye, EyeOff, Globe, ListOrdered, LoaderCircle, Settings2, Square, Type, Wrench } from "lucide-react";
 import type { Service, StreamStatus, View, YouTubeCheck } from "@/lib/api";
-import { at, go, hhmm, longDate, post, setStreamMode } from "@/lib/api";
+import { at, fileName, go, hhmm, longDate, post, setStreamMode } from "@/lib/api";
 import { health } from "@/lib/problems";
 import { itemLabel } from "@/lib/kinds";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,7 @@ import { Sheet, SheetContent } from "./ui/sheet";
 import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Confirm } from "./Confirm";
+import { GoLive, NO_YOUTUBE } from "./LiveConfirm";
 import { toast } from "sonner";
 import { ServiceTiles } from "./ServiceTiles";
 
@@ -55,8 +56,19 @@ function StatusLight({ status, yt, connected, alarm }: { status: StreamStatus; y
   );
 }
 
-/** What YouTube itself says (checked every minute while live): live, and with sound? */
-function youtubeLines(status: StreamStatus, yt: YouTubeCheck | null) {
+type Line = { ok: boolean | null; text: string };
+
+/** What goes to YouTube: nothing (only the recording), a connection that failed (and when it
+ *  is tried again), or what YouTube itself says (checked every minute): live, and with sound? */
+function youtubeLines(status: StreamStatus, yt: YouTubeCheck | null): { mark: string; lines: Line[]; detail?: string } {
+  if (status.youtube === "geen") return { mark: "", lines: [{ ok: false, text: "Niet naar YouTube: geen YouTube ingesteld" }] };
+  if (status.youtube === "fout") {
+    const wait = Math.max(0, Math.round((status.youtubeRetryAt || 0) - Date.now() / 1000));
+    const lines: Line[] = [{ ok: false, text: "YouTube werkt niet: we nemen wel op" }];
+    if (status.youtubeRetryAt) lines.push({ ok: null, text: wait > 0 ? `Opnieuw proberen over ${wait} s` : "Opnieuw proberen…" });
+    return { mark: "⚠", lines, detail: status.youtubeError };
+  }
+  if (status.youtube === "verbinden") return { mark: "", lines: [{ ok: null, text: "Verbinden met YouTube" }] };
   // Only a check made after going live counts; the first takes about a minute.
   const fresh = !!yt?.at && yt.at >= (status.since || 0);
   if (!fresh) return { mark: "", lines: [{ ok: null, text: "YouTube wordt gecontroleerd" }] };
@@ -67,6 +79,7 @@ function youtubeLines(status: StreamStatus, yt: YouTubeCheck | null) {
   return { mark: lines.every((l) => l.ok) ? "✓" : "⚠", lines };
 }
 
+
 /** The broadcast on YouTube: this service's own, else the channel's live page. */
 function youtubeUrl(svc?: Service, yt?: YouTubeCheck | null) {
   if (svc?.youtubeId) return `https://www.youtube.com/watch?v=${encodeURIComponent(svc.youtubeId)}`;
@@ -74,30 +87,40 @@ function youtubeUrl(svc?: Service, yt?: YouTubeCheck | null) {
   return "https://www.youtube.com";
 }
 
-/** Live: a red pill; tap it to see what YouTube receives and to open it there. Not live: when it
- *  will go live by itself, and the button to go live now. */
+/** Live: a red pill (with "alleen opname" when nothing goes to YouTube); tap it to see what
+ *  YouTube receives, the recording, and to open it on YouTube. Not live: when it will go live by
+ *  itself, and the button to go live now. */
 function LiveArea({ status, svc, yt }: { status: StreamStatus; svc?: Service; yt: YouTubeCheck | null }) {
   const [ask, setAsk] = useState(false);
   if (status.mode === "live") {
     const y = youtubeLines(status, yt);
+    const only = status.youtube === "geen";
+    const lines: Line[] = [...y.lines, status.recording ? { ok: true, text: "Opname loopt" } : { ok: false, text: "Opname loopt niet" }];
     return (
       <Popover>
         <PopoverTrigger asChild>
-          <button className="flex h-14 shrink-0 items-center gap-2.5 rounded-full bg-live px-5 text-[22px] font-bold tracking-wide text-white tabular-nums transition hover:brightness-110">
+          <button className="flex h-14 shrink-0 items-center gap-2.5 rounded-full bg-live px-5 text-[22px] font-bold tracking-wide whitespace-nowrap text-white tabular-nums transition hover:brightness-110">
             <span className="size-3 animate-pulse-dot rounded-full bg-white" /> LIVE {hhmm(at(status.since))}
+            {only && <span className="rounded-full bg-white px-3 py-0.5 text-[18px] tracking-normal text-live">alleen opname</span>}
             {y.mark && <span className={cn("grid size-8 place-items-center rounded-full text-[20px]", y.mark === "✓" ? "bg-white text-ok" : "bg-warn text-[#2b1d12]")}>{y.mark}</span>}
           </button>
         </PopoverTrigger>
-        <PopoverContent align="end" className="w-auto min-w-[22rem] p-5">
+        <PopoverContent align="end" className="w-auto max-w-xl min-w-[22rem] p-5">
           <div className="grid gap-3">
-            {y.lines.map((l) => (
+            {lines.map((l) => (
               <div key={l.text} className={cn("flex items-center gap-3 text-[24px]", l.ok === false && "font-semibold text-[#9a5a00]")}>
                 <span className="grid w-7 place-items-center">{l.ok === null ? <LoaderCircle className="size-6 animate-spin" /> : l.ok ? "✓" : "⚠"}</span> {l.text}
               </div>
             ))}
-            <Button asChild variant="outline" className="mt-2">
-              <a href={youtubeUrl(svc, yt)} target="_blank" rel="noreferrer"><ExternalLink /> Openen op YouTube</a>
-            </Button>
+            {y.detail && <div className="pl-10 text-[18px] break-words text-muted-foreground">{y.detail}</div>}
+            {status.recording && <div className="pl-10 text-[18px] break-all text-muted-foreground">{fileName(status.recording)} in {status.recordDir}</div>}
+            {only ? (
+              <div className="rounded-xl border-2 border-warn/50 bg-warn/10 p-3 text-[18px]">{NO_YOUTUBE}</div>
+            ) : (
+              <Button asChild variant="outline" className="mt-2">
+                <a href={youtubeUrl(svc, yt)} target="_blank" rel="noreferrer"><ExternalLink /> Openen op YouTube</a>
+              </Button>
+            )}
           </div>
         </PopoverContent>
       </Popover>
@@ -113,29 +136,82 @@ function LiveArea({ status, svc, yt }: { status: StreamStatus; svc?: Service; yt
       <Button variant="outline" className="shrink-0 border-live px-6 text-[22px] text-live hover:bg-[#fbe9e7]" onClick={() => setAsk(true)}>
         Nu live
       </Button>
-      <Confirm open={ask} onOpenChange={setAsk} title="Live gaan?" yes="Ja, live" tone="live" onYes={() => setStreamMode("live")} />
+      <GoLive open={ask} onOpenChange={setAsk} status={status} />
     </>
   );
 }
 
-/** A small picture of the stream; tap for the whole screen, tap again to close. */
+type Source = "camera" | "uitzending";
+const SOURCE_KEY = "beeld";
+
+function savedSource(): Source {
+  try {
+    return localStorage.getItem(SOURCE_KEY) === "uitzending" ? "uitzending" : "camera";
+  } catch {
+    return "camera";
+  }
+}
+
+/** What the picture says over itself; nothing when it shows what it should. */
+function pictureNote(status: StreamStatus, src: Source) {
+  if (status.mode === "stop") return "Beeld uit";
+  if (src === "camera" && !status.camera) return "Geen camera: testbeeld";
+  if (src === "camera" && status.cameraLive === false) return "Geen camerabeeld";
+  return "";
+}
+
+/** The live picture: the camera itself (what it sees now, also during the start screen), or the
+ *  stream as it goes out. Tap the picture for the whole screen, tap again to close. */
 function PreviewThumb({ status }: { status: StreamStatus }) {
+  const [src, setSrc] = useState<Source>(savedSource);
   const [big, setBig] = useState(false);
   const on = status.mode !== "stop";
+  const url = src === "camera" ? "/camera.mjpg" : "/preview.mjpg";
+  const note = pictureNote(status, src);
+  const choose = (s: Source) => {
+    setSrc(s);
+    try {
+      localStorage.setItem(SOURCE_KEY, s);
+    } catch {
+      /* a private window: only for now */
+    }
+  };
+  const toggle = (
+    <div role="radiogroup" aria-label="Beeld" className="grid shrink-0 gap-1 rounded-xl border-2 border-input bg-card p-1">
+      {([["camera", "Camera"], ["uitzending", "Uitzending"]] as const).map(([v, label]) => (
+        <button
+          key={v}
+          role="radio"
+          aria-checked={src === v}
+          onClick={() => choose(v)}
+          className={cn(
+            "h-[34px] rounded-lg px-3 text-[18px] leading-none font-semibold transition",
+            src === v ? "bg-walnut text-white" : "text-muted-foreground hover:bg-accent",
+          )}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
   return (
     <>
+      {toggle}
       <button
-        aria-label="Beeld"
+        aria-label={src === "camera" ? "Camerabeeld" : "Uitzendbeeld"}
         onClick={() => on && setBig(true)}
         className={cn("mon h-[90px] w-[160px] shrink-0 rounded-lg ring-2", status.mode === "live" ? "ring-live" : "ring-walnut/30", !on && "cursor-default bg-walnut/80")}
       >
-        {on && <img src="/preview.mjpg" alt="" />}
+        {on && <img key={url} src={url} alt="" />}
+        {note && <span className="absolute inset-x-0 bottom-0 bg-black/70 px-1 py-0.5 text-center text-[18px] leading-tight text-white">{note}</span>}
       </button>
       {big && (
         <div className="fixed inset-0 z-[60] cursor-pointer bg-black" onClick={() => setBig(false)}>
           <div className="mon h-full w-full">
-            <img src="/preview.mjpg" alt="" />
+            <img key={url} src={url} alt="" />
           </div>
+          <div className="absolute top-5 left-5 cursor-default" onClick={(e) => e.stopPropagation()}>{toggle}</div>
+          {note && <div className="absolute inset-x-0 bottom-10 text-center text-[32px] font-semibold text-white">{note}</div>}
         </div>
       )}
     </>

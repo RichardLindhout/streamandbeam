@@ -26,6 +26,7 @@ export function Voorbereiden({ state, status, onBack }: { state: View | null; st
         {live && (
           <span className="flex h-14 shrink-0 items-center gap-2.5 rounded-full bg-live px-5 text-[22px] font-bold text-white tabular-nums">
             <span className="size-3 animate-pulse-dot rounded-full bg-white" /> LIVE {hhmm(at(status.since))}
+            {status.youtube === "geen" && <span className="rounded-full bg-white px-3 py-0.5 text-[18px] text-live">alleen opname</span>}
           </span>
         )}
         <DropdownMenu modal={false}>

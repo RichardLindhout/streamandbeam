@@ -77,14 +77,31 @@ export type View = {
 export type Mode = "stop" | "voorbeeld" | "opnemen" | "live";
 
 export type StreamStatus = {
+  /** The mode chosen; after a failure the program keeps trying to get there (see `error`). */
   mode: Mode;
+  /** What is wrong with picture, sound or recording ("" = fine). */
   error: string;
   audioDb: number;
+  /** The file being recorded now, in full ("" = not recording). */
   recording: string;
   audioWarning: string;
   /** Unix seconds the stream started (0 = not running). */
   since: number;
   boards: number;
+  /** A camera is set up (false = test picture). */
+  camera?: boolean;
+  /** The camera picture is coming in. */
+  cameraLive?: boolean;
+  /** While live: "geen" (no YouTube set up, only recording), "verbinden", "ok" or "fout" (still recording). */
+  youtube?: "" | "geen" | "verbinden" | "ok" | "fout";
+  /** Why YouTube does not work. */
+  youtubeError?: string;
+  /** Unix seconds YouTube is tried again (0 = not waiting). */
+  youtubeRetryAt?: number;
+  /** Logged in to YouTube or a stream key: going live also sends to YouTube. */
+  youtubeConfigured?: boolean;
+  /** The folder with the recordings, in full. */
+  recordDir?: string;
   /** Unix seconds the stream will go live by itself (0 or absent = not planned). */
   autoStartAt?: number;
   /** The service that auto-start is for. */
@@ -211,6 +228,9 @@ export function hash(s: string) {
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
   return (h >>> 0).toString(36);
 }
+
+/** "dienst-2026-11-08-091500.mp4" of a full path. */
+export const fileName = (path: string) => path.split(/[\\/]/).pop() || path;
 
 /** Unix seconds (or milliseconds) → Date; null for 0/absent. */
 export function at(t?: number | null) {

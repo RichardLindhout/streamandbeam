@@ -156,10 +156,12 @@ impl Director {
 
     /// Switches the stream mode. Going live while logged in to YouTube first creates the
     /// broadcast for the current service (title and description from the liturgy); without
-    /// a login the stream key from the settings is used.
+    /// a login the stream key from the settings is used. Without either, or when YouTube
+    /// cannot be reached, it goes live all the same: the preview and the recording run, and
+    /// the operator sees that nothing goes to YouTube.
     pub async fn set_mode(&self, show: &Show, mode: Mode) -> anyhow::Result<()> {
         let mut settings = self.settings();
-        let was_live = self.engine.status().mode == Mode::Live;
+        let was_live = self.engine.mode() == Mode::Live;
         if mode == Mode::Live && !was_live {
             // Never go live on an old end screen: the service about to start, from the top.
             let view = show.view();
@@ -171,22 +173,28 @@ impl Director {
                 _ => {}
             }
         }
+        let mut youtube_problem = None;
         if mode == Mode::Live && self.youtube.channel().is_some() {
-            let view = show.view();
-            let svc = view.service().cloned().ok_or_else(|| anyhow::anyhow!("kies eerst een dienst"))?;
-            let privacy = if settings.youtube_test { "private" } else { settings.youtube_privacy.as_str() };
-            let b = self
-                .youtube
-                .broadcast_for(&settings.youtube_client_id, &settings.youtube_client_secret, &svc, privacy, &svc.youtube_id, settings.youtube_test)
-                .await?;
-            println!("YouTube-uitzending: {} ({})", b.title, b.watch_url);
-            show.set_youtube_id(&svc.id, &b.id).await;
-            settings.rtmp_url = b.rtmp_url.clone();
-            settings.stream_key = b.stream_key.clone();
-            *self.broadcast.lock().unwrap() = Some(b);
+            match self.make_broadcast(show, &settings).await {
+                Ok(b) => {
+                    settings.rtmp_url = b.rtmp_url.clone();
+                    settings.stream_key = b.stream_key.clone();
+                    *self.broadcast.lock().unwrap() = Some(b);
+                }
+                Err(e) => {
+                    eprintln!("YouTube-uitzending aanmaken: {e:#}");
+                    youtube_problem = Some(format!("YouTube-uitzending aanmaken lukt niet: {e:#}"));
+                }
+            }
         }
-        let engine = self.engine.clone();
-        tokio::task::spawn_blocking(move || engine.set_mode(mode, &settings)).await??;
+        let (engine, s) = (self.engine.clone(), settings.clone());
+        let result = tokio::task::spawn_blocking(move || engine.set_mode(mode, &s)).await?;
+        // Without a stream key to fall back on: only the recording, and try YouTube again later.
+        if let Some(problem) = youtube_problem
+            && settings.stream_key.is_empty()
+        {
+            self.engine.youtube_waiting(problem);
+        }
         if was_live && mode != Mode::Live {
             let b = self.broadcast.lock().unwrap().take();
             if let Some(b) = b {
@@ -200,7 +208,55 @@ impl Director {
         if was_live && mode == Mode::Stop {
             self.start_preview().await;
         }
-        Ok(())
+        result
+    }
+
+    /// The YouTube broadcast for the current service (made, or the one made before).
+    async fn make_broadcast(&self, show: &Show, settings: &Settings) -> anyhow::Result<Broadcast> {
+        let view = show.view();
+        let svc = view.service().cloned().ok_or_else(|| anyhow::anyhow!("kies eerst een dienst"))?;
+        let privacy = if settings.youtube_test { "private" } else { settings.youtube_privacy.as_str() };
+        let b = self
+            .youtube
+            .broadcast_for(&settings.youtube_client_id, &settings.youtube_client_secret, &svc, privacy, &svc.youtube_id, settings.youtube_test)
+            .await?;
+        println!("YouTube-uitzending: {} ({})", b.title, b.watch_url);
+        show.set_youtube_id(&svc.id, &b.id).await;
+        Ok(b)
+    }
+
+    /// While live without YouTube because the broadcast could not be made: try again.
+    async fn retry_youtube(&self, show: &Show) {
+        if !self.engine.youtube_due() {
+            return;
+        }
+        let settings = self.settings();
+        if self.youtube.channel().is_none() {
+            // Logged out meanwhile: the stream key from the settings, if there is one.
+            self.engine.send_to(&settings.rtmp_url, &settings.stream_key);
+            if settings.stream_key.is_empty() {
+                self.engine.youtube_waiting("niet ingelogd bij YouTube".into());
+            }
+            return;
+        }
+        match self.make_broadcast(show, &settings).await {
+            Ok(b) => {
+                self.engine.send_to(&b.rtmp_url, &b.stream_key);
+                *self.broadcast.lock().unwrap() = Some(b);
+            }
+            Err(e) => self.engine.youtube_waiting(format!("YouTube-uitzending aanmaken lukt niet: {e:#}")),
+        }
+    }
+
+    /// Whether going live sends anything to YouTube: logged in, or a stream key.
+    pub fn youtube_configured(&self) -> bool {
+        self.youtube.channel().is_some() || !self.settings().stream_key.is_empty()
+    }
+
+    /// The folder the recordings go to, in full.
+    pub fn record_dir(&self) -> PathBuf {
+        let dir = PathBuf::from(self.settings().record_dir);
+        std::path::absolute(&dir).unwrap_or(dir)
     }
 
     /// Camera, overlay and sound in the console, nothing sent anywhere. Failing is fine:
@@ -218,10 +274,35 @@ impl Director {
         self.settings.lock().unwrap().clone()
     }
 
-    pub fn save_settings(&self, s: Settings) -> anyhow::Result<()> {
+    /// Saves the settings. A new camera, sound input, encoder or recording folder starts the
+    /// engine again in the mode it is in (the preview stays on); a new stream key while live
+    /// only changes where the stream goes.
+    pub async fn save_settings(&self, s: Settings) -> anyhow::Result<()> {
         write_json(&self.path, &s)?;
-        *self.settings.lock().unwrap() = s;
+        let old = std::mem::replace(&mut *self.settings.lock().unwrap(), s.clone());
         self.settings_changed.notify_one();
+        let mode = self.engine.mode();
+        if mode == Mode::Stop {
+            return Ok(());
+        }
+        // While live with a YouTube login, the broadcast's own address stays.
+        let mut engine_settings = s.clone();
+        if mode == Mode::Live
+            && let Some(b) = self.broadcast()
+        {
+            engine_settings.rtmp_url = b.rtmp_url;
+            engine_settings.stream_key = b.stream_key;
+        }
+        if !old.same_pipeline(&s) {
+            println!("instellingen gewijzigd: {mode:?} opnieuw starten");
+            let engine = self.engine.clone();
+            // A failure is in the status, and the engine keeps trying.
+            if let Err(e) = tokio::task::spawn_blocking(move || engine.restart(&engine_settings)).await? {
+                eprintln!("opnieuw starten na nieuwe instellingen: {e:#}");
+            }
+        } else if mode == Mode::Live {
+            self.engine.send_to(&engine_settings.rtmp_url, &engine_settings.stream_key);
+        }
         Ok(())
     }
 
@@ -349,12 +430,13 @@ impl Director {
     }
 
     /// Goes live before a service (with the start screen) and stops a while after the end
-    /// screen, when switched on.
+    /// screen, when switched on. Also makes the YouTube broadcast again when that failed.
     async fn autopilot(self: Arc<Self>, show: Arc<Show>) {
         // The blessing slide on screen and since when.
         let mut zegen_since: Option<(usize, Instant)> = None;
         loop {
             tokio::time::sleep(Duration::from_secs(10)).await;
+            self.retry_youtube(&show).await;
             let s = self.settings();
             let view = show.view();
             let mode = self.engine.status().mode;
