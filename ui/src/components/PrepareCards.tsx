@@ -132,7 +132,7 @@ export function BoardBackground({ state }: { state: View | null }) {
     }
   }
   return (
-    <div className="grid grid-cols-[150px_minmax(0,1fr)] items-start gap-6">
+    <div className="grid grid-cols-[150px_minmax(0,1fr)] items-start gap-6 max-md:grid-cols-[110px_minmax(0,1fr)] max-md:gap-3">
       <Board slide={sample} className="rounded-lg ring-2 ring-walnut/30" />
       <div className="grid gap-3">
         <div className="text-[20px]">{custom ? "Eigen afbeelding" : "Hout"}</div>

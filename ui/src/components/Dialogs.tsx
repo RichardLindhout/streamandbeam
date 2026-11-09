@@ -82,17 +82,17 @@ export function SettingsDialog({ open, onOpenChange, state, status, onMade }: {
           <DialogTitle>Instellingen</DialogTitle>
           <DialogDescription className="sr-only">Instellingen</DialogDescription>
         </DialogHeader>
-        <Tabs defaultValue="algemeen" className="flex min-h-0 flex-col">
+        <Tabs defaultValue="algemeen" className="flex min-h-0 flex-col max-md:flex-1">
         <TabsList>
           <TabsTrigger value="algemeen">Algemeen</TabsTrigger>
           <TabsTrigger value="uitzending">Uitzending</TabsTrigger>
           <TabsTrigger value="bord">Bord</TabsTrigger>
         </TabsList>
-        <TabsContent value="uitzending"><DialogBody><StreamControls status={status} /></DialogBody></TabsContent>
-        <TabsContent value="bord"><DialogBody><BoardBackground state={state} /></DialogBody></TabsContent>
-        <TabsContent value="algemeen" className="flex min-h-0 flex-col">
+        <TabsContent value="uitzending" className="max-md:flex max-md:min-h-0 max-md:flex-1 max-md:flex-col"><DialogBody><StreamControls status={status} /></DialogBody></TabsContent>
+        <TabsContent value="bord" className="max-md:flex max-md:min-h-0 max-md:flex-1 max-md:flex-col"><DialogBody><BoardBackground state={state} /></DialogBody></TabsContent>
+        <TabsContent value="algemeen" className="flex min-h-0 flex-col max-md:flex-1">
         {s ? (
-          <DialogBody className="gap-8">
+          <DialogBody className="gap-8 max-md:gap-6">
             <Section title="Diensten">
               <div className="grid gap-3 sm:grid-cols-2">
                 <Button variant="outline" disabled={fetching} onClick={fetchSite}><Globe /> {fetching ? "Bezig…" : "Diensten ophalen van website"}</Button>
@@ -154,7 +154,7 @@ export function SettingsDialog({ open, onOpenChange, state, status, onMade }: {
         ) : (
           <DialogBody><div className="text-[20px] text-muted-foreground">{error || "Laden…"}</div></DialogBody>
         )}
-        {error && s && <div className="mx-7 mb-3 rounded-xl bg-[#fbe9e7] px-4 py-3 text-[22px] font-semibold text-live">{error}</div>}
+        {error && s && <div className="mx-7 mb-3 max-md:mx-4 rounded-xl bg-[#fbe9e7] px-4 py-3 text-[22px] font-semibold text-live">{error}</div>}
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Annuleer</Button>
           <Button

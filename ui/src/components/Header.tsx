@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { CalendarDays, Ellipsis, ExternalLink, Eye, EyeOff, Globe, ListOrdered, LoaderCircle, Settings2, Square, Type, Wrench } from "lucide-react";
 import type { Service, StreamStatus, View, YouTubeCheck } from "@/lib/api";
-import { at, go, hhmm, longDate, post, setStreamMode } from "@/lib/api";
+import { at, go, hhmm, longDate, post, setStreamMode, shortDate } from "@/lib/api";
 import { health } from "@/lib/problems";
 import { itemLabel } from "@/lib/kinds";
 import { cn } from "@/lib/utils";
@@ -32,7 +32,7 @@ function StatusLight({ status, yt, connected, alarm }: { status: StreamStatus; y
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className="flex h-[72px] shrink-0 items-center gap-3 rounded-xl px-4 text-[22px] font-semibold transition hover:bg-accent">
+        <button className="flex h-[72px] shrink-0 items-center gap-3 rounded-xl px-4 text-[22px] font-semibold transition hover:bg-accent max-md:order-5 max-md:h-12 max-md:gap-2 max-md:px-1.5 max-md:text-[20px]">
           <span className="size-5 rounded-full" style={{ background: l.dot }} />
           {h.silent && h.level === "warn" ? "Geen geluid" : l.word}
         </button>
@@ -83,12 +83,12 @@ function LiveArea({ status, svc, yt }: { status: StreamStatus; svc?: Service; yt
     return (
       <Popover>
         <PopoverTrigger asChild>
-          <button className="flex h-14 shrink-0 items-center gap-2.5 rounded-full bg-live px-5 text-[22px] font-bold tracking-wide text-white tabular-nums transition hover:brightness-110">
+          <button className="flex h-14 shrink-0 items-center gap-2.5 rounded-full bg-live px-5 text-[22px] font-bold tracking-wide text-white tabular-nums transition hover:brightness-110 max-md:h-12 max-md:gap-2 max-md:px-3 max-md:text-[19px]">
             <span className="size-3 animate-pulse-dot rounded-full bg-white" /> LIVE {hhmm(at(status.since))}
-            {y.mark && <span className={cn("grid size-8 place-items-center rounded-full text-[20px]", y.mark === "✓" ? "bg-white text-ok" : "bg-warn text-[#2b1d12]")}>{y.mark}</span>}
+            {y.mark && <span className={cn("grid size-8 place-items-center rounded-full text-[20px] max-md:size-7 max-md:text-[18px]", y.mark === "✓" ? "bg-white text-ok" : "bg-warn text-[#2b1d12]")}>{y.mark}</span>}
           </button>
         </PopoverTrigger>
-        <PopoverContent align="end" className="w-auto min-w-[22rem] p-5">
+        <PopoverContent align="end" className="w-auto min-w-[22rem] p-5 max-md:min-w-0">
           <div className="grid gap-3">
             {y.lines.map((l) => (
               <div key={l.text} className={cn("flex items-center gap-3 text-[24px]", l.ok === false && "font-semibold text-[#9a5a00]")}>
@@ -109,8 +109,8 @@ function LiveArea({ status, svc, yt }: { status: StreamStatus; svc?: Service; yt
   const word = startAt ? `Gaat live ${day} ${hhmm(startAt)}` : status.mode === "opnemen" ? "Opname" : status.mode === "voorbeeld" ? "Voorbeeld" : "Uit";
   return (
     <>
-      <span className="shrink-0 text-[22px] whitespace-nowrap tabular-nums">{word}</span>
-      <Button variant="outline" className="shrink-0 border-live px-6 text-[22px] text-live hover:bg-[#fbe9e7]" onClick={() => setAsk(true)}>
+      <span className="shrink-0 text-[22px] whitespace-nowrap tabular-nums max-md:min-w-0 max-md:shrink max-md:text-right max-md:text-[18px] max-md:leading-tight max-md:whitespace-normal">{word}</span>
+      <Button variant="outline" className="shrink-0 border-live px-6 text-[22px] text-live hover:bg-[#fbe9e7] max-md:h-12 max-md:px-4 max-md:text-[20px]" onClick={() => setAsk(true)}>
         Nu live
       </Button>
       <Confirm open={ask} onOpenChange={setAsk} title="Live gaan?" yes="Ja, live" tone="live" onYes={() => setStreamMode("live")} />
@@ -127,7 +127,7 @@ function PreviewThumb({ status }: { status: StreamStatus }) {
       <button
         aria-label="Beeld"
         onClick={() => on && setBig(true)}
-        className={cn("mon h-[90px] w-[160px] shrink-0 rounded-lg ring-2", status.mode === "live" ? "ring-live" : "ring-walnut/30", !on && "cursor-default bg-walnut/80")}
+        className={cn("mon h-[90px] w-[160px] shrink-0 rounded-lg ring-2 max-md:order-2 max-md:h-[50px] max-md:w-[89px]", status.mode === "live" ? "ring-live" : "ring-walnut/30", !on && "cursor-default bg-walnut/80")}
       >
         {on && <img src="/preview.mjpg" alt="" />}
       </button>
@@ -143,7 +143,7 @@ function PreviewThumb({ status }: { status: StreamStatus }) {
 }
 
 /** All parts of the service; tap one, confirm, and the boards and stream go there. */
-function GotoSheet({ open, onOpenChange, state, svc }: { open: boolean; onOpenChange: (b: boolean) => void; state: View | null; svc?: Service }) {
+export function GotoSheet({ open, onOpenChange, state, svc }: { open: boolean; onOpenChange: (b: boolean) => void; state: View | null; svc?: Service }) {
   const [ask, setAsk] = useState<number | null>(null);
   const slides = state?.slides || [];
   const cur = slides[state?.index ?? 0]?.item;
@@ -159,12 +159,12 @@ function GotoSheet({ open, onOpenChange, state, svc }: { open: boolean; onOpenCh
                 disabled={first(i) < 0}
                 onClick={() => setAsk(i)}
                 className={cn(
-                  "flex min-h-[72px] items-center gap-4 rounded-xl px-5 text-left text-[26px] transition hover:bg-accent disabled:opacity-40",
+                  "flex min-h-[72px] items-center gap-4 rounded-xl px-5 text-left text-[26px] transition hover:bg-accent disabled:opacity-40 max-md:min-h-14 max-md:gap-3 max-md:px-3 max-md:text-[22px]",
                   i === cur && "bg-[#efe3c6] font-semibold",
                 )}
               >
                 <span className="min-w-0 flex-1 truncate">{itemLabel(it)}</span>
-                {it.ref && it.kind !== "welkom" && it.kind !== "einde" && <span className="truncate text-[22px] text-muted-foreground">{it.ref}</span>}
+                {it.ref && it.kind !== "welkom" && it.kind !== "einde" && <span className="truncate text-[22px] text-muted-foreground max-md:text-[19px]">{it.ref}</span>}
               </button>
             ))}
           </div>
@@ -258,7 +258,7 @@ function MainMenu({ state, svc, status, setScreen, onSettings }: {
     <>
       <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon" aria-label="Menu" className="shrink-0"><Ellipsis className="size-9" /></Button>
+          <Button variant="outline" size="icon" aria-label="Menu" className="shrink-0 max-md:order-3"><Ellipsis className="size-9 max-md:size-7" /></Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-[26rem]">
           <DropdownMenuItem onSelect={() => setDlg("goto")}><ListOrdered /> Naar onderdeel…</DropdownMenuItem>
@@ -324,7 +324,7 @@ function WebsiteInfo({ state, svc }: { state: View | null; svc?: Service }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button className="flex max-w-full items-center gap-2 truncate rounded-lg px-2 text-[18px] text-muted-foreground transition hover:bg-accent">
+        <button className="flex max-w-full items-center gap-2 truncate rounded-lg px-2 text-[18px] text-muted-foreground transition hover:bg-accent max-md:-ml-1 max-md:min-h-11 max-md:px-1">
           {flag && <span className="size-2.5 shrink-0 rounded-full bg-warn" />}
           website: {last || "nog niet opgehaald"}
         </button>
@@ -371,15 +371,28 @@ export function Header({ state, svc, status, yt, connected, alarm, setScreen, on
   setScreen: (s: Screen) => void; onSettings: () => void;
 }) {
   return (
-    <header className="flex h-24 shrink-0 items-center gap-4 border-b-2 border-walnut/15 bg-[#efe5cc] px-4">
+    <header className="flex h-24 shrink-0 items-center gap-4 border-b-2 border-walnut/15 bg-[#efe5cc] px-4 max-md:h-auto max-md:flex-wrap max-md:gap-x-2 max-md:gap-y-0.5 max-md:px-2 max-md:pt-[max(0.375rem,env(safe-area-inset-top))] max-md:pb-1">
       <StatusLight status={status} yt={yt} connected={connected} alarm={alarm} />
-      <div className="flex min-w-0 flex-1 flex-col items-center leading-tight">
-        <div className="max-w-full truncate text-[22px]">{svc ? `${longDate(svc)} · ${svc.label}` : "Geen dienst"}</div>
+      <div className="flex min-w-0 flex-1 flex-col items-center leading-tight max-md:order-1 max-md:items-start max-md:pl-1">
+        <div className="max-w-full truncate text-[22px] max-md:text-[20px] max-md:font-semibold">
+          {svc ? (
+            <>
+              <span className="max-md:hidden">{longDate(svc)}</span>
+              <span className="md:hidden">{shortDate(svc)}</span> · {svc.label}
+            </>
+          ) : (
+            "Geen dienst"
+          )}
+        </div>
         <WebsiteInfo state={state} svc={svc} />
       </div>
-      <LiveArea status={status} svc={svc} yt={yt} />
+      <div className="contents max-md:order-6 max-md:ml-auto max-md:flex max-md:min-w-0 max-md:items-center max-md:gap-2">
+        <LiveArea status={status} svc={svc} yt={yt} />
+      </div>
       <PreviewThumb status={status} />
       <MainMenu state={state} svc={svc} status={status} setScreen={setScreen} onSettings={onSettings} />
+      {/* On a phone the light and the live state go to a second row. */}
+      <div aria-hidden className="hidden max-md:order-4 max-md:block max-md:basis-full" />
     </header>
   );
 }

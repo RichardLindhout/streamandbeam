@@ -21,7 +21,7 @@ export function ServiceTiles({ services, active, live, onPick, className }: {
           type="button"
           onClick={() => onPick(s)}
           className={cn(
-            "flex min-h-[72px] w-full items-center gap-4 rounded-xl border-2 px-5 py-3 text-left text-[26px] transition",
+            "flex min-h-[72px] w-full items-center gap-4 rounded-xl border-2 px-5 py-3 text-left text-[26px] transition max-md:min-h-14 max-md:gap-2 max-md:px-3 max-md:py-2 max-md:text-[20px]",
             s.id === active ? "border-walnut bg-[#efe3c6]" : "border-transparent bg-card hover:bg-accent",
           )}
         >

@@ -196,30 +196,32 @@ export function OrderEdit({ svc, cur }: { svc: Service; cur: number }) {
     return 0;
   }
 
-  const ctl = "grid size-14 shrink-0 place-items-center rounded-xl text-walnut transition hover:bg-accent disabled:text-[#c4b59a] disabled:hover:bg-transparent [&_svg]:size-7";
+  const ctl = "grid size-14 shrink-0 place-items-center rounded-xl text-walnut transition hover:bg-accent disabled:text-[#c4b59a] disabled:hover:bg-transparent [&_svg]:size-7 max-md:size-11 max-md:[&_svg]:size-6";
 
   return (
     <div className="flex min-h-0 flex-1 flex-col rounded-2xl border-[3px] border-dashed border-primary bg-[#fbf6ea]">
-      <div className="flex shrink-0 items-center gap-3 border-b-2 border-primary/30 bg-[#f7f0de] px-3 py-2">
-        <label className="flex h-16 min-w-0 flex-1 items-center gap-3 rounded-xl border-2 border-input bg-card pl-4 focus-within:border-primary">
-          <span className="shrink-0 text-[20px] whitespace-nowrap text-muted-foreground">na {itemLabel(items[spot - 1]) || "het begin"}</span>
+      <div className="flex shrink-0 items-center gap-3 border-b-2 border-primary/30 bg-[#f7f0de] px-3 py-2 max-md:gap-2 max-md:px-2">
+        <label className="flex h-16 min-w-0 flex-1 items-center gap-3 rounded-xl border-2 border-input bg-card pl-4 focus-within:border-primary max-md:h-14 max-md:pl-3">
+          <span className="shrink-0 text-[20px] whitespace-nowrap text-muted-foreground max-md:hidden">na {itemLabel(items[spot - 1]) || "het begin"}</span>
           <input
             value={typed}
             onChange={(e) => setTyped(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && add()}
             placeholder="ps 84:3, gebed"
             aria-label="Toevoegen"
-            className="h-full min-w-0 flex-1 bg-transparent pr-3 text-[24px] outline-none placeholder:text-[#a8987f]"
+            className="h-full min-w-0 flex-1 bg-transparent pr-3 text-[24px] outline-none placeholder:text-[#a8987f] max-md:text-[20px]"
           />
         </label>
-        <Button onClick={add} disabled={busy?.spin || !typed.trim()} className="h-16 shrink-0">
-          {busy?.spin ? <LoaderCircle className="animate-spin" /> : <Plus />} Voeg toe
+        <Button onClick={add} disabled={busy?.spin || !typed.trim()} aria-label="Voeg toe" className="h-16 shrink-0 max-md:h-14 max-md:w-14 max-md:px-0">
+          {busy?.spin ? <LoaderCircle className="animate-spin" /> : <Plus />} <span className="max-md:hidden">Voeg toe</span>
         </Button>
       </div>
+      {/* On a phone the place for new parts goes under the field, so the field keeps its width. */}
+      <div className="shrink-0 truncate px-3 pt-1 text-[18px] text-muted-foreground md:hidden">komt na <b>{itemLabel(items[spot - 1]) || "het begin"}</b></div>
       {busy && !busy.spin && (
-        <div className={cn("shrink-0 truncate px-4 pt-1 text-[20px] font-semibold", busy.bad ? "text-live" : "text-ok")}>{busy.text}</div>
+        <div className={cn("shrink-0 truncate px-4 pt-1 text-[20px] font-semibold max-md:px-3 max-md:text-[18px]", busy.bad ? "text-live" : "text-ok")}>{busy.text}</div>
       )}
-      <div ref={box} className="scroll-thin min-h-0 flex-1 overflow-y-auto p-2">
+      <div ref={box} className="scroll-thin min-h-0 flex-1 overflow-y-auto p-2 max-md:p-1">
         <ol className="relative">
           {items.map((it, i) => {
             const locked = LOCKED.has(it.kind);
@@ -236,9 +238,9 @@ export function OrderEdit({ svc, cur }: { svc: Service; cur: number }) {
                   sel === i && !dragging && "bg-primary/15",
                 )}
               >
-                <div className="flex min-h-[64px] items-center gap-1">
+                <div className="flex min-h-[64px] items-center gap-1 max-md:min-h-14 max-md:gap-0.5">
                   {locked ? (
-                    <span className="grid size-14 shrink-0 place-items-center text-muted-foreground"><Lock className="size-6" /></span>
+                    <span className="grid size-14 shrink-0 place-items-center text-muted-foreground max-md:size-11"><Lock className="size-6 max-md:size-5" /></span>
                   ) : (
                     <span
                       role="button"
@@ -247,20 +249,20 @@ export function OrderEdit({ svc, cur }: { svc: Service; cur: number }) {
                       onPointerMove={moveDrag}
                       onPointerUp={up}
                       onPointerCancel={up}
-                      className="grid size-14 shrink-0 cursor-grab touch-none place-items-center rounded-xl text-walnut hover:bg-accent active:cursor-grabbing"
+                      className="grid size-14 shrink-0 cursor-grab touch-none place-items-center rounded-xl text-walnut hover:bg-accent active:cursor-grabbing max-md:h-12 max-md:w-11"
                     >
-                      <GripVertical className="size-8" />
+                      <GripVertical className="size-8 max-md:size-7" />
                     </span>
                   )}
                   <button
                     type="button"
                     disabled={locked}
                     onClick={() => tap(i)}
-                    className={cn("flex min-w-0 flex-1 items-baseline gap-4 rounded-xl px-2 py-2 text-left disabled:text-muted-foreground", i === cur && "font-semibold")}
+                    className={cn("flex min-w-0 flex-1 items-baseline gap-4 rounded-xl px-2 py-2 text-left disabled:text-muted-foreground max-md:min-h-12 max-md:flex-wrap max-md:gap-x-2 max-md:gap-y-0 max-md:px-1 max-md:py-1", i === cur && "font-semibold")}
                   >
                     {i === cur && <span className="shrink-0 text-primary">▶</span>}
-                    <span className="shrink-0 text-[26px]">{itemLabel(it)}</span>
-                    {itemDetail(it) && <span className="min-w-0 truncate text-[24px] text-[#4a3826]">{itemDetail(it)}</span>}
+                    <span className="shrink-0 text-[26px] max-md:min-w-0 max-md:shrink max-md:truncate max-md:text-[21px] max-md:leading-tight">{itemLabel(it)}</span>
+                    {itemDetail(it) && <span className="min-w-0 truncate text-[24px] text-[#4a3826] max-md:basis-full max-md:text-[18px] max-md:leading-tight">{itemDetail(it)}</span>}
                   </button>
                   {!locked && (
                     <>
@@ -271,7 +273,7 @@ export function OrderEdit({ svc, cur }: { svc: Service; cur: number }) {
                   )}
                 </div>
                 {ch && (
-                  <div className="flex flex-wrap items-center gap-3 px-3 pb-3 pl-16">
+                  <div className="flex flex-wrap items-center gap-3 px-3 pb-3 pl-16 max-md:gap-2 max-md:px-2 max-md:pl-2">
                     <Input
                       autoFocus
                       value={ch.text}
@@ -279,12 +281,12 @@ export function OrderEdit({ svc, cur }: { svc: Service; cur: number }) {
                       onKeyDown={(e) => e.key === "Enter" && replace()}
                       onFocus={(e) => e.currentTarget.select()}
                       aria-label="Wijzigen in"
-                      className="h-16 w-[280px] min-w-0 flex-1 text-[26px]"
+                      className="h-16 w-[280px] min-w-0 flex-1 text-[26px] max-md:h-14 max-md:w-auto max-md:basis-full max-md:text-[22px]"
                     />
-                    <Button className="h-16 shrink-0" disabled={ch.busy || !ch.text.trim()} onClick={replace}>
+                    <Button className="h-16 shrink-0 max-md:h-14 max-md:flex-1" disabled={ch.busy || !ch.text.trim()} onClick={replace}>
                       {ch.busy && <LoaderCircle className="animate-spin" />} {i === cur ? "Opslaan" : "Vervangen"}
                     </Button>
-                    <Button variant="ghost" className="h-16 shrink-0" onClick={() => setChange(null)}>Annuleer</Button>
+                    <Button variant="ghost" className="h-16 shrink-0 max-md:h-14 max-md:flex-1" onClick={() => setChange(null)}>Annuleer</Button>
                     {ch.error && <span className="w-full text-[20px] font-semibold text-live">{ch.error}</span>}
                   </div>
                 )}
