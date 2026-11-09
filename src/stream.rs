@@ -177,6 +177,8 @@ pub struct Engine {
     running: Mutex<Option<Running>>,
     status: Mutex<Status>,
     overlay: Mutex<Option<gst::Buffer>>,
+    /// Where the camera picture sits in the stream: x, y, width, height.
+    camera: Mutex<[i32; 4]>,
     preview: Mutex<Vec<u8>>,
     audio: Mutex<AudioWatch>,
     listener: Mutex<Option<Arc<crate::listen::Listener>>>,
@@ -196,6 +198,7 @@ impl Engine {
                 since: 0,
             }),
             overlay: Mutex::new(None),
+            camera: Mutex::new([0, 0, WIDTH as i32, HEIGHT as i32]),
             preview: Mutex::new(Vec::new()),
             audio: Mutex::new(AudioWatch::new()),
             listener: Mutex::new(None),
@@ -229,10 +232,24 @@ impl Engine {
         self.preview.lock().unwrap().clone()
     }
 
-    /// Replaces the overlay with new straight-alpha RGBA pixels.
-    pub fn set_overlay(&self, rgba: Vec<u8>) {
+    /// Replaces the overlay with new straight-alpha RGBA pixels, and puts the camera
+    /// picture at `camera` (x, y, width, height) behind it.
+    pub fn set_overlay(&self, rgba: Vec<u8>, camera: [i32; 4]) {
         *self.overlay.lock().unwrap() = Some(gst::Buffer::from_mut_slice(rgba));
+        *self.camera.lock().unwrap() = camera;
+        self.place_camera();
         self.push_overlay();
+    }
+
+    /// Moves and scales the camera picture in the running pipeline.
+    fn place_camera(&self) {
+        let [x, y, w, h] = *self.camera.lock().unwrap();
+        let running = self.running.lock().unwrap();
+        let Some(pad) = running.as_ref().and_then(|r| r.pipeline.by_name("comp")).and_then(|c| c.static_pad("sink_0")) else { return };
+        pad.set_property("xpos", x);
+        pad.set_property("ypos", y);
+        pad.set_property("width", w.max(1));
+        pad.set_property("height", h.max(1));
     }
 
     fn push_overlay(&self) {
@@ -302,6 +319,7 @@ impl Engine {
         st.since = chrono::Utc::now().timestamp();
         st.recording = recording;
         drop(st);
+        self.place_camera();
         self.push_overlay();
         Ok(())
     }

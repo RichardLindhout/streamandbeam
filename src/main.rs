@@ -9,6 +9,7 @@ mod confessions;
 mod director;
 mod extract;
 mod kerktijden;
+mod layout;
 mod listen;
 mod render;
 mod show;

@@ -38,7 +38,12 @@
     // The boards have their own version of each slide (see Show::board_slides).
     var boards = last && (last.boards || last.slides);
     // Text the operator put on the boards directly goes over everything else.
-    if (last) renderSlide(canvas, last.overrideBoard || (boards ? boards[last.index] : null), last.black, layout());
+    if (!last) return;
+    var slide = last.overrideBoard || (boards ? boards[last.index] : null);
+    // A screen of the church's own, put up by hand, goes over the service's board.
+    var hand = last.black ? null : findLayout(last.boardLayout);
+    if (hand) renderLayout(canvas, hand, slideFields(slide), layout());
+    else renderSlide(canvas, slide, last.black, layout());
   }
   window.sbRole = "bord";
   listen(function (st) {

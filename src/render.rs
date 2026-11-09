@@ -3,7 +3,12 @@
 //! curve), a lower-third card over the camera, or the church photo in a teal frame before
 //! and after the service. Transparent pixels show the camera.
 
+use crate::layout::{Layout, LayoutBox, parse_color};
 use cosmic_text::{Align, Attrs, Buffer, Color, Family, FontSystem, Metrics, Shaping, SwashCache, Weight};
+use std::collections::HashMap;
+use std::path::PathBuf;
+use std::sync::Arc;
+use std::time::SystemTime;
 use tiny_skia::{FillRule, Paint, PathBuilder, Pixmap, PixmapPaint, Rect, Transform};
 
 pub const WIDTH: u32 = 1920;
@@ -107,6 +112,22 @@ pub enum Scene {
     /// in the bar below it: `left` left-aligned, `right` right-aligned. As the church's own
     /// start screen (outside, date and service) and end screen (inside, next service).
     Frame { photo: Photo, left: String, right: String },
+    /// A screen the church made itself (see `layout`), with the texts for its fields.
+    Custom { layout: Layout, fields: Vec<(String, String)> },
+}
+
+impl Scene {
+    /// Where the camera picture goes, as (x, y, width, height) in pixels: the whole
+    /// picture, or for a screen of the church's own the camera box, covered completely
+    /// (what sticks out is hidden by the screen itself).
+    pub fn camera_rect(&self) -> [i32; 4] {
+        let full = [0, 0, WIDTH as i32, HEIGHT as i32];
+        let Scene::Custom { layout, .. } = self else { return full };
+        let Some(b) = layout.camera().filter(|b| b.w >= 1.0 && b.h >= 1.0) else { return full };
+        let scale = (b.w / WIDTH as f32).max(b.h / HEIGHT as f32);
+        let (w, h) = (WIDTH as f32 * scale, HEIGHT as f32 * scale);
+        [(b.x + (b.w - w) / 2.0).round() as i32, (b.y + (b.h - h) / 2.0).round() as i32, w.round() as i32, h.round() as i32]
+    }
 }
 
 /// How the panel text is set.
@@ -145,6 +166,10 @@ pub struct Renderer {
     qr: Option<(usize, Vec<bool>)>,
     /// Areas the panel text keeps clear of.
     zones: Vec<Zone>,
+    /// Folder with the church's own pictures, for its own screens.
+    image_dir: PathBuf,
+    /// Pictures already read, by file name, with the file's time (None = built in).
+    pictures: HashMap<String, (Option<SystemTime>, Option<Arc<Pixmap>>)>,
 }
 
 /// Source Serif 4 for the texts (psalms, readings), Source Sans 3 for headings and labels.
@@ -190,6 +215,7 @@ impl Renderer {
         db.load_font_data(include_bytes!("../assets/fonts/SourceSerif4-Regular.ttf").to_vec());
         db.load_font_data(include_bytes!("../assets/fonts/SourceSans3-Regular.ttf").to_vec());
         db.load_font_data(include_bytes!("../assets/fonts/SourceSans3-Semibold.ttf").to_vec());
+        db.load_font_data(include_bytes!("../assets/fonts/SourceSerif4-Semibold.ttf").to_vec());
         let qr = (!qr_link.is_empty()).then(|| qrcode::QrCode::new(qr_link).ok()).flatten().map(|code| {
             (code.width(), code.to_colors().into_iter().map(|c| c == qrcode::Color::Dark).collect())
         });
@@ -201,6 +227,8 @@ impl Renderer {
             outside: load(images.outside),
             logo: load(images.logo),
             qr,
+            image_dir: PathBuf::new(),
+            pictures: HashMap::new(),
         }
     }
 
@@ -220,6 +248,11 @@ impl Renderer {
         self.zones = zones.to_vec();
     }
 
+    /// Where the church's own pictures are.
+    pub fn set_image_dir(&mut self, dir: PathBuf) {
+        self.image_dir = dir;
+    }
+
     /// Renders a scene to straight-alpha RGBA pixels of WIDTH x HEIGHT.
     pub fn render(&mut self, scene: &Scene) -> Vec<u8> {
         let mut pm = Pixmap::new(WIDTH, HEIGHT).unwrap();
@@ -228,8 +261,117 @@ impl Renderer {
             Scene::Bar { label, text } => self.bar(&mut pm, label, text),
             Scene::Panel { label, title, paragraphs, style, footer, qr } => self.panel(&mut pm, label, title, paragraphs, *style, footer, *qr),
             Scene::Frame { photo, left, right } => self.frame(&mut pm, *photo, left, right),
+            Scene::Custom { layout, fields } => self.custom(&mut pm, layout, fields),
         }
         to_straight_rgba(pm)
+    }
+
+    /// A screen of the church's own: the boxes from back to front on a solid background.
+    /// A camera box is an opening: the camera shows through it, and boxes after it lie
+    /// over the camera.
+    fn custom(&mut self, pm: &mut Pixmap, layout: &Layout, fields: &[(String, String)]) {
+        pm.fill(color(parse_color(&layout.background).unwrap_or([0; 3]), 255));
+        for b in &layout.boxes {
+            if b.w < 1.0 || b.h < 1.0 {
+                continue;
+            }
+            match b.kind.as_str() {
+                "camera" => {
+                    let mut clear = Paint::default();
+                    clear.blend_mode = tiny_skia::BlendMode::Clear;
+                    clear.anti_alias = true;
+                    if let Some(path) = box_path(b) {
+                        pm.fill_path(&path, &clear, FillRule::Winding, Transform::identity(), None);
+                    }
+                }
+                "vlak" => fill_path(pm, box_path(b), parse_color(&b.fill).unwrap_or([0; 3]), alpha(b.opacity)),
+                "afbeelding" => {
+                    let Some(img) = self.picture(&b.image) else { continue };
+                    let Some(mut part) = Pixmap::new(b.w.round() as u32, b.h.round() as u32) else { continue };
+                    if b.fit == "passend" {
+                        draw_contain(&mut part, &img, b.w, b.h);
+                    } else {
+                        draw_cover(&mut part, &img, 0.0, 0.0, b.w, b.h);
+                    }
+                    pm.draw_pixmap(b.x.round() as i32, b.y.round() as i32, part.as_ref(), &PixmapPaint::default(), Transform::identity(), None);
+                }
+                "qr" => self.draw_qr(pm, b.x, b.y, b.w.min(b.h)),
+                _ => {
+                    if let Some(fill) = parse_color(&b.fill) {
+                        fill_path(pm, box_path(b), fill, alpha(b.opacity));
+                    }
+                    let text = crate::layout::fill(&b.text, fields);
+                    if !text.trim().is_empty() {
+                        self.text_box(pm, b, &text);
+                    }
+                }
+            }
+        }
+    }
+
+    /// One of the church's own pictures (read again when the file changed), or one built
+    /// into the program: buiten.jpg, interieur.jpg and logo-wit.png.
+    fn picture(&mut self, name: &str) -> Option<Arc<Pixmap>> {
+        let name = crate::layout::safe_name(name)?;
+        let path = self.image_dir.join(&name);
+        let time = std::fs::metadata(&path).and_then(|m| m.modified()).ok();
+        if let Some((t, img)) = self.pictures.get(&name)
+            && *t == time
+        {
+            return img.clone();
+        }
+        let img = match time {
+            Some(_) => std::fs::read(&path).ok().and_then(|bytes| load(&bytes)),
+            None => match name.as_str() {
+                "buiten.jpg" => self.outside.clone(),
+                "interieur.jpg" => self.inside.clone(),
+                "logo-wit.png" => self.logo.clone(),
+                _ => None,
+            },
+        }
+        .map(Arc::new);
+        self.pictures.insert(name, (time, img.clone()));
+        img
+    }
+
+    /// Text in a box: broken at the box's width, in the largest letters (up to the box's
+    /// size) at which it all fits.
+    fn text_box(&mut self, pm: &mut Pixmap, b: &LayoutBox, text: &str) {
+        let pad = if parse_color(&b.fill).is_some() { 24.0_f32.min(b.w / 8.0).min(b.h / 8.0) } else { 0.0 };
+        let (w, h) = ((b.w - 2.0 * pad).max(8.0), (b.h - 2.0 * pad).max(8.0));
+        let [r, g, bl] = parse_color(&b.color).unwrap_or([255; 3]);
+        let serif = b.font == "serif";
+        let align = match b.align.as_str() {
+            "midden" => Align::Center,
+            "rechts" => Align::Right,
+            _ => Align::Left,
+        };
+        // Typographic apostrophe: ’t instead of 't.
+        let text = text.replace('\'', "\u{2019}");
+        let mut size = b.size.clamp(MIN_BOX_TEXT, 500.0);
+        let (mut buf, height) = loop {
+            let metrics = Metrics::new(size, size * 1.3);
+            let mut buf = Buffer::new(&mut self.fonts, metrics);
+            buf.set_size(Some(w), None);
+            let attrs = Attrs::new()
+                .family(Family::Name(if serif { "Source Serif 4" } else { "Source Sans 3" }))
+                .weight(if b.bold { Weight::SEMIBOLD } else { Weight::NORMAL })
+                .metrics(metrics)
+                .color(Color::rgb(r, g, bl));
+            buf.set_text(&text, &attrs, Shaping::Advanced, Some(align));
+            buf.shape_until_scroll(&mut self.fonts, false);
+            let (height, widest) = buf.layout_runs().fold((0.0_f32, 0.0_f32), |(hh, ww), run| (hh.max(run.line_top + run.line_height), ww.max(run.line_w)));
+            if (height <= h && widest <= w + 1.0) || size <= MIN_BOX_TEXT {
+                break (buf, height);
+            }
+            size = (size * 0.95).floor().max(MIN_BOX_TEXT);
+        };
+        let y = b.y + pad + match b.valign.as_str() {
+            "midden" => ((h - height) / 2.0).max(0.0),
+            "onder" => (h - height).max(0.0),
+            _ => 0.0,
+        };
+        self.draw_buffer(pm, &mut buf, b.x + pad, y);
     }
 
     /// Lower-third card: a small label above the main text, a warm stripe on the left.
@@ -474,6 +616,11 @@ impl Renderer {
     /// Draws one line of text with its top at y.
     fn line(&mut self, pm: &mut Pixmap, spans: &[(&str, TextStyle)], x: f32, y: f32) {
         let mut buf = self.buffer(spans);
+        self.draw_buffer(pm, &mut buf, x, y);
+    }
+
+    /// Draws laid-out text with its top left corner at (x, y).
+    fn draw_buffer(&mut self, pm: &mut Pixmap, buf: &mut Buffer, x: f32, y: f32) {
         let (pw, ph) = (pm.width() as i32, pm.height() as i32);
         let data = pm.data_mut();
         buf.draw(&mut self.fonts, &mut self.cache, Color::rgb(0, 0, 0), |gx, gy, gw, gh, c| {
@@ -486,6 +633,22 @@ impl Renderer {
                 }
             }
         });
+    }
+}
+
+/// Smallest letters in a box of the church's own screens.
+const MIN_BOX_TEXT: f32 = 14.0;
+
+fn alpha(opacity: f32) -> u8 {
+    (opacity.clamp(0.0, 1.0) * 255.0).round() as u8
+}
+
+/// The outline of a box: an ellipse, a rectangle, or one with round corners.
+fn box_path(b: &LayoutBox) -> Option<tiny_skia::Path> {
+    if b.round {
+        PathBuilder::from_oval(Rect::from_xywh(b.x, b.y, b.w, b.h)?)
+    } else {
+        round_rect_path(b.x, b.y, b.w, b.h, b.radius)
     }
 }
 
@@ -510,9 +673,13 @@ fn fill_rect(pm: &mut Pixmap, x: f32, y: f32, w: f32, h: f32, c: [u8; 3], a: u8)
 }
 
 fn fill_round_rect(pm: &mut Pixmap, x: f32, y: f32, w: f32, h: f32, radius: f32, c: [u8; 3], a: u8) {
+    fill_path(pm, round_rect_path(x, y, w, h, radius), c, a);
+}
+
+fn round_rect_path(x: f32, y: f32, w: f32, h: f32, radius: f32) -> Option<tiny_skia::Path> {
     let r = radius.min(w / 2.0).min(h / 2.0);
     if r <= 0.0 {
-        return fill_rect(pm, x, y, w, h, c, a);
+        return Some(PathBuilder::from_rect(Rect::from_xywh(x, y, w, h)?));
     }
     let mut pb = PathBuilder::new();
     pb.move_to(x + r, y);
@@ -525,7 +692,16 @@ fn fill_round_rect(pm: &mut Pixmap, x: f32, y: f32, w: f32, h: f32, radius: f32,
     pb.line_to(x, y + r);
     pb.quad_to(x, y, x + r, y);
     pb.close();
-    fill_path(pm, pb.finish(), c, a);
+    pb.finish()
+}
+
+/// Draws the whole photo inside a box of w x h at the top left, centred.
+fn draw_contain(pm: &mut Pixmap, photo: &Pixmap, w: f32, h: f32) {
+    let scale = (w / photo.width() as f32).min(h / photo.height() as f32);
+    let (sw, sh) = (photo.width() as f32 * scale, photo.height() as f32 * scale);
+    let t = Transform::from_scale(scale, scale).post_translate((w - sw) / 2.0, (h - sh) / 2.0);
+    let paint = PixmapPaint { quality: tiny_skia::FilterQuality::Bicubic, ..Default::default() };
+    pm.draw_pixmap(0, 0, photo.as_ref(), &paint, t, None);
 }
 
 /// Draws the photo scaled to cover the box, cropping what sticks out.

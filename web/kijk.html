@@ -56,7 +56,9 @@
   function drawBoard() {
     if (!state) return;
     var boards = state.boards || state.slides || [];
-    renderSlide($("board"), state.overrideBoard || boards[state.index], state.black, { portrait: true });
+    var hand = state.black ? null : findLayout(state.boardLayout);
+    if (hand) renderLayout($("board"), hand, slideFields(state.overrideBoard || boards[state.index]), { portrait: true });
+    else renderSlide($("board"), state.overrideBoard || boards[state.index], state.black, { portrait: true });
   }
   listen(function (st) {
     state = st;

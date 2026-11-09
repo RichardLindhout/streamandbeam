@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CalendarDays, Ellipsis, ExternalLink, Eye, EyeOff, Globe, ListOrdered, LoaderCircle, Settings2, Square, Type, Wrench } from "lucide-react";
+import { CalendarDays, Ellipsis, LayoutTemplate, ExternalLink, Eye, EyeOff, Globe, ListOrdered, LoaderCircle, Settings2, Square, Type, Wrench } from "lucide-react";
 import type { Service, StreamStatus, View, YouTubeCheck } from "@/lib/api";
 import { at, go, hhmm, longDate, post, setStreamMode } from "@/lib/api";
 import { health } from "@/lib/problems";
@@ -17,7 +17,7 @@ import { Confirm } from "./Confirm";
 import { toast } from "sonner";
 import { ServiceTiles } from "./ServiceTiles";
 
-export type Screen = "dienst" | "voorbereiden";
+export type Screen = "dienst" | "voorbereiden" | "schermen";
 
 const LIGHT = {
   ok: { word: "Alles in orde", dot: "#2E7D32" },
@@ -265,6 +265,7 @@ function MainMenu({ state, svc, status, setScreen, onSettings }: {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={() => setScreen("voorbereiden")}><Wrench /> Dienst voorbereiden</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setScreen("schermen")}><LayoutTemplate /> Schermen en beelden</DropdownMenuItem>
           <DropdownMenuItem onSelect={() => setDlg("other")}><CalendarDays /> Andere dienst…</DropdownMenuItem>
           <DropdownMenuItem onSelect={onSettings}><Settings2 /> Instellingen</DropdownMenuItem>
           {live && (

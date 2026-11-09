@@ -72,6 +72,48 @@ export type View = {
   held?: boolean;
   /** While held: the new version of the board on screen. */
   freshBoard?: Slide | null;
+  /** The church's own screens, for the boards and the stream. */
+  layouts?: Layout[];
+  /** Own screen put on the boards by hand ("" = none). */
+  boardLayout?: string;
+  /** Own screen put into the stream by hand ("" = none). */
+  streamLayout?: string;
+};
+
+export type Target = "uitzending" | "bord";
+export type BoxKind = "tekst" | "afbeelding" | "vlak" | "camera" | "qr";
+
+/** One box of an own screen, in pixels of the picture (1920x1080 stream, 1080x1920 board). */
+export type LayoutBox = {
+  id: string;
+  kind: BoxKind;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  text: string;
+  font: "serif" | "sans";
+  size: number;
+  bold: boolean;
+  color: string;
+  align: "links" | "midden" | "rechts";
+  valign: "boven" | "midden" | "onder";
+  fill: string;
+  opacity: number;
+  radius: number;
+  round: boolean;
+  image: string;
+  fit: "vullen" | "passend";
+};
+
+export type Layout = {
+  id: string;
+  name: string;
+  target: Target;
+  /** The moment whose automatic picture it replaces; "" = only by hand. */
+  moment: string;
+  background: string;
+  boxes: LayoutBox[];
 };
 
 export type Mode = "stop" | "voorbeeld" | "opnemen" | "live";
@@ -253,4 +295,6 @@ export function shortDate(s: Service) {
 declare global {
   function renderSlide(el: HTMLElement, slide: Slide | null | undefined, black?: boolean, layout?: { portrait?: boolean; rotate?: number }): void;
   function listen(onState: (v: View) => void): void;
+  function renderLayout(el: HTMLElement, layout: Layout, fields: Record<string, string>, opts?: { portrait?: boolean; rotate?: number }): void;
+  function slideFields(slide: Slide | null | undefined): Record<string, string>;
 }

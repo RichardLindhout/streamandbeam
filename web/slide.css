@@ -199,3 +199,19 @@
 .thema .flow .t { font-weight: 700; font-size: calc(var(--row) * .6); }
 
 .canvas.portrait .announce { position: absolute; }
+
+/* The church's own screens: boxes at a place on the picture. */
+.canvas.own::before { display: none; }
+.canvas.own { text-shadow: none; }
+.canvas.own > .lbox { position: absolute; box-sizing: border-box; overflow: hidden; z-index: auto; }
+.canvas.own > .ltekst { display: flex; flex-direction: column; }
+.canvas.own .ltext { line-height: 1.3; white-space: pre-wrap; overflow-wrap: break-word; width: 100%; }
+.canvas.own .lbox > img { display: block; width: 100%; height: 100%; }
+.canvas.own > .lqr { background: #fff; border-radius: 14px; }
+.canvas.own > .lqr > img { object-fit: contain; }
+/* Only seen in the editor: where the camera comes in the stream. */
+.canvas.own > .lcamera {
+  display: flex; align-items: center; justify-content: center;
+  background: repeating-linear-gradient(45deg, #56606a, #56606a 28px, #4b545d 28px, #4b545d 56px);
+  color: rgba(255, 255, 255, .75); font: 600 54px "Source Sans 3", Arial, sans-serif; letter-spacing: 6px; text-transform: uppercase;
+}

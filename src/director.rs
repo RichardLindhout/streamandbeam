@@ -29,6 +29,8 @@ pub struct Director {
     autopilot: Mutex<Autopilot>,
     /// Where `Autopilot::started` is kept, so a restart does not go live again.
     autopilot_path: PathBuf,
+    /// The church's own pictures, for its own screens.
+    image_dir: PathBuf,
 }
 
 /// What the automatic start and stop know (times in Unix seconds).
@@ -112,6 +114,7 @@ impl Director {
             thumbs: Mutex::new(std::collections::HashMap::new()),
             autopilot: Mutex::new(Autopilot { started: saved.started, ..Default::default() }),
             autopilot_path,
+            image_dir: data_dir.join("afbeeldingen"),
         })
     }
 
@@ -121,32 +124,46 @@ impl Director {
         let mut v = view.clone();
         v.index = index;
         v.override_board = None;
-        let (scene, _, _) = scene_for(&v, Duration::from_secs(3600), &self.settings());
+        v.stream_layout.clear();
+        let (scene, _, _) = picture_for(&v, Duration::from_secs(3600), &self.settings());
         let zones = self.settings().overlay_zones;
         let key = format!("{scene:?}{zones:?}");
         if let Some(png) = self.thumbs.lock().unwrap().get(&key) {
             return Some(png.clone());
         }
-        let renderer = self.renderer.lock().unwrap().clone()?;
-        let rgba = {
-            let mut r = renderer.lock().unwrap();
-            r.set_zones(&zones);
-            r.render(&scene)
-        };
-        let overlay = image::RgbaImage::from_raw(crate::render::WIDTH, crate::render::HEIGHT, rgba)?;
-        let mut img = image::RgbaImage::from_fn(crate::render::WIDTH, crate::render::HEIGHT, |_, y| {
-            let g = 70 + (y * 40 / crate::render::HEIGHT) as u8;
-            image::Rgba([g, g + 4, g + 8, 255])
-        });
-        image::imageops::overlay(&mut img, &overlay, 0, 0);
-        let small = image::imageops::resize(&img, 384, 216, image::imageops::FilterType::Triangle);
-        let mut png = Vec::new();
-        small.write_to(&mut std::io::Cursor::new(&mut png), image::ImageFormat::Png).ok()?;
+        let png = self.draw_png(&scene, 384)?;
         let mut cache = self.thumbs.lock().unwrap();
         if cache.len() > 300 {
             cache.clear();
         }
         cache.insert(key, png.clone());
+        Some(png)
+    }
+
+    /// One of the church's own screens as the stream would show it, with example texts,
+    /// for the editor.
+    pub fn layout_preview(&self, layout: crate::layout::Layout, fields: Vec<(String, String)>) -> Option<Vec<u8>> {
+        self.draw_png(&Scene::Custom { layout, fields }, 960)
+    }
+
+    /// Draws a scene over a grey stand-in for the camera, as a PNG `width` pixels wide.
+    fn draw_png(&self, scene: &Scene, width: u32) -> Option<Vec<u8>> {
+        use crate::render::{HEIGHT, WIDTH};
+        let renderer = self.renderer.lock().unwrap().clone()?;
+        let rgba = {
+            let mut r = renderer.lock().unwrap();
+            r.set_zones(&self.settings().overlay_zones);
+            r.render(scene)
+        };
+        let overlay = image::RgbaImage::from_raw(WIDTH, HEIGHT, rgba)?;
+        let mut img = image::RgbaImage::from_fn(WIDTH, HEIGHT, |_, y| {
+            let g = 70 + (y * 40 / HEIGHT) as u8;
+            image::Rgba([g, g + 4, g + 8, 255])
+        });
+        image::imageops::overlay(&mut img, &overlay, 0, 0);
+        let small = image::imageops::resize(&img, width, width * HEIGHT / WIDTH, image::imageops::FilterType::Triangle);
+        let mut png = Vec::new();
+        small.write_to(&mut std::io::Cursor::new(&mut png), image::ImageFormat::Png).ok()?;
         Some(png)
     }
 
@@ -234,6 +251,7 @@ impl Director {
         tokio::spawn(self.clone().autopilot(show.clone()));
         let qr_link = self.settings().qr_link;
         let renderer = Arc::new(Mutex::new(Renderer::with_builtin_images(&qr_link)));
+        renderer.lock().unwrap().set_image_dir(self.image_dir.clone());
         *self.renderer.lock().unwrap() = Some(renderer.clone());
         let mut rx = show.subscribe();
         let mut last_scene = None;
@@ -261,19 +279,20 @@ impl Director {
                     ap.end_card_at = Local::now().timestamp() - since + PULPIT_HOLD.as_secs() as i64;
                 }
             }
-            let (scene, position, until) = scene_for(&view, on_screen.2.elapsed(), &settings);
+            let (scene, position, until) = picture_for(&view, on_screen.2.elapsed(), &settings);
             let drawn = (scene.clone(), settings.overlay_zones.clone());
             if last_scene.as_ref() != Some(&drawn) {
                 last_scene = Some(drawn);
                 let r = renderer.clone();
                 let zones = settings.overlay_zones.clone();
+                let camera = scene.camera_rect();
                 let render = move || {
                     let mut r = r.lock().unwrap();
                     r.set_zones(&zones);
                     r.render(&scene)
                 };
                 if let Ok(pixels) = tokio::task::spawn_blocking(render).await {
-                    self.engine.set_overlay(pixels);
+                    self.engine.set_overlay(pixels, camera);
                 }
             }
             let preset = match position {
@@ -424,6 +443,69 @@ enum Position {
     Doopvont,
 }
 
+/// What the stream shows now: the automatic scene, or the church's own screen for this
+/// moment (or the one put up by hand), filled with the same texts.
+fn picture_for(view: &View, shown: Duration, s: &Settings) -> (Scene, Position, Option<Duration>) {
+    use crate::layout::{STREAM, for_moment};
+    let (scene, position, until) = scene_for(view, shown, s);
+    let own_text = view.override_board.is_some() && view.override_stream;
+    let kind = view.slides.get(view.index).filter(|_| !own_text).map(|sl| sl.kind.as_str()).unwrap_or_default();
+    let by_hand = view.layouts.iter().find(|l| !l.id.is_empty() && l.id == view.stream_layout && l.target == STREAM);
+    match by_hand.or_else(|| for_moment(&view.layouts, STREAM, moment_of(&scene, kind))) {
+        Some(layout) => (Scene::Custom { layout: layout.clone(), fields: fields_of(&scene, view) }, position, until),
+        None => (scene, position, until),
+    }
+}
+
+/// The moment of the service an automatic scene belongs to; one of the church's own
+/// screens can take its place (`Layout::moment`).
+pub fn moment_of(scene: &Scene, kind: &str) -> &'static str {
+    let sung = matches!(kind, "psalm" | "slotzang" | "nazang" | "lied");
+    match scene {
+        Scene::Camera => "camera",
+        Scene::Bar { .. } if sung => "aankondiging",
+        Scene::Bar { .. } if kind == "gebed" => "gebed",
+        Scene::Bar { .. } => "balk",
+        Scene::Panel { .. } if sung => "psalm",
+        Scene::Panel { .. } => match kind {
+            "lezing" => "lezing",
+            "catechismus" => "catechismus",
+            "collecte" => "collecte",
+            "preek" => "thema",
+            _ => "tekst",
+        },
+        Scene::Frame { photo: Photo::Outside, .. } => "welkom",
+        Scene::Frame { .. } => "einde",
+        Scene::Custom { .. } => "",
+    }
+}
+
+/// The texts of an automatic scene, for the fields of the church's own screen: {kop},
+/// {onder}, {tekst} and {voet}, and of the service {datum}, {dienst}, {tijd}, {predikant}.
+fn fields_of(scene: &Scene, view: &View) -> Vec<(String, String)> {
+    let (kop, onder, tekst, voet) = match scene {
+        Scene::Bar { label, text } => (text.clone(), label.clone(), String::new(), String::new()),
+        Scene::Panel { label, title, paragraphs, footer, .. } => (title.clone(), label.clone(), paragraphs.join("\n"), footer.clone()),
+        Scene::Frame { left, right, .. } => (left.clone(), right.clone(), String::new(), String::new()),
+        Scene::Camera | Scene::Custom { .. } => Default::default(),
+    };
+    let svc = view.service();
+    let of = |f: fn(&Service) -> String| svc.map(f).unwrap_or_default();
+    [
+        ("kop", kop),
+        ("onder", onder),
+        ("tekst", tekst),
+        ("voet", voet),
+        ("datum", of(|s| long_date(&s.date))),
+        ("dienst", of(|s| s.label.clone())),
+        ("tijd", of(|s| s.time.clone())),
+        ("predikant", of(|s| s.predikant.clone())),
+    ]
+    .into_iter()
+    .map(|(k, v)| (k.to_string(), v))
+    .collect()
+}
+
 /// The stream scene and camera position for what the screens show now, and until when
 /// that holds (for timed intros), measured from when the slide appeared.
 fn scene_for(view: &View, shown: Duration, s: &Settings) -> (Scene, Position, Option<Duration>) {
@@ -571,6 +653,35 @@ mod tests {
         assert_eq!(next_sentence(&v).as_deref(), Some("Zondag om 9.30 uur is er weer een dienst."));
         let v = view(vec![svc("2026-10-18", "09:30", ""), svc("2026-10-18", "16:00", "")], "2026-10-18 09:30");
         assert_eq!(next_sentence(&v).as_deref(), Some("Vanmiddag is er een dienst om 16.00 uur."));
+    }
+
+    #[test]
+    fn own_screen_takes_the_place_of_the_automatic_one() {
+        use crate::layout::{Layout, LayoutBox};
+        let mut v = view(vec![svc("2026-10-18", "16:00", "")], "2026-10-18 16:00");
+        v.services[0].label = "Middagdienst".into();
+        v.slides = vec![crate::show::Slide { kind: "gebed".into(), header: "Gebed".into(), ..Default::default() }];
+        let s = Settings::default();
+        let (auto, _, _) = picture_for(&v, Duration::ZERO, &s);
+        assert_eq!(auto, Scene::Bar { label: String::new(), text: "Gebed".into() });
+        assert_eq!(auto.camera_rect(), [0, 0, 1920, 1080]);
+
+        let camera = LayoutBox { kind: "camera".into(), x: 960.0, y: 0.0, w: 960.0, h: 1080.0, ..Default::default() };
+        v.layouts = vec![Layout { id: "a".into(), moment: "gebed".into(), target: "uitzending".into(), boxes: vec![camera], ..Default::default() }];
+        let (own, position, _) = picture_for(&v, Duration::ZERO, &s);
+        let Scene::Custom { layout, fields } = &own else { panic!("{own:?}") };
+        assert_eq!(layout.id, "a");
+        assert_eq!(position, Position::Doopvont);
+        assert!(fields.contains(&("kop".to_string(), "Gebed".to_string())));
+        assert!(fields.contains(&("dienst".to_string(), "Middagdienst".to_string())));
+        // The camera covers its box: full height, centred on the right half.
+        assert_eq!(own.camera_rect(), [480, 0, 1920, 1080]);
+
+        // Another moment keeps the automatic picture, unless a screen is put up by hand.
+        v.slides[0].kind = "zegen".into();
+        assert_eq!(picture_for(&v, Duration::ZERO, &s).0, Scene::Camera);
+        v.stream_layout = "a".into();
+        assert!(matches!(picture_for(&v, Duration::ZERO, &s).0, Scene::Custom { .. }));
     }
 
     #[test]

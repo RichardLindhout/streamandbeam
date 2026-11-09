@@ -23,6 +23,23 @@ Open `http://<pc>:8080` op de PC, een laptop of een tablet.
 De TV's openen `http://<pc>:8080/beam` en volgen de bediening vanzelf. Geef de PC een vast
 IP-adres in de router.
 
+## Eigen schermen en beelden
+
+Onder **⋯ → Schermen en beelden** maak je zelf een bord voor de TV's of een beeld voor de
+uitzending, zoals de scènes in OBS: vakken (tekst, afbeelding, vlak, camera, QR-code) die je
+versleept en groter of kleiner trekt. In een tekstvak staan velden als `{kop}`, `{tekst}`,
+`{datum}` en `{dienst}`; die vult het programma tijdens de dienst.
+
+- **Vervangt het automatische beeld bij…**: kies een moment (psalmvers, schriftlezing,
+  startbeeld, liturgiebord, …) en het scherm komt daar vanzelf. Zonder moment zet je het met
+  **Nu tonen** op; bij Volgende gaat het weer weg.
+- **Camera**: in de uitzending vult de camera zijn vak, dus de predikant staat in het midden
+  van de uitsparing. Vakken die erna komen, liggen over de camera.
+- **Afbeeldingen** (JPG of PNG, bijvoorbeeld de sjablonen uit OBS) staan in
+  `data/afbeeldingen`, de schermen zelf in `data/schermen.json`.
+
+Zolang je niets maakt, blijft alles automatisch zoals hieronder beschreven.
+
 ## Teksten
 
 Psalmen (berijming 1773 zoals de gemeente zingt), de Statenvertaling en de Heidelbergse

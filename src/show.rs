@@ -2,6 +2,7 @@
 
 use crate::books::{BibleRef, psalm_ref_string};
 use crate::extract::ExtractedService;
+use crate::layout::Layout;
 use crate::texts::{Verse, read_json, write_json};
 use chrono::{Datelike, Local, NaiveDate, NaiveDateTime};
 use serde::{Deserialize, Serialize};
@@ -263,6 +264,12 @@ pub struct View {
     pub held: bool,
     /// While held: the new version of the board on screen, for the console to edit.
     pub fresh_board: Option<Slide>,
+    /// The screens the church made itself, for the boards and the stream (see `layout`).
+    pub layouts: Vec<Layout>,
+    /// A screen put on the boards by hand (its id; "" = none), until the operator moves on.
+    pub board_layout: String,
+    /// A screen put into the stream by hand, likewise.
+    pub stream_layout: String,
     /// After a change to the service, what the screens showed stays (slide index, stream
     /// slide, board slide) until the operator moves on or chooses to show the change.
     #[serde(skip)]
@@ -298,6 +305,7 @@ impl Show {
         let mut view = view;
         migrate(&mut view.services);
         view.board_background = background_version(path.parent().unwrap_or(Path::new(".")));
+        view.layouts = crate::layout::load(path.parent().unwrap_or(Path::new(".")));
         let (tx, _) = watch::channel(view.clone());
         let show = Arc::new(Show { liturgy_url, path, state: Mutex::new(view), tx });
         let mut st = show.state.lock().await;
@@ -512,6 +520,9 @@ impl Show {
             };
             st.index = target.clamp(0, st.slides.len().saturating_sub(1) as i64) as usize;
             st.black = false;
+            // Moving on takes a screen that was put up by hand off again.
+            st.board_layout.clear();
+            st.stream_layout.clear();
             // Moving on shows the service as it is now.
             if st.hold.take().is_some() {
                 self.changed(&mut st);
@@ -528,6 +539,50 @@ impl Show {
         st.override_board = slide.map(|s| Slide { kind: "vrij".into(), ..s });
         st.override_stream = stream && st.override_board.is_some();
         self.publish(&st);
+    }
+
+    /// Adds or changes one of the church's own screens; gives it back with its id.
+    pub async fn save_layout(&self, layout: Layout) -> anyhow::Result<Layout> {
+        let mut st = self.state.lock().await;
+        let mut all = st.layouts.clone();
+        let saved = crate::layout::upsert(&mut all, layout);
+        crate::layout::save(&self.data_dir(), &all)?;
+        st.layouts = all;
+        self.publish(&st);
+        Ok(saved)
+    }
+
+    pub async fn delete_layout(&self, id: &str) -> anyhow::Result<()> {
+        let mut st = self.state.lock().await;
+        let all: Vec<Layout> = st.layouts.iter().filter(|l| l.id != id).cloned().collect();
+        crate::layout::save(&self.data_dir(), &all)?;
+        st.layouts = all;
+        if st.board_layout == id {
+            st.board_layout.clear();
+        }
+        if st.stream_layout == id {
+            st.stream_layout.clear();
+        }
+        self.publish(&st);
+        Ok(())
+    }
+
+    /// Puts a screen up by hand (on the boards or in the stream, whichever it is for), or
+    /// takes it off again. False when the screen does not exist.
+    pub async fn show_layout(&self, id: &str, on: bool) -> bool {
+        let mut st = self.state.lock().await;
+        let Some(target) = st.layouts.iter().find(|l| l.id == id).map(|l| l.target.clone()) else { return false };
+        let slot = if target == crate::layout::BOARD { &mut st.board_layout } else { &mut st.stream_layout };
+        if on {
+            *slot = id.to_string();
+        } else if *slot == id {
+            slot.clear();
+        }
+        if on && target == crate::layout::BOARD {
+            st.black = false;
+        }
+        self.publish(&st);
+        true
     }
 
     fn changed(&self, st: &mut View) {

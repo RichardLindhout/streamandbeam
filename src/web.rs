@@ -85,6 +85,14 @@ pub fn router(
         .route("/preview.mjpg", get(preview_mjpeg))
         .route("/api/thumb", get(thumb))
         .route("/api/youtube-check", get(youtube_check))
+        .route("/api/scherm", post(save_layout))
+        .route("/api/scherm-weg", post(delete_layout))
+        .route("/api/scherm-tonen", post(show_layout))
+        .route("/api/scherm-voorbeeld", post(layout_preview))
+        .route("/api/afbeeldingen", get(images))
+        .route("/api/afbeelding", post(upload_image).layer(axum::extract::DefaultBodyLimit::max(12 * 1024 * 1024)))
+        .route("/afbeelding/{file}", get(image))
+        .route("/qr.png", get(qr_png))
         .route("/bord-achtergrond", get(board_background))
         .route(
             "/api/bord-achtergrond",
@@ -113,6 +121,8 @@ pub fn public_router(
         .route("/kijk.css", get(|| asset("kijk.css")))
         .route("/hout.jpg", get(|| asset("hout.jpg")))
         .route("/bord-achtergrond", get(board_background))
+        .route("/afbeelding/{file}", get(image))
+        .route("/qr.png", get(qr_png))
         .route("/fonts/{file}", get(font))
         .route("/events", get(events))
         .route("/api/state", get(state))
@@ -569,4 +579,160 @@ async fn reset_board_background(State(app): State<App>) -> StatusCode {
     remove_board_background(&app).await;
     app.show.board_background_changed().await;
     StatusCode::NO_CONTENT
+}
+
+/// Adds or changes one of the church's own screens (see `layout`).
+async fn save_layout(State(app): State<App>, Query(c): Query<Confirmed>, Json(layout): Json<crate::layout::Layout>) -> Response {
+    // Only a screen that is in use changes what people see.
+    let view = app.show.view();
+    let in_use = !layout.moment.is_empty() || [&view.board_layout, &view.stream_layout].contains(&&layout.id);
+    if in_use && let Some(r) = needs_confirmation(&app, c.yes(), "Dit scherm wijzigen?") {
+        return r;
+    }
+    match app.show.save_layout(layout).await {
+        Ok(saved) => Json(saved).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, format!("Opslaan mislukt: {e:#}")).into_response(),
+    }
+}
+
+async fn delete_layout(State(app): State<App>, Query(q): Query<SelectQuery>, Query(c): Query<Confirmed>) -> Response {
+    if let Some(r) = needs_confirmation(&app, c.yes(), "Dit scherm verwijderen?") {
+        return r;
+    }
+    match app.show.delete_layout(&q.id).await {
+        Ok(()) => StatusCode::NO_CONTENT.into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, format!("Verwijderen mislukt: {e:#}")).into_response(),
+    }
+}
+
+#[derive(Deserialize)]
+struct ShowLayout {
+    id: String,
+    /// true = put it up, false = take it off.
+    aan: bool,
+}
+
+/// Puts one of the church's own screens up by hand (boards or stream), or takes it off.
+async fn show_layout(State(app): State<App>, Query(c): Query<Confirmed>, Json(req): Json<ShowLayout>) -> Response {
+    if req.aan && let Some(r) = needs_confirmation(&app, c.yes(), "Dit scherm nu tonen?") {
+        return r;
+    }
+    if app.show.show_layout(&req.id, req.aan).await {
+        StatusCode::NO_CONTENT.into_response()
+    } else {
+        (StatusCode::NOT_FOUND, "Dit scherm bestaat niet (meer).").into_response()
+    }
+}
+
+#[derive(Deserialize)]
+struct LayoutPreview {
+    layout: crate::layout::Layout,
+    #[serde(default)]
+    fields: std::collections::BTreeMap<String, String>,
+}
+
+/// A screen for the stream as the program itself draws it, with example texts (PNG).
+async fn layout_preview(State(app): State<App>, Json(req): Json<LayoutPreview>) -> Response {
+    let director = app.director.clone();
+    let draw = move || director.layout_preview(req.layout, req.fields.into_iter().collect());
+    match tokio::task::spawn_blocking(draw).await.ok().flatten() {
+        Some(png) => ([(header::CONTENT_TYPE, "image/png"), (header::CACHE_CONTROL, "no-store")], png).into_response(),
+        None => StatusCode::SERVICE_UNAVAILABLE.into_response(),
+    }
+}
+
+/// Pictures built into the program, usable in the church's own screens.
+const BUILTIN_IMAGES: [(&str, &[u8]); 3] = [
+    ("buiten.jpg", include_bytes!("../assets/images/buiten.jpg")),
+    ("interieur.jpg", include_bytes!("../assets/images/interieur.jpg")),
+    ("logo-wit.png", include_bytes!("../assets/images/logo-wit.png")),
+];
+
+fn image_dir(app: &App) -> std::path::PathBuf {
+    app.show.data_dir().join("afbeeldingen")
+}
+
+/// The names of the pictures: the church's own first, then the built-in ones.
+async fn images(State(app): State<App>) -> impl IntoResponse {
+    let mut names: Vec<String> = Vec::new();
+    if let Ok(mut dir) = tokio::fs::read_dir(image_dir(&app)).await {
+        while let Ok(Some(entry)) = dir.next_entry().await {
+            let name = entry.file_name().to_string_lossy().to_string();
+            if crate::layout::safe_name(&name).as_deref() == Some(name.as_str()) {
+                names.push(name);
+            }
+        }
+    }
+    names.sort_by_key(|n| n.to_lowercase());
+    let builtin: Vec<String> = BUILTIN_IMAGES.iter().map(|(n, _)| n.to_string()).filter(|n| !names.contains(n)).collect();
+    names.extend(builtin);
+    Json(names)
+}
+
+async fn image(State(app): State<App>, Path(file): Path<String>) -> Response {
+    let Some(name) = crate::layout::safe_name(&file) else { return StatusCode::NOT_FOUND.into_response() };
+    let mime = mime_guess::from_path(&name).first_or_octet_stream();
+    let data = match tokio::fs::read(image_dir(&app).join(&name)).await {
+        Ok(data) => data,
+        Err(_) => match BUILTIN_IMAGES.iter().find(|(n, _)| *n == name) {
+            Some((_, data)) => data.to_vec(),
+            None => return StatusCode::NOT_FOUND.into_response(),
+        },
+    };
+    ([(header::CONTENT_TYPE, mime.as_ref()), (header::CACHE_CONTROL, "no-cache")], data).into_response()
+}
+
+#[derive(Deserialize)]
+struct ImageName {
+    #[serde(default)]
+    naam: String,
+}
+
+/// A new picture for the church's own screens (the raw image as the request body). The
+/// stream draws JPG and PNG.
+async fn upload_image(State(app): State<App>, Query(q): Query<ImageName>, headers: axum::http::HeaderMap, body: axum::body::Bytes) -> Response {
+    let mime = headers.get(header::CONTENT_TYPE).and_then(|v| v.to_str().ok()).unwrap_or_default();
+    let ext = if mime.starts_with("image/png") {
+        "png"
+    } else if mime.starts_with("image/jpeg") {
+        "jpg"
+    } else {
+        return (StatusCode::UNSUPPORTED_MEDIA_TYPE, "Kies een JPG- of PNG-afbeelding.").into_response();
+    };
+    if body.is_empty() || image::load_from_memory(&body).is_err() {
+        return (StatusCode::BAD_REQUEST, "Dit bestand is geen leesbare afbeelding.").into_response();
+    }
+    let stem = q.naam.rsplit_once('.').map(|(s, _)| s.to_string()).unwrap_or(q.naam.clone());
+    let Some(name) = crate::layout::safe_name(&format!("{}.{ext}", if stem.trim().is_empty() { "afbeelding" } else { stem.trim() })) else {
+        return (StatusCode::BAD_REQUEST, "Geef de afbeelding een naam.").into_response();
+    };
+    let dir = image_dir(&app);
+    if let Err(e) = tokio::fs::create_dir_all(&dir).await {
+        return (StatusCode::INTERNAL_SERVER_ERROR, format!("Opslaan mislukt: {e}")).into_response();
+    }
+    if let Err(e) = tokio::fs::write(dir.join(&name), &body).await {
+        return (StatusCode::INTERNAL_SERVER_ERROR, format!("Opslaan mislukt: {e}")).into_response();
+    }
+    Json(serde_json::json!({ "name": name })).into_response()
+}
+
+/// The QR code of the settings as a picture, for the boards and the editor.
+async fn qr_png(State(app): State<App>) -> Response {
+    let link = app.director.settings().qr_link;
+    let Ok(code) = qrcode::QrCode::new(if link.is_empty() { "https://www.hhgtholen.nl" } else { link.as_str() }) else {
+        return StatusCode::NOT_FOUND.into_response();
+    };
+    let (n, quiet, cell) = (code.width() as u32, 2u32, 10u32);
+    let dark = code.to_colors();
+    let side = (n + 2 * quiet) * cell;
+    let img = image::GrayImage::from_fn(side, side, |x, y| {
+        let (cx, cy) = ((x / cell) as i64 - quiet as i64, (y / cell) as i64 - quiet as i64);
+        let on = cx >= 0 && cy >= 0 && cx < n as i64 && cy < n as i64 && dark[(cy * n as i64 + cx) as usize] == qrcode::Color::Dark;
+        image::Luma([if on { 16 } else { 255 }])
+    });
+    let mut png = Vec::new();
+    if image::DynamicImage::ImageLuma8(img).write_to(&mut std::io::Cursor::new(&mut png), image::ImageFormat::Png).is_err() {
+        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+    }
+    ([(header::CONTENT_TYPE, "image/png"), (header::CACHE_CONTROL, "no-cache")], png).into_response()
 }

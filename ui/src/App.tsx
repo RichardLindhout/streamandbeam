@@ -10,10 +10,11 @@ import { LiveConfirm } from "@/components/LiveConfirm";
 import { SettingsDialog } from "@/components/Dialogs";
 import { Dienst } from "@/views/Dienst";
 import { Voorbereiden } from "@/views/Voorbereiden";
+import { Schermen } from "@/views/Schermen";
 
 function initialScreen(): Screen {
   const q = new URLSearchParams(location.search).get("scherm");
-  return q === "voorbereiden" ? "voorbereiden" : "dienst";
+  return q === "voorbereiden" || q === "schermen" ? q : "dienst";
 }
 
 /** True while a dialog, sheet or menu is open, or the cursor is in a text field. */
@@ -70,6 +71,8 @@ export default function App() {
       {alarm ? <AlarmBand alarm={alarm} onAct={act} /> : screen === "dienst" ? <Notice state={state} svc={svc} live={status.mode === "live"} /> : null}
       {screen === "dienst" ? (
         <Dienst state={state} svc={svc} status={status} lis={lis} />
+      ) : screen === "schermen" ? (
+        <Schermen state={state} status={status} onBack={() => setScreen("dienst")} />
       ) : (
         <Voorbereiden state={state} status={status} onBack={() => setScreen("dienst")} />
       )}

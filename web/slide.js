@@ -58,6 +58,10 @@ function slideHTML(s) {
 // TV that stands upright but still sends a landscape picture }.
 function renderSlide(canvas, slide, black, layout) {
   layout = layout || {};
+  // One of the church's own screens takes the place of the automatic board.
+  var own = !black && slide ? layoutForMoment("bord", slide.kind) : null;
+  if (own) return renderLayout(canvas, own, slideFields(slide), layout);
+  canvas.style.background = "";
   canvas.className = "canvas " + (layout.portrait ? "portrait " : "") + (slide ? slide.kind : "") + (black ? " black" : "");
   canvas.innerHTML = slideHTML(slide);
   scaleCanvas(canvas, layout);
@@ -112,6 +116,7 @@ function fitText(canvas) {
 // With ?static in the URL it loads the state once (for screenshots).
 function listen(onState) {
   var got = function (st) {
+    window.sbState = st;
     boardBackground(st.boardBackground);
     onState(st);
   };
@@ -139,4 +144,114 @@ function boardBackground(version) {
   var root = document.documentElement.style;
   root.setProperty("--board-bg", 'url("/bord-achtergrond?v=' + version + '")');
   root.setProperty("--board-shade", version ? ".45" : "0");
+}
+
+// ---- The church's own screens: boxes at a place on the picture (see layout.rs). ----
+
+function findLayout(id) {
+  var all = (window.sbState && window.sbState.layouts) || [];
+  for (var i = 0; i < all.length; i++) if (id && all[i].id === id) return all[i];
+  return null;
+}
+
+function layoutForMoment(target, moment) {
+  var all = (window.sbState && window.sbState.layouts) || [];
+  for (var i = 0; i < all.length; i++) if (moment && all[i].target === target && all[i].moment === moment) return all[i];
+  return null;
+}
+
+var LONG_DAYS = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
+var LONG_MONTHS = ["januari", "februari", "maart", "april", "mei", "juni", "juli", "augustus", "september", "oktober", "november", "december"];
+
+// The texts of a board slide for the fields of an own screen: {kop} {onder} {tekst} {voet},
+// and of the service {datum} {dienst} {tijd} {predikant}.
+function slideFields(s) {
+  s = s || {};
+  var st = window.sbState || {}, svc = null, i;
+  for (i = 0; i < (st.services || []).length; i++) if (st.services[i].id === st.current) svc = st.services[i];
+  var lines = (s.list || []).concat(s.lines || []);
+  if (s.kind === "thema") lines = (s.points || []).map(function (p, n) { return (n + 1) + ". " + p; });
+  var f = {
+    kop: s.kind === "thema" ? s.theme : s.header,
+    onder: s.sub,
+    tekst: lines.join("\n"),
+    voet: s.footer,
+    datum: "", dienst: "", tijd: "", predikant: "",
+  };
+  if (svc) {
+    var d = new Date(svc.date + "T12:00:00");
+    f.datum = isNaN(+d) ? svc.date : LONG_DAYS[d.getDay()] + " " + d.getDate() + " " + LONG_MONTHS[d.getMonth()] + " " + d.getFullYear();
+    f.dienst = svc.label;
+    f.tijd = svc.time;
+    f.predikant = svc.predikant;
+  }
+  return f;
+}
+
+function fillFields(text, f) {
+  return String(text == null ? "" : text).replace(/\{(\w+)\}/g, function (m, k) { return f && f[k] != null ? f[k] : f && k in f ? "" : m; });
+}
+
+function rgba(hex, opacity) {
+  var h = String(hex || "").replace("#", "");
+  if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  if (!/^[0-9a-fA-F]{6}$/.test(h)) return "transparent";
+  var n = parseInt(h, 16), a = opacity == null ? 1 : Math.max(0, Math.min(1, opacity));
+  return "rgba(" + (n >> 16) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")";
+}
+
+function boxHTML(b, f) {
+  var st = "left:" + b.x + "px;top:" + b.y + "px;width:" + b.w + "px;height:" + b.h + "px;";
+  st += b.round ? "border-radius:50%;" : b.radius ? "border-radius:" + b.radius + "px;" : "";
+  var open = '<div class="lbox l' + esc(b.kind) + '" data-box="' + esc(b.id) + '" style="' + st;
+  switch (b.kind) {
+    case "vlak":
+      return open + "background:" + rgba(b.fill || "#000000", b.opacity) + '"></div>';
+    case "afbeelding":
+      return open + '">' + (b.image ? '<img src="/afbeelding/' + encodeURIComponent(b.image) + '" style="object-fit:' + (b.fit === "passend" ? "contain" : "cover") + '">' : "") + "</div>";
+    case "qr":
+      return open + '"><img src="/qr.png"></div>';
+    // The camera only exists in the stream; the editor shows where it comes.
+    case "camera":
+      return open + '"><span>camera</span></div>';
+    default: {
+      var pad = b.fill ? Math.min(24, b.w / 8, b.h / 8) : 0;
+      var just = b.valign === "midden" ? "center" : b.valign === "onder" ? "flex-end" : "flex-start";
+      var align = b.align === "midden" ? "center" : b.align === "rechts" ? "right" : "left";
+      return open + "padding:" + pad + "px;justify-content:" + just + ";text-align:" + align + ";color:" + esc(b.color || "#ffffff") + ";" +
+        (b.fill ? "background:" + rgba(b.fill, b.opacity) + ";" : "") +
+        "font-family:" + (b.font === "serif" ? "'Source Serif 4',Georgia,serif" : "'Source Sans 3',Arial,sans-serif") + ";font-weight:" + (b.bold ? 600 : 400) + '">' +
+        '<div class="ltext" data-size="' + (+b.size || 60) + '">' + typo(fillFields(b.text, f)) + "</div></div>";
+    }
+  }
+}
+
+// Draws an own screen into a .canvas element, scaled to its parent like renderSlide.
+// layout: { portrait, rotate } as there; fields: the texts for {kop} and the others.
+function renderLayout(canvas, own, fields, layout) {
+  layout = layout || {};
+  var portrait = own.target === "bord";
+  canvas.className = "canvas own " + (portrait ? "portrait" : "");
+  canvas.style.background = own.background || (portrait ? "" : "#000");
+  canvas.innerHTML = (own.boxes || []).map(function (b) { return boxHTML(b, fields); }).join("");
+  scaleCanvas(canvas, { portrait: portrait, rotate: layout.rotate });
+  fitBoxes(canvas);
+  // Measured again once the letters are loaded: before that the text is set in another letter.
+  if (document.fonts && document.fonts.status !== "loaded" && document.fonts.ready) {
+    document.fonts.ready.then(function () { fitBoxes(canvas); });
+  }
+}
+
+// Text in a box gets smaller until it fits (never larger than the size set for the box).
+function fitBoxes(canvas) {
+  var texts = canvas.querySelectorAll(".ltext");
+  for (var i = 0; i < texts.length; i++) {
+    var t = texts[i], box = t.parentElement, size = parseFloat(t.getAttribute("data-size")) || 60;
+    var cs = getComputedStyle(box), room = box.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    t.style.fontSize = size + "px";
+    while (size > 14 && (t.scrollHeight > room + 1 || t.scrollWidth > t.clientWidth + 1)) {
+      size = Math.max(14, Math.floor(size * 0.95));
+      t.style.fontSize = size + "px";
+    }
+  }
 }
