@@ -95,6 +95,10 @@
   .tabular-nums, time { font-variant-numeric: tabular-nums; }
   button { cursor: pointer; }
   button:disabled { cursor: default; }
+  /* On a phone two quick taps on Volgende must not zoom the page. */
+  @media (width < 48rem) {
+    button, a, label, [role="button"], [role="tab"], [role="radio"], [role="menuitem"] { touch-action: manipulation; }
+  }
 }
 
 /* slide.css (shared with the TVs) reads --accent; keep its own colours inside a slide. */

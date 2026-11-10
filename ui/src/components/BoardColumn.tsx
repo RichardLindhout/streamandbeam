@@ -151,22 +151,30 @@ function BoardEditor({ kind, svc, slide, onScreen, onClose }: { kind: Kind | nul
 }
 
 /** The church boards beside the order: the one on the TVs has a gold edge. Tap another to put it up;
- *  in edit mode tap one to give it your own text. */
-export function BoardColumn({ state, svc, edit }: { state: View | null; svc?: Service; edit: boolean }) {
+ *  in edit mode tap one to give it your own text. On a phone they fill the screen's width and scroll. */
+export function BoardColumn({ state, svc, edit, phone }: { state: View | null; svc?: Service; edit: boolean; phone?: boolean }) {
   const box = useRef<HTMLDivElement>(null);
   const [h, setH] = useState(500);
+  const [width, setWidth] = useState(360);
   const [ask, setAsk] = useState<{ index: number; label: string; to: string } | null>(null);
   const [editing, setEditing] = useState<Kind | null>(null);
   useLayoutEffect(() => {
     const el = box.current;
     if (!el) return;
-    const ro = new ResizeObserver(() => setH(el.clientHeight));
+    const measure = () => {
+      setH(el.clientHeight);
+      setWidth(el.clientWidth);
+    };
+    const ro = new ResizeObserver(measure);
     ro.observe(el);
-    setH(el.clientHeight);
+    measure();
     return () => ro.disconnect();
   }, []);
   // Two rows of two upright boards fill the height; the width follows.
-  const w = Math.round(Math.max(70, Math.min(240, ((h - 2 * PAD - GAP - 2 * NAME - 16) / 2) * (9 / 16))));
+  // On a phone two boards fill the width instead.
+  const w = phone
+    ? Math.floor(Math.max(70, Math.min(240, (width - 3 * PAD - 16) / 2)))
+    : Math.round(Math.max(70, Math.min(240, ((h - 2 * PAD - GAP - 2 * NAME - 16) / 2) * (9 / 16))));
 
   const boards = state?.boards?.length ? state.boards : state?.slides || [];
   const index = state?.index ?? 0;
@@ -178,8 +186,11 @@ export function BoardColumn({ state, svc, edit }: { state: View | null; svc?: Se
   return (
     <aside
       ref={box}
-      className="flex h-full shrink-0 flex-col items-center border-l-2 border-walnut/15 bg-[#efe5cc]/60"
-      style={{ width: 2 * w + 3 * PAD + 8, padding: PAD, paddingTop: PAD + 6 }}
+      className={cn(
+        "flex shrink-0 flex-col items-center bg-[#efe5cc]/60",
+        phone ? "scroll-thin min-h-0 w-full flex-1 overflow-y-auto border-t-2 border-walnut/15" : "h-full border-l-2 border-walnut/15",
+      )}
+      style={phone ? { padding: PAD, paddingTop: PAD + 10 } : { width: 2 * w + 3 * PAD + 8, padding: PAD, paddingTop: PAD + 6 }}
     >
       <div className="grid grid-cols-2 content-start" style={{ columnGap: PAD, rowGap: GAP }}>
         {KINDS.map(({ kind, label, key }) => {

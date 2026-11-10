@@ -10,7 +10,7 @@ function SelectTrigger({ className, children, ...props }: React.ComponentProps<t
   return (
     <P.Trigger
       className={cn(
-        "flex h-14 w-full items-center justify-between gap-2 rounded-xl border-2 border-input bg-card px-4 text-[22px] whitespace-nowrap shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/30 data-[placeholder]:text-muted-foreground [&>span]:truncate",
+        "flex h-14 w-full items-center justify-between gap-2 rounded-xl border-2 border-input bg-card px-4 text-[22px] whitespace-nowrap shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/30 data-[placeholder]:text-muted-foreground [&>span]:truncate max-md:[&>span]:w-0 max-md:[&>span]:flex-1 max-md:[&>span]:text-left",
         className,
       )}
       {...props}

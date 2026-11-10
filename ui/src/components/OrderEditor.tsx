@@ -21,7 +21,7 @@ function MenuItem({ icon, onClick, children, danger, disabled }: { icon: React.R
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "flex min-h-[72px] w-full items-center gap-4 rounded-xl px-4 text-left text-[26px] transition hover:bg-accent disabled:text-[#a8987f] [&_svg]:size-7 [&_svg]:text-walnut disabled:[&_svg]:text-[#c4b59a]",
+        "flex min-h-[72px] w-full items-center gap-4 rounded-xl px-4 text-left text-[26px] transition hover:bg-accent disabled:text-[#a8987f] [&_svg]:size-7 [&_svg]:text-walnut disabled:[&_svg]:text-[#c4b59a] max-md:min-h-14 max-md:gap-3 max-md:text-[22px] max-md:[&_svg]:size-6",
         danger && "text-live [&_svg]:text-live",
       )}
     >
@@ -38,10 +38,10 @@ function SlideEditor({ initial, label, onSave, onReset, onClose }: {
   const [slides, setSlides] = useState(initial.length ? initial : [{ header: label, sub: "", text: "", footer: "" }]);
   const set = (k: number, patch: Partial<CustomSlide>) => setSlides(slides.map((c, j) => (j === k ? { ...c, ...patch } : c)));
   return (
-    <div className="mx-2 mb-3 grid gap-4 rounded-2xl border-2 border-primary bg-[#fdf8ec] p-5">
+    <div className="mx-2 mb-3 grid gap-4 rounded-2xl border-2 border-primary bg-[#fdf8ec] p-5 max-md:mx-0 max-md:gap-3 max-md:p-2">
       {slides.map((c, k) => (
-        <div key={k} className="grid gap-3 rounded-xl border-2 bg-card p-4">
-          <div className="flex items-center gap-3">
+        <div key={k} className="grid gap-3 rounded-xl border-2 bg-card p-4 max-md:gap-2 max-md:p-2">
+          <div className="flex items-center gap-3 max-md:gap-2">
             <span className="text-[18px] font-bold whitespace-nowrap text-muted-foreground">Dia {k + 1}</span>
             <Input value={c.header} placeholder="Kop" onChange={(e) => set(k, { header: e.target.value })} />
             {slides.length > 1 && (
@@ -51,7 +51,7 @@ function SlideEditor({ initial, label, onSave, onReset, onClose }: {
           <Textarea rows={6} value={c.text} onChange={(e) => set(k, { text: e.target.value })} />
         </div>
       ))}
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-3 max-md:grid max-md:grid-cols-2 max-md:gap-2">
         <Button onClick={() => onSave(slides)}>Opslaan</Button>
         <Button variant="outline" onClick={() => setSlides([...slides, { header: label, sub: "", text: "", footer: "" }])}><Plus /> Dia</Button>
         <Button variant="outline" onClick={onReset}><RotateCcw /> Origineel</Button>
@@ -145,45 +145,45 @@ export function OrderEditor({ svc, state }: { svc: Service; state: View | null }
     <Card className="overflow-hidden">
       <CardHeader>Volgorde</CardHeader>
 
-      <div className="grid gap-3 border-b-2 bg-[#f7f0de] p-5">
-        <div className="flex gap-3">
+      <div className="grid gap-3 border-b-2 bg-[#f7f0de] p-5 max-md:gap-2 max-md:p-3">
+        <div className="flex gap-3 max-md:gap-2">
           <Input
             value={typed}
             onChange={(e) => setTyped(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && add()}
             placeholder="Typ wat er komt"
-            className="h-[72px] text-[24px]"
+            className="h-[72px] text-[24px] max-md:h-14 max-md:text-[20px]"
           />
-          <Button onClick={add} disabled={busy?.spin || !typed.trim()} className="shrink-0">
-            {busy?.spin ? <LoaderCircle className="animate-spin" /> : <Plus />} Voeg toe
+          <Button onClick={add} disabled={busy?.spin || !typed.trim()} aria-label="Voeg toe" className="shrink-0 max-md:w-14 max-md:px-0">
+            {busy?.spin ? <LoaderCircle className="animate-spin" /> : <Plus />} <span className="max-md:hidden">Voeg toe</span>
           </Button>
         </div>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[22px]">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[22px] max-md:text-[19px]">
           <span>Komt na: <b>{comesAfter || "het begin"}</b></span>
           {busy && <span className={cn("ml-auto font-semibold", busy.bad ? "text-live" : "text-ok")}>{busy.text}</span>}
         </div>
         {(svc.problems || []).length > 0 && (
-          <div className="flex gap-3 rounded-xl border-2 border-warn/50 bg-warn/10 p-3 text-[20px] text-[#7a4a00]">
+          <div className="flex gap-3 rounded-xl border-2 border-warn/50 bg-warn/10 p-3 text-[20px] text-[#7a4a00] max-md:gap-2 max-md:p-2 max-md:text-[18px]">
             <CircleAlert className="mt-0.5 size-6 shrink-0" /> Nakijken: {svc.problems.join("; ")}
           </div>
         )}
       </div>
 
-      <ol className="p-2">
+      <ol className="p-2 max-md:p-1">
         {svc.items.map((it, i) => {
           const locked = LOCKED.has(it.kind);
           const row = (
-            <span className={cn("flex min-h-[72px] w-full items-center gap-4 rounded-xl px-4 py-2 text-left", !locked && (menu === i ? "bg-accent" : "hover:bg-accent"))}>
-              <span className={cn("grid size-11 shrink-0 place-items-center rounded-lg", i === cur ? "bg-primary text-primary-foreground" : "bg-secondary text-walnut")}>
+            <span className={cn("flex min-h-[72px] w-full items-center gap-4 rounded-xl px-4 py-2 text-left max-md:min-h-14 max-md:gap-3 max-md:px-2", !locked && (menu === i ? "bg-accent" : "hover:bg-accent"))}>
+              <span className={cn("grid size-11 shrink-0 place-items-center rounded-lg max-md:size-10", i === cur ? "bg-primary text-primary-foreground" : "bg-secondary text-walnut")}>
                 <KindIcon kind={it.kind} className="size-6" />
               </span>
               <span className="min-w-0 flex-1 leading-tight">
-                <span className="flex items-baseline gap-3">
-                  <span className="truncate text-[26px] font-semibold">{itemLabel(it)}</span>
-                  {itemDetail(it) && <span className="truncate text-[24px] text-muted-foreground">{itemDetail(it)}</span>}
+                <span className="flex items-baseline gap-3 max-md:flex-wrap max-md:gap-x-2 max-md:gap-y-0">
+                  <span className="truncate text-[26px] font-semibold max-md:text-[21px]">{itemLabel(it)}</span>
+                  {itemDetail(it) && <span className="truncate text-[24px] text-muted-foreground max-md:order-last max-md:basis-full max-md:text-[18px]">{itemDetail(it)}</span>}
                   {it.custom?.length ? <span className="hymnal shrink-0 text-[18px] text-[#7a5a1c]">aangepast</span> : null}
                 </span>
-                {it.problem && <span className="mt-1 flex items-center gap-2 text-[20px] text-[#9a5a00]"><CircleAlert className="size-5" /> {it.problem}</span>}
+                {it.problem && <span className="mt-1 flex items-center gap-2 text-[20px] text-[#9a5a00] max-md:text-[18px]"><CircleAlert className="size-5" /> {it.problem}</span>}
               </span>
               {locked && <Lock className="size-5 shrink-0 text-muted-foreground" />}
             </span>
@@ -197,7 +197,7 @@ export function OrderEditor({ svc, state }: { svc: Service; state: View | null }
                   <PopoverTrigger asChild>
                     <button type="button" className="block w-full">{row}</button>
                   </PopoverTrigger>
-                  <PopoverContent align="end" side="bottom" className="w-80 p-2">
+                  <PopoverContent align="end" side="bottom" className="w-80 p-2 max-md:w-72">
                     <MenuItem icon={<Pencil />} onClick={() => openEdit(i)}>Tekst aanpassen</MenuItem>
                     <MenuItem icon={<ArrowUp />} disabled={i === 0 || LOCKED.has(svc.items[i - 1]?.kind)} onClick={() => move(i, -1)}>Omhoog</MenuItem>
                     <MenuItem icon={<ArrowDown />} disabled={i === svc.items.length - 1 || LOCKED.has(svc.items[i + 1]?.kind)} onClick={() => move(i, 1)}>Omlaag</MenuItem>
@@ -207,7 +207,7 @@ export function OrderEditor({ svc, state }: { svc: Service; state: View | null }
                 </Popover>
               )}
               {(it.kind === "collecte" || it.kind === "mededeling") && (
-                <div className="px-4 pb-3 pl-[4.75rem]">
+                <div className="px-4 pb-3 pl-[4.75rem] max-md:px-2 max-md:pl-2">
                   <BlurField
                     multiline
                     rows={Math.min(6, Math.max(2, (it.text || "").split("\n").length))}

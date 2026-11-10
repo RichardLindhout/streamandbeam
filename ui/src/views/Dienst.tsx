@@ -7,7 +7,9 @@ import { cn } from "@/lib/utils";
 import { Confirm } from "@/components/Confirm";
 import { BoardColumn } from "@/components/BoardColumn";
 import { OrderEdit } from "@/components/OrderEdit";
-import { ListChecks, Pencil } from "lucide-react";
+import { GotoSheet } from "@/components/Header";
+import { usePhone } from "@/lib/phone";
+import { Eye, EyeOff, LayoutGrid, ListChecks, ListOrdered, Pencil } from "lucide-react";
 
 type Props = { state: View | null; svc?: Service; status: StreamStatus; lis: ListenStatus | null };
 
@@ -118,19 +120,19 @@ function Order({ svc, p, sub, hint, board }: { svc?: Service; p: ReturnType<type
   const first = (i: number) => p.slides.findIndex((s) => s.item === i);
   const sermon = p.slide?.kind === "preek" ? p.slide : undefined;
   return (
-    <div ref={box} className="relative min-h-0 flex-1 cursor-default overflow-y-auto overscroll-contain px-8 py-4 select-none [scrollbar-width:none] max-sm:px-3 [mask-image:linear-gradient(to_bottom,transparent,#000_28px,#000_calc(100%-36px),transparent)] [&::-webkit-scrollbar]:hidden">
-      <div className="grid gap-1 pb-[60vh]">
+    <div ref={box} className="relative min-h-0 flex-1 cursor-default overflow-y-auto overscroll-contain px-8 py-4 select-none [scrollbar-width:none] max-md:px-3 max-md:py-2 [mask-image:linear-gradient(to_bottom,transparent,#000_28px,#000_calc(100%-36px),transparent)] [&::-webkit-scrollbar]:hidden">
+      <div className="grid gap-1 pb-[60vh] max-md:grid-cols-[minmax(0,1fr)]">
         {svc.items.map((it: Item, i: number) => {
           const label = itemLabel(it), detail = itemDetail(it);
           const ring = hint === i && i !== p.cur && "animate-hint";
           if (i === p.cur)
             return (
-              <div key={it.id || i} data-now className="my-2 rounded-2xl border-2 border-[#e2cf9f] border-l-[6px] border-l-primary bg-[#fdf8ec] px-6 py-4 shadow-[0_10px_30px_-18px_rgb(90_62_43/0.6)] max-sm:px-3">
-                <div className="flex items-baseline gap-6">
-                  <span className="shrink-0 text-[40px] leading-tight font-bold tracking-wide uppercase">▶&nbsp;&nbsp;{label}</span>
-                  {detail && <span className="min-w-0 truncate text-[32px] leading-tight">{detail}</span>}
+              <div key={it.id || i} data-now className="my-2 rounded-2xl border-2 border-[#e2cf9f] border-l-[6px] border-l-primary bg-[#fdf8ec] px-6 py-4 shadow-[0_10px_30px_-18px_rgb(90_62_43/0.6)] max-md:my-1 max-md:px-3 max-md:py-2.5">
+                <div className="flex items-baseline gap-6 max-md:flex-wrap max-md:gap-x-3 max-md:gap-y-0">
+                  <span className="shrink-0 text-[40px] leading-tight font-bold tracking-wide uppercase max-md:text-[26px]">▶&nbsp;&nbsp;{label}</span>
+                  {detail && <span className="min-w-0 truncate text-[32px] leading-tight max-md:pl-[34px] max-md:text-[22px]">{detail}</span>}
                 </div>
-                {sub && <div className="mt-1 pl-[52px] text-[28px] leading-tight tabular-nums text-[#5a4632]">{sub}</div>}
+                {sub && <div className="mt-1 pl-[52px] text-[28px] leading-tight tabular-nums text-[#5a4632] max-md:pl-[34px] max-md:text-[20px]">{sub}</div>}
                 {sermon && <Points slide={sermon} board={board} />}
               </div>
             );
@@ -147,18 +149,18 @@ function Order({ svc, p, sub, hint, board }: { svc?: Service; p: ReturnType<type
             </button>
           );
           if (p.cur >= 0 && i < p.cur)
-            return row("gap-5 py-1 pl-2 text-[24px] text-done", <>
-              <span className="w-7 shrink-0">✓</span>
+            return row("gap-5 py-1 pl-2 text-[24px] text-done max-md:gap-2 max-md:pl-0 max-md:text-[19px]", <>
+              <span className="w-7 shrink-0 max-md:w-5">✓</span>
               <span className="shrink-0">{label}</span>
               {detail && <span className="min-w-0 truncate">{detail}</span>}
             </>);
           if (i === p.nxt)
-            return row("gap-5 rounded-l-none border-l-[3px] border-primary py-1.5 pl-5 text-[30px]", <>
-              <span className="hymnal shrink-0 text-[20px] text-[#7a5a1c]">hierna</span>
+            return row("gap-5 rounded-l-none border-l-[3px] border-primary py-1.5 pl-5 text-[30px] max-md:flex-wrap max-md:gap-x-2.5 max-md:gap-y-0 max-md:pl-3 max-md:text-[22px]", <>
+              <span className="hymnal shrink-0 text-[20px] text-[#7a5a1c] max-md:text-[18px]">hierna</span>
               <span className="shrink-0 font-semibold">{label}</span>
               {detail && <span className="min-w-0 truncate">{detail}</span>}
             </>);
-          return row("gap-5 py-1 pl-[2.6rem] text-[26px]", <>
+          return row("gap-5 py-1 pl-[2.6rem] text-[26px] max-md:gap-2.5 max-md:pl-7 max-md:text-[20px]", <>
             <span className="shrink-0">{label}</span>
             {detail && <span className="min-w-0 truncate text-[#4a3826]">{detail}</span>}
           </>);
@@ -182,8 +184,10 @@ function Order({ svc, p, sub, hint, board }: { svc?: Service; p: ReturnType<type
 const big = "flex h-[112px] w-[880px] max-w-full min-w-0 flex-col items-center justify-center rounded-2xl px-8 transition active:scale-[0.99]";
 
 /** Terug, and the one big button that moves the service on; at the end: wait or stop. */
-function Bottom({ svc, p, status, now }: { svc?: Service; p: ReturnType<typeof position>; status: StreamStatus; now: number }) {
+function Bottom({ state, svc, p, status, now }: { state: View | null; svc?: Service; p: ReturnType<typeof position>; status: StreamStatus; now: number }) {
+  const phone = usePhone();
   const [ask, setAsk] = useState<"" | "early" | "stop">("");
+  const [jump, setJump] = useState(false);
   const start = serviceStart(svc);
   const welkom = p.kind === "welkom";
   const einde = p.kind === "einde";
@@ -206,6 +210,74 @@ function Bottom({ svc, p, status, now }: { svc?: Service; p: ReturnType<typeof p
   function forward() {
     if (welkom && start && now < +start - 5 * 60_000) return setAsk("early");
     step(1);
+  }
+
+  const confirms = (
+    <>
+      <Confirm open={ask === "early"} onOpenChange={(o) => !o && setAsk("")} title="Dienst begint al?" yes="Ja" onYes={() => step(1)} tone="gold" />
+      <Confirm open={ask === "stop"} onOpenChange={(o) => !o && setAsk("")} title="Uitzending stoppen?" yes="Stoppen" no="Nog niet" onYes={() => setStreamMode("stop")} />
+    </>
+  );
+
+  if (phone) {
+    // On a phone: everything for the service at the bottom, under the thumb. Black and jumping
+    // to a part sit on a small row above Terug and the big button.
+    const quick = "flex h-12 min-w-0 items-center justify-center gap-2 rounded-xl border-2 text-[19px] font-semibold transition active:scale-[0.98] [&_svg]:size-5 [&_svg]:shrink-0";
+    const black = !!state?.black;
+    return (
+      <footer className="grid shrink-0 gap-2 border-t-2 border-walnut/15 bg-[#efe5cc] px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => go({ kind: "zwart" })}
+            className={cn(quick, black ? "border-walnut bg-walnut text-white" : "border-input bg-card hover:bg-accent")}
+          >
+            {black ? <><Eye /> Borden weer aan</> : <><EyeOff /> Borden zwart</>}
+          </button>
+          <button disabled={!svc} onClick={() => setJump(true)} className={cn(quick, "border-input bg-card hover:bg-accent disabled:opacity-40")}>
+            <ListOrdered /> <span className="truncate">Naar onderdeel</span>
+          </button>
+        </div>
+        <div className="flex gap-2">
+          <button
+            disabled={p.index <= 0 || !p.slides.length}
+            onClick={() => step(-1)}
+            className="flex h-[76px] w-[92px] shrink-0 flex-col items-center justify-center rounded-2xl border-2 border-input bg-card font-semibold transition hover:bg-accent active:scale-[0.98] disabled:border-[#d8cbb0] disabled:bg-transparent disabled:text-[#a8987f]"
+          >
+            <span className="text-[28px] leading-none">←</span>
+            <span className="text-[18px] leading-tight">Terug</span>
+          </button>
+          {einde ? (
+            live ? (
+              <>
+                <button onClick={() => later()} className="h-[76px] min-w-0 flex-1 rounded-2xl border-2 border-input bg-card text-[21px] leading-tight font-semibold transition hover:bg-accent active:scale-[0.98]">
+                  Nog 5 min
+                </button>
+                <button onClick={() => setAsk("stop")} className="h-[76px] min-w-0 flex-1 rounded-2xl bg-walnut text-[22px] leading-tight font-bold text-white transition hover:bg-[#6b4a33] active:scale-[0.98]">
+                  Nu stoppen
+                </button>
+              </>
+            ) : (
+              <div className="flex-1" />
+            )
+          ) : (
+            <button
+              disabled={!p.slides.length}
+              onClick={forward}
+              className={cn(
+                "flex h-[76px] min-w-0 flex-1 flex-col items-center justify-center rounded-2xl px-3 transition active:scale-[0.99]",
+                "bg-primary text-primary-foreground shadow-[0_10px_30px_-12px_rgb(90_62_43/0.5)] hover:bg-primary-hover disabled:opacity-40",
+                call && "animate-call",
+              )}
+            >
+              <span className="text-[30px] leading-none font-bold whitespace-nowrap">{label}</span>
+              {next && <span className="mt-1.5 max-w-full truncate text-[18px] leading-none">{next}</span>}
+            </button>
+          )}
+        </div>
+        <GotoSheet open={jump} onOpenChange={setJump} state={state} svc={svc} />
+        {confirms}
+      </footer>
+    );
   }
 
   return (
@@ -252,14 +324,17 @@ function Bottom({ svc, p, status, now }: { svc?: Service; p: ReturnType<typeof p
       </div>
       {/* Balances Terug so the big button sits in the middle. */}
       <div className="hidden w-[240px] shrink-0 min-[1500px]:block" />
-      <Confirm open={ask === "early"} onOpenChange={(o) => !o && setAsk("")} title="Dienst begint al?" yes="Ja" onYes={() => step(1)} tone="gold" />
-      <Confirm open={ask === "stop"} onOpenChange={(o) => !o && setAsk("")} title="Uitzending stoppen?" yes="Stoppen" no="Nog niet" onYes={() => setStreamMode("stop")} />
+      {confirms}
     </footer>
   );
 }
 
 export function Dienst({ state, svc, status, lis }: Props) {
+  const phone = usePhone();
   const [edit, setEdit] = useState(false);
+  // On a phone the boards take the place of the list; on a wider screen they stand beside it.
+  const [boards, setBoards] = useState(false);
+  const showBoards = phone && boards;
   const now = Date.now();
   const p = position(state, svc);
   const sub = subline(p, svc, status, now);
@@ -269,17 +344,17 @@ export function Dienst({ state, svc, status, lis }: Props) {
     <>
       <div className="flex min-h-0 flex-1">
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex h-[72px] shrink-0 items-center gap-5 px-5 pt-1">
-            <div role="radiogroup" aria-label="Lijst" className="flex shrink-0 rounded-2xl border-2 border-input bg-card p-1">
+          <div className="flex h-[72px] shrink-0 items-center gap-5 px-5 pt-1 max-md:h-auto max-md:flex-wrap max-md:gap-x-2 max-md:gap-y-1 max-md:px-2 max-md:pt-2 max-md:pb-1">
+            <div role="radiogroup" aria-label="Lijst" className="flex shrink-0 rounded-2xl border-2 border-input bg-card p-1 max-md:min-w-0 max-md:flex-1">
               {([[false, "Overzicht", <ListChecks key="o" />], [true, "Bewerken", <Pencil key="e" />]] as const).map(([on, label, icon]) => (
                 <button
                   key={label}
                   role="radio"
                   aria-checked={edit === on}
                   disabled={on && !svc}
-                  onClick={() => setEdit(on)}
+                  onClick={() => { setEdit(on); setBoards(false); }}
                   className={cn(
-                    "flex h-14 items-center gap-2 rounded-xl px-6 text-[22px] font-semibold transition [&_svg]:size-6",
+                    "flex h-14 items-center gap-2 rounded-xl px-6 text-[22px] font-semibold transition [&_svg]:size-6 max-md:h-12 max-md:min-w-0 max-md:flex-1 max-md:justify-center max-md:gap-1.5 max-md:px-2 max-md:text-[19px] max-md:[&_svg]:size-5",
                     edit === on ? (on ? "bg-primary text-primary-foreground" : "bg-walnut text-white") : "text-muted-foreground hover:bg-accent",
                   )}
                 >
@@ -287,19 +362,34 @@ export function Dienst({ state, svc, status, lis }: Props) {
                 </button>
               ))}
             </div>
-            {edit && <span className="min-w-0 truncate text-[22px] text-[#7a5a1c]">Bewerken — er verandert niets op het scherm</span>}
+            {phone && (
+              <button
+                data-phone-tab="borden"
+                aria-pressed={boards}
+                onClick={() => setBoards(!boards)}
+                className={cn(
+                  "flex h-[60px] shrink-0 items-center gap-1.5 rounded-2xl border-2 px-3 text-[19px] font-semibold transition [&_svg]:size-5",
+                  boards ? "border-primary bg-[#fdf8ec] text-foreground" : "border-input bg-card text-muted-foreground hover:bg-accent",
+                )}
+              >
+                <LayoutGrid /> Borden
+              </button>
+            )}
+            {edit && <span className="min-w-0 truncate text-[22px] text-[#7a5a1c] max-md:basis-full max-md:text-[18px] max-md:whitespace-normal">Bewerken — er verandert niets op het scherm</span>}
           </div>
-          {edit && svc ? (
-            <div className="flex min-h-0 flex-1 flex-col px-3 pb-3">
+          {showBoards ? (
+            <BoardColumn state={state} svc={svc} edit={edit} phone />
+          ) : edit && svc ? (
+            <div className="flex min-h-0 flex-1 flex-col px-3 pb-3 max-md:px-1 max-md:pb-1">
               <OrderEdit svc={svc} cur={p.cur} />
             </div>
           ) : (
             <Order svc={svc} p={p} sub={sub} hint={hint} board={state?.boards?.[p.index]} />
           )}
         </div>
-        <BoardColumn state={state} svc={svc} edit={edit} />
+        {!phone && <BoardColumn state={state} svc={svc} edit={edit} />}
       </div>
-      <Bottom svc={svc} p={p} status={status} now={now} />
+      <Bottom state={state} svc={svc} p={p} status={status} now={now} />
     </>
   );
 }

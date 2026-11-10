@@ -11,7 +11,12 @@ function AlertDialogContent({ className, ...props }: React.ComponentProps<typeof
     <P.Portal>
       <P.Overlay className="fixed inset-0 z-50 bg-[#2b1d12]/55" />
       <P.Content
-        className={cn("fixed top-1/2 left-1/2 z-50 grid w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 gap-7 rounded-2xl border-2 bg-popover p-8 shadow-2xl", className)}
+        className={cn(
+          "fixed top-1/2 left-1/2 z-50 grid w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 gap-7 rounded-2xl border-2 bg-popover p-8 shadow-2xl",
+          // On a phone: the whole screen, the question at the top and the answers at the bottom under the thumb.
+          "max-md:inset-0 max-md:h-[100dvh] max-md:w-full max-md:max-w-none max-md:translate-x-0 max-md:translate-y-0 max-md:grid-rows-[minmax(0,1fr)_auto] max-md:gap-5 max-md:overflow-y-auto max-md:rounded-none max-md:border-0 max-md:p-5 max-md:pt-[max(1.5rem,env(safe-area-inset-top))] max-md:pb-[max(1.25rem,env(safe-area-inset-bottom))]",
+          className,
+        )}
         {...props}
       />
     </P.Portal>
@@ -19,13 +24,13 @@ function AlertDialogContent({ className, ...props }: React.ComponentProps<typeof
 }
 
 function AlertDialogHeader({ className, ...props }: React.ComponentProps<"div">) {
-  return <div className={cn("grid gap-2", className)} {...props} />;
+  return <div className={cn("grid gap-2 max-md:content-start", className)} {...props} />;
 }
 function AlertDialogFooter({ className, ...props }: React.ComponentProps<"div">) {
-  return <div className={cn("grid grid-cols-2 gap-4", className)} {...props} />;
+  return <div className={cn("grid grid-cols-2 gap-4 max-md:grid-cols-1 max-md:gap-3", className)} {...props} />;
 }
 function AlertDialogTitle({ className, ...props }: React.ComponentProps<typeof P.Title>) {
-  return <P.Title className={cn("font-serif text-[32px] leading-tight font-semibold tracking-tight", className)} {...props} />;
+  return <P.Title className={cn("font-serif text-[32px] leading-tight font-semibold tracking-tight max-md:text-[26px]", className)} {...props} />;
 }
 function AlertDialogDescription({ className, ...props }: React.ComponentProps<typeof P.Description>) {
   return <P.Description className={cn("text-[22px] leading-snug text-foreground", className)} {...props} />;
