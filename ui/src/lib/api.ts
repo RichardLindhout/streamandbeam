@@ -230,6 +230,8 @@ export type Kerk = {
   fotoStart: string;
   fotoEinde: string;
   logo: string;
+  /** A dash between verses is "t/m" (3-7 is 3 to 7); off: "en" (3 and 7). */
+  streepjeTotEnMet: boolean;
 };
 
 export type Settings = {

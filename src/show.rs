@@ -407,6 +407,7 @@ impl Show {
 
     /// The church's settings changed: its name on the boards, where its services are listed.
     pub async fn set_kerk(&self, kerk: Kerk) {
+        crate::parse::set_dash_is_range(kerk.streepje_tot_en_met);
         if *self.kerk.read().unwrap() == kerk {
             return;
         }

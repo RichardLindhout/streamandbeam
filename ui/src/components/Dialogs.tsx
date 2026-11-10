@@ -230,6 +230,19 @@ function ChurchSettings({ kerk, qrLink, onChange }: { kerk: Kerk; qrLink: string
         {picture("fotoStart", "Foto startbeeld")}
         {picture("fotoEinde", "Foto eindbeeld")}
         {picture("logo", "Logo (wit op doorzichtig)")}
+        <div className="grid gap-1.5">
+          <Label htmlFor="kerk-streepje">Streepje in versnummers</Label>
+          <select
+            id="kerk-streepje"
+            className="h-14 w-full rounded-xl border-2 border-input bg-card px-3 text-[20px]"
+            value={kerk.streepjeTotEnMet ? "tm" : "en"}
+            onChange={(e) => set({ streepjeTotEnMet: e.target.value === "tm" })}
+          >
+            <option value="en">en: Ps 27: 3-7 is vers 3 en 7</option>
+            <option value="tm">tot en met: Ps 27: 3-7 is vers 3 t/m 7</option>
+          </select>
+          <span className="text-[17px] text-muted-foreground">Geldt voor wat daarna wordt ingevuld of opgehaald.</span>
+        </div>
       </div>
     </Section>
   );

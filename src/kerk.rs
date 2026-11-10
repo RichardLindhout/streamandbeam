@@ -22,6 +22,9 @@ pub struct Kerk {
     pub foto_start: String,
     pub foto_einde: String,
     pub logo: String,
+    /// A dash between verses means "to" ("Ps 27: 3-7" is 3 to 7), as most churches write
+    /// it. Off (HHG Tholen): "and", 3 and 7.
+    pub streepje_tot_en_met: bool,
 }
 
 impl Default for Kerk {
@@ -34,6 +37,7 @@ impl Default for Kerk {
             foto_start: "buiten.jpg".into(),
             foto_einde: "interieur.jpg".into(),
             logo: "logo-wit.png".into(),
+            streepje_tot_en_met: false,
         }
     }
 }

@@ -313,16 +313,38 @@ pub fn sung_verse_list(text: &str) -> Vec<u32> {
     sung_verses(&tokens(&fold(text))).0
 }
 
-/// "vers 3, 7 en 9-11" after a psalm or gezang number: in the church's notation a dash
-/// means "and" ("3-7" is 3 and 7); only "t/m" is a range. Returns the verses and the
+/// Whether a dash between verses is a range ("3-7" is 3 to 7), as most churches write it;
+/// off (the default) it is "and", as HHG Tholen writes it. Set from the church's settings
+/// (Kerk::streepje_tot_en_met).
+static DASH_IS_RANGE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+pub fn set_dash_is_range(on: bool) {
+    DASH_IS_RANGE.store(on, std::sync::atomic::Ordering::Relaxed);
+}
+
+/// "vers 3, 7 en 9-11" after a psalm or gezang number: a dash is "and" or a range, as the
+/// church set it (see DASH_IS_RANGE); "t/m" is always a range. Returns the verses and the
 /// words it did not understand.
 fn sung_verses(toks: &[Tok]) -> (Vec<u32>, Vec<String>) {
+    sung_verses_as(toks, DASH_IS_RANGE.load(std::sync::atomic::Ordering::Relaxed))
+}
+
+fn sung_verses_as(toks: &[Tok], dash_is_range: bool) -> (Vec<u32>, Vec<String>) {
     let mut verses: Vec<u32> = Vec::new();
     let mut unknown = Vec::new();
     let mut i = 0;
     while i < toks.len() {
         match &toks[i] {
             Tok::Num(n) => verses.push(*n),
+            Tok::Sym('-') if dash_is_range && matches!(toks.get(i + 1), Some(Tok::Num(_))) && !verses.is_empty() => {
+                if let (Some(&from), Some(Tok::Num(to))) = (verses.last(), toks.get(i + 1))
+                    && *to > from
+                    && to - from < 200
+                {
+                    verses.extend(from + 1..=*to);
+                    i += 1;
+                }
+            }
             Tok::Word(w) if w == "tm" => {
                 if let (Some(&from), Some(Tok::Num(to))) = (verses.last(), toks.get(i + 1))
                     && *to > from
@@ -1061,6 +1083,19 @@ pub fn from_ai(r: RawItem, bron: &str) -> RawItem {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn a_dash_is_and_or_a_range_as_the_church_writes_it() {
+        let toks = |t: &str| tokens(&fold(t));
+        assert_eq!(sung_verses_as(&toks("3-7"), false).0, [3, 7]);
+        assert_eq!(sung_verses_as(&toks("3-7"), true).0, [3, 4, 5, 6, 7]);
+        assert_eq!(sung_verses_as(&toks("1, 3-5 en 8"), true).0, [1, 3, 4, 5, 8]);
+        // "t/m" is a range either way.
+        assert_eq!(sung_verses_as(&toks("2 t/m 4"), false).0, [2, 3, 4]);
+        // A dash backwards stays two verses.
+        assert_eq!(sung_verses_as(&toks("7-3"), true).0, [7, 3]);
+    }
+
     use super::*;
 
     /// Gezang names as another edition might write them, so the tests do not depend on the

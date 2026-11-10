@@ -67,7 +67,9 @@ ze staan alleen op de eigen computer, in `data/liederen.json`.
 Wat het programma over de kerk weet, staat in **Instellingen → Onze kerk**: de naam (op de
 borden, onder de uitzending en op de meekijkpagina), de website (op het eindbeeld), de pagina
 met de diensten, het nummer op kerktijden.nl, de link in de QR-code en de foto's voor het
-start- en eindbeeld en het logo. Zonder instellingen zijn het die van HHG Tholen.
+start- en eindbeeld en het logo, en of een streepje in versnummers "en" betekent (zoals in
+Tholen: Ps 27: 3-7 is vers 3 en 7) of "tot en met". Zonder instellingen zijn het die van
+HHG Tholen.
 
 ## Eigen schermen en beelden
 
