@@ -140,6 +140,18 @@ export const STARTS: Record<Target, Start[]> = {
   ],
   bord: [
     {
+      // As the church's screens were: plain black with the church in the bottom right corner.
+      label: "Zwart met de kerk rechtsonder",
+      make: () => ({
+        name: "Zwart met kerk", target: "bord", moment: "", background: "#000000",
+        boxes: [
+          box("tekst", { x: 70, y: 110, w: 940, h: 180, text: "{kop}", bold: true, size: 110, valign: "onder" }),
+          box("tekst", { x: 70, y: 340, w: 940, h: 1180, text: "{tekst}", bold: true, size: 96 }),
+          box("afbeelding", { x: 690, y: 1600, w: 330, h: 250, image: "logo-wit.png", fit: "passend" }),
+        ],
+      }),
+    },
+    {
       label: "Kop met tekst",
       make: () => ({
         name: "Kop met tekst", target: "bord", moment: "", background: "",
