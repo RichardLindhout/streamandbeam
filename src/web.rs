@@ -329,7 +329,6 @@ async fn roosters_day(State(app): State<App>, Query(q): Query<DayQuery>) -> impl
         "dag": r.special_day(&q.datum, time),
         "voorzang": r.voorzang(&q.datum, time).map(|z| z.display()).unwrap_or_default(),
         "collectes": r.collecte(&q.datum).map(|c| c.doelen.clone()).unwrap_or_default(),
-        "bediening": r.operator(&q.datum, time),
     }))
 }
 

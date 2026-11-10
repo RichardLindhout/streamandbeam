@@ -1,6 +1,7 @@
 //! The church's schedules, from its Excel workbook (Streamupdate.xlsm): the collectes and
-//! special days per date (tab Collecterooster), the voorzang of each service (Voorzang) and
-//! who operates the stream (Streamdienst). Read with `streamandbeam importeer-excel <bestand>`
+//! special days per date (tab Collecterooster) and the voorzang of each service (Voorzang).
+//! Who operates the stream (tab Streamdienst) is not read: the program does not need the
+//! names of volunteers. Read with `streamandbeam importeer-excel <bestand>`
 //! or from the settings, into <data>/roosters.json. Nothing is built in: the schedules hold
 //! the names of volunteers and belong to the church, not in the program (or its public
 //! source). Without an import there are no schedules. The workbook is only read: no macros.
@@ -22,7 +23,6 @@ pub struct Roosters {
     pub ingelezen: String,
     pub collectes: Vec<CollecteDag>,
     pub voorzang: Vec<VoorzangDag>,
-    pub bediening: Vec<BedieningDag>,
 }
 
 /// One date of the collecterooster.
@@ -62,17 +62,6 @@ pub struct Zang {
     pub verzen: Vec<u32>,
 }
 
-/// Who operates the stream on a date (tab Streamdienst).
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
-#[serde(default)]
-pub struct BedieningDag {
-    pub datum: String,
-    pub morgen: String,
-    pub middag: String,
-    /// What else is written beside it, e.g. "<naam> niet".
-    pub notities: Vec<String>,
-}
-
 /// Morning or afternoon/evening, as the schedules split a day: before 13:00 is morning.
 pub fn morning(time: &str) -> bool {
     NaiveTime::parse_from_str(time.trim(), "%H:%M").map_or(true, |t| t < NaiveTime::from_hms_opt(13, 0, 0).unwrap())
@@ -82,8 +71,14 @@ pub fn morning(time: &str) -> bool {
 pub fn load(dir: &Path) -> Roosters {
     let own = dir.join("roosters.json");
     if own.exists() {
-        match crate::texts::read_json(&own) {
-            Ok(r) => return r,
+        match crate::texts::read_json::<Roosters>(&own) {
+            Ok(r) => {
+                // An import from before kept who operates the stream: written again without it.
+                if std::fs::read_to_string(&own).is_ok_and(|t| t.contains("\"bediening\"")) {
+                    let _ = crate::texts::write_json(&own, &r);
+                }
+                return r;
+            }
             Err(e) => eprintln!("{}: {e:#}; geen roosters tot de Excel opnieuw is ingelezen", own.display()),
         }
     }
@@ -132,12 +127,6 @@ impl Roosters {
         crate::songs::builtin_feast_songs().iter().find(|f| crate::songs::same_day(&day, &f.dag)).map(|f| f.lied.clone()).unwrap_or_default()
     }
 
-    /// Who operates the stream at this service, from the roster; empty when nobody is in it.
-    pub fn operator(&self, date: &str, time: &str) -> String {
-        let Some(b) = self.bediening.iter().find(|b| b.datum == date) else { return String::new() };
-        if morning(time) { b.morgen.clone() } else { b.middag.clone() }
-    }
-
     pub fn summary(&self) -> Summary {
         let span = |dates: Vec<&str>| Span {
             aantal: dates.len(),
@@ -148,7 +137,6 @@ impl Roosters {
             collectes: span(self.collectes.iter().filter(|c| !c.doelen.is_empty()).map(|c| c.datum.as_str()).collect()),
             dagen: span(self.collectes.iter().filter(|c| !c.dag.is_empty()).map(|c| c.datum.as_str()).collect()),
             voorzang: span(self.voorzang.iter().map(|v| v.datum.as_str()).collect()),
-            bediening: span(self.bediening.iter().map(|b| b.datum.as_str()).collect()),
         }
     }
 
@@ -160,7 +148,6 @@ impl Roosters {
             .iter()
             .map(|c| c.datum.as_str())
             .chain(self.voorzang.iter().map(|v| v.datum.as_str()))
-            .chain(self.bediening.iter().map(|b| b.datum.as_str()))
             .filter(|d| *d >= first.as_str() && *d <= last.as_str())
             .collect();
         dates.sort();
@@ -169,16 +156,12 @@ impl Roosters {
             .into_iter()
             .map(|d| {
                 let v = self.voorzang.iter().find(|v| v.datum == d);
-                let b = self.bediening.iter().find(|b| b.datum == d);
                 Upcoming {
                     datum: d.to_string(),
                     dag: self.collecte(d).map(|c| c.dag.clone()).unwrap_or_default(),
                     collectes: self.collecte(d).map(|c| c.doelen.clone()).unwrap_or_default(),
                     voorzang_morgen: v.and_then(|v| v.morgen.as_ref()).map(Zang::display).unwrap_or_default(),
                     voorzang_middag: v.and_then(|v| v.middag.as_ref()).map(Zang::display).unwrap_or_default(),
-                    bediening_morgen: b.map(|b| b.morgen.clone()).unwrap_or_default(),
-                    bediening_middag: b.map(|b| b.middag.clone()).unwrap_or_default(),
-                    notities: b.map(|b| b.notities.clone()).unwrap_or_default(),
                 }
             })
             .collect()
@@ -192,7 +175,6 @@ pub struct Summary {
     /// The special days (from the collecterooster).
     pub dagen: Span,
     pub voorzang: Span,
-    pub bediening: Span,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize)]
@@ -211,9 +193,6 @@ pub struct Upcoming {
     pub collectes: Vec<String>,
     pub voorzang_morgen: String,
     pub voorzang_middag: String,
-    pub bediening_morgen: String,
-    pub bediening_middag: String,
-    pub notities: Vec<String>,
 }
 
 impl Zang {
@@ -575,53 +554,11 @@ fn voorzang(wb: &Workbook, sheet: &Sheet, numbering: &Numbering, warn: &mut Vec<
     list
 }
 
-/// Tab Streamdienst: per date who operates in the morning and the afternoon, and the notes
-/// beside it. A name followed by a number is a count of turns, not a note.
-fn bediening(wb: &Workbook, sheet: &Sheet) -> Vec<BedieningDag> {
-    let Some((head, morning_col)) = sheet.find("Ochtend") else { return Vec::new() };
-    let Some(afternoon_col) = sheet.find_in_row(head, "Middag") else { return Vec::new() };
-    let date_col = sheet.find_in_row(head, "Datum").unwrap_or(1);
-    let notes_from = morning_col.max(afternoon_col) + 1;
-    let mut list: Vec<BedieningDag> = Vec::new();
-    for row in head + 1..=sheet.last_row() {
-        let Some(datum) = date_of(wb, sheet, row, date_col) else { continue };
-        let (morgen, middag) = (clean(&sheet.text(row, morning_col)), clean(&sheet.text(row, afternoon_col)));
-        let notities: Vec<String> = sheet
-            .row(row)
-            .filter(|(c, cell)| *c >= notes_from && matches!(cell, Cell::Text(_)) && !matches!(sheet.cell(row, c + 1), Some(Cell::Number(_))))
-            .map(|(c, _)| clean(&sheet.text(row, c)))
-            .filter(|t| !t.is_empty())
-            .collect();
-        if morgen.is_empty() && middag.is_empty() && notities.is_empty() {
-            continue;
-        }
-        match list.iter_mut().find(|b| b.datum == datum) {
-            Some(b) => {
-                if b.morgen.is_empty() {
-                    b.morgen = morgen;
-                }
-                if b.middag.is_empty() {
-                    b.middag = middag;
-                }
-                for n in notities {
-                    if !b.notities.contains(&n) {
-                        b.notities.push(n);
-                    }
-                }
-            }
-            None => list.push(BedieningDag { datum, morgen, middag, notities }),
-        }
-    }
-    list.sort_by(|a, b| a.datum.cmp(&b.datum));
-    list
-}
-
 /// What an import found. A tab that is not in the workbook leaves that schedule as it was.
 #[derive(Debug, Default)]
 pub struct Import {
     pub collectes: Option<Vec<CollecteDag>>,
     pub voorzang: Option<Vec<VoorzangDag>>,
-    pub bediening: Option<Vec<BedieningDag>>,
     pub waarschuwingen: Vec<String>,
 }
 
@@ -638,11 +575,8 @@ pub fn import(bytes: &[u8]) -> Result<Import> {
         imp.voorzang = Some(voorzang(&wb, s, &numbering, &mut warn));
         imp.waarschuwingen.extend(warn);
     }
-    if let Some(s) = wb.sheet("Streamdienst") {
-        imp.bediening = Some(bediening(&wb, s));
-    }
-    if imp.collectes.is_none() && imp.voorzang.is_none() && imp.bediening.is_none() {
-        bail!("Geen tabblad Collecterooster, Voorzang of Streamdienst in dit Excel-bestand");
+    if imp.collectes.is_none() && imp.voorzang.is_none() {
+        bail!("Geen tabblad Collecterooster of Voorzang in dit Excel-bestand");
     }
     Ok(imp)
 }
@@ -669,18 +603,16 @@ impl Import {
         };
         keep("collectes", self.collectes.is_some());
         keep("voorzang", self.voorzang.is_some());
-        keep("bediening", self.bediening.is_some());
         let new = Roosters {
             bron: bron.to_string(),
             ingelezen: Local::now().format("%Y-%m-%d %H:%M").to_string(),
             collectes: self.collectes.unwrap_or_else(|| old.collectes.clone()),
             voorzang: self.voorzang.unwrap_or_else(|| old.voorzang.clone()),
-            bediening: self.bediening.unwrap_or_else(|| old.bediening.clone()),
         };
         let samenvatting = new.summary();
         let mut waarschuwingen = Vec::new();
         let soon = (today + chrono::Days::new(28)).to_string();
-        for (name, span) in [("collecterooster", &samenvatting.collectes), ("voorzangrooster", &samenvatting.voorzang), ("bedieningsrooster", &samenvatting.bediening)] {
+        for (name, span) in [("collecterooster", &samenvatting.collectes), ("voorzangrooster", &samenvatting.voorzang)] {
             if span.aantal == 0 {
                 waarschuwingen.push(format!("Het {name} is leeg"));
             } else if span.tot < soon {
@@ -709,7 +641,6 @@ impl Report {
             format!("  Collectes:        {}", span(&s.collectes)),
             format!("  Bijzondere dagen: {}", span(&s.dagen)),
             format!("  Voorzang:         {}", span(&s.voorzang)),
-            format!("  Bediening:        {}", span(&s.bediening)),
         ];
         if !self.behouden.is_empty() {
             lines.push(format!("  Niet in dit bestand, blijft zoals het was: {}", self.behouden.join(", ")));
@@ -808,6 +739,7 @@ mod tests {
             &[("A3", "#46334"), ("B3", "34: 11"), ("C3", "Psalm"), ("D3", "#34"), ("E3", "#1"), ("J3", "#0.46180555555555558"), ("K3", "Psalm"), ("L3", "#62"), ("M3", "#5")],
             &[("A4", "#46369"), ("B4", "LvM:1"), ("C4", "Gezang"), ("D4", "LvM"), ("E4", "#1"), ("K4", "Psalm"), ("L4", "#48"), ("M4", "#4")],
         ];
+        // Who operates the stream: never read.
         let stream: &[&[(&str, &str)]] = &[
             &[("A2", "Datum"), ("B2", "Omschrijving"), ("C2", "Ochtend"), ("D2", "Middag")],
             &[("A3", "JANUARI 2023")],
@@ -832,25 +764,20 @@ mod tests {
         assert_eq!(r.voorzang("2026-12-13", "09:30").unwrap().display(), "Lofzang van Maria : 1");
         assert_eq!(r.voorzang("2026-12-13", "16:00").unwrap().display(), "Psalm 48 : 4");
         assert!(report.waarschuwingen.iter().any(|w| w.contains("tijd (11:05)")), "{:?}", report.waarschuwingen);
-        // Bediening: notes, not the count of turns; a date twice gives one entry.
-        assert_eq!(r.bediening.iter().map(|b| b.datum.as_str()).collect::<Vec<_>>(), ["2023-06-25", "2024-01-01", "2024-01-07"]);
-        assert_eq!(r.operator("2023-06-25", "09:30"), "Bediener 3/Bediener 4");
-        assert_eq!(r.bediening[0].notities, ["Bediener 5 niet"]);
-        assert_eq!((r.bediening[2].morgen.as_str(), r.bediening[2].notities.len()), ("Bediener 10", 0));
-        assert_eq!(r.operator("2024-01-01", "09:30"), "Bediener 6");
-        assert!(report.waarschuwingen.iter().any(|w| w.contains("bedieningsrooster loopt maar tot")));
+        assert!(!serde_json::to_string(&r).unwrap().contains("Bediener"));
     }
 
     #[test]
     fn a_missing_tab_keeps_the_old_schedule() {
-        let input: &[&[(&str, &str)]] = &[&[("A1", "Datum"), ("C1", "Ochtend"), ("D1", "Middag")], &[("A2", "#46327"), ("C2", "Bediener 10")]];
-        let bytes = crate::excel::tests::workbook(&[("Streamdienst", input)]);
+        let input: &[&[(&str, &str)]] = &[&[("A1", "Datum"), ("B1", "Ochtend")], &[("A2", "#46327"), ("B2", "31:19")]];
+        let bytes = crate::excel::tests::workbook(&[("Voorzang", input)]);
         let old = builtin();
         let (r, report) = import(&bytes).unwrap().apply(&old, "x.xlsx", NaiveDate::from_ymd_opt(2026, 11, 4).unwrap());
         assert_eq!(r.collectes, old.collectes);
-        assert_eq!(r.voorzang, old.voorzang);
-        assert_eq!(r.bediening.len(), 1);
-        assert_eq!(report.behouden, ["collectes", "voorzang"]);
+        assert_eq!(report.behouden, ["collectes"]);
+        // Only who operates the stream: nothing the program reads.
+        let stream = crate::excel::tests::workbook(&[("Streamdienst", input)]);
+        assert!(import(&stream).is_err());
         let none = crate::excel::tests::workbook(&[("Blad1", input)]);
         assert!(import(&none).is_err());
     }
@@ -970,32 +897,6 @@ mod tests {
         assert_eq!((r.voorzang[0].datum.as_str(), r.voorzang.last().unwrap().datum.as_str()), ("2023-01-01", "2027-07-18"));
     }
 
-    #[test]
-    fn built_in_bedieningsrooster_is_the_workbook() {
-        let r = builtin();
-        let cases: [(&str, &str, &str, &[&str]); 12] = [
-            ("2023-02-19", "Bediener 10", "Bediener 8", &[]),
-            ("2023-02-22", "Bediener 8", "Bediener 10", &[]), // Biddag, Wednesday
-            ("2023-03-12", "Bediener 10", "Bediener 3/Bediener 4", &[]),
-            ("2023-04-07", "Bediener 5", "", &[]), // Goede Vrijdag
-            ("2023-06-25", "Bediener 3/Bediener 4", "Bediener 1", &["Bediener 5 niet"]),
-            ("2023-07-30", "Bediener 8", "Bediener 5", &["Bediener 6 niet", "Bediener 11 niet", "Bediener 2 niet"]),
-            ("2023-11-15", "Bediener 5", "Bediener 6", &[]), // Dankdag, Wednesday
-            ("2024-01-01", "Bediener 6", "", &[]), // the date twice, the first row empty
-            ("2024-01-07", "Bediener 3/Bediener 4", "Bediener 8", &[]), // a count beside the name ("<naam> 3"), no note
-            ("2024-07-14", "Bediener 3/Bediener 4", "Bediener 1", &["Bediener 5, Bediener 10", "Bediener 9"]),
-            ("2024-09-08", "Bediener 3", "Bediener 1", &[]),
-            ("2024-11-24", "Bediener 9", "Bediener 3", &[]),
-        ];
-        for (date, morning, afternoon, notes) in cases {
-            let b = r.bediening.iter().find(|b| b.datum == date).unwrap_or_else(|| panic!("{date}"));
-            assert_eq!((b.morgen.as_str(), b.middag.as_str(), b.notities.iter().map(String::as_str).collect::<Vec<_>>()), (morning, afternoon, notes.to_vec()), "{date}");
-        }
-        assert_eq!(r.operator("2023-06-25", "16:00"), "Bediener 1");
-        // Nobody on New Year's Day 2023: not in the roster.
-        assert!(r.bediening.iter().all(|b| b.datum != "2023-01-01"));
-    }
-
     /// Importing the workbook again gives the import this computer has (data/roosters.json),
     /// when the workbook is on it: STREAMUPDATE_XLSM, or the Downloads folder.
     #[test]
@@ -1018,8 +919,14 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("sb-geen-rooster-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let r = load(&dir);
-        assert!(r.collectes.is_empty() && r.voorzang.is_empty() && r.bediening.is_empty());
-        assert_eq!((r.collecte_text("2026-11-01"), r.operator("2024-07-14", "09:30")), (String::new(), String::new()));
+        assert!(r.collectes.is_empty() && r.voorzang.is_empty());
+        assert_eq!(r.collecte_text("2026-11-01"), String::new());
+        // An import from before, with who operated the stream: read, and written again without it.
+        let old = r#"{"bron":"x.xlsm","collectes":[{"datum":"2026-11-01","dag":"","doelen":["Zending"]}],"bediening":[{"datum":"2026-11-01","morgen":"Iemand","middag":"","notities":["Iemand anders niet"]}]}"#;
+        std::fs::write(dir.join("roosters.json"), old).unwrap();
+        assert_eq!(load(&dir).collecte_text("2026-11-01"), "1. Zending");
+        let now = std::fs::read_to_string(dir.join("roosters.json")).unwrap();
+        assert!(!now.contains("bediening") && !now.contains("Iemand") && now.contains("Zending"), "{now}");
         let _ = std::fs::remove_dir_all(&dir);
     }
 

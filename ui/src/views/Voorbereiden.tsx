@@ -60,10 +60,9 @@ export function Voorbereiden({ state, status, onBack }: { state: View | null; st
             className="grid-cols-[repeat(auto-fill,minmax(470px,1fr))] max-md:grid-cols-1"
           />
           {isLive && <div className="rounded-xl bg-warn px-6 py-4 text-[26px] font-bold text-[#2b1d12] max-md:px-4 max-md:py-3 max-md:text-[22px]">Deze dienst is nu live</div>}
-          {svc && (day || svc.operator || !onScreen) && (
+          {svc && (day || !onScreen) && (
             <div className="flex flex-wrap items-center gap-x-8 gap-y-3 rounded-xl border-2 bg-card px-5 py-3 text-[22px] max-md:gap-x-4 max-md:px-3 max-md:text-[19px]">
               {day && <span className="hymnal text-[24px] text-[#7a5a1c] max-md:text-[20px]">{day}</span>}
-              {svc.operator && <span>Bediening: <b>{svc.operator}</b></span>}
               {!onScreen && (
                 <>
                   <span className="min-w-0 flex-1 text-muted-foreground">Op het scherm staat een andere dienst</span>

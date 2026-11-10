@@ -63,7 +63,7 @@ fn parse_args() -> Options {
                      --publiek-poort  alleen-kijken-pagina (bord + uitzending) voor internet, bv. 8090; standaard uit\n  \
                      fetch            laat zien wat het programma van de website leest (en de AI-controle, met sleutel)\n  \
                      scenes           schrijf voorbeelden van de uitzendbeelden naar data/scenes\n  \
-                     importeer-excel  lees collecte-, voorzang- en bedieningsrooster uit de Excel van de kerk\n                   \
+                     importeer-excel  lees collecte- en voorzangrooster uit de Excel van de kerk\n                   \
                      (Streamupdate.xlsm) naar data/roosters.json"
                 );
                 std::process::exit(0);

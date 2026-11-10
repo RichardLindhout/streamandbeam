@@ -36,14 +36,12 @@ export type Service = {
   website?: { summary: string; problems: string[] } | null;
   /** From the church's schedules: the special day ("Heilig Avondmaal"), "" on other days. */
   specialDay?: string;
-  /** Who operates the stream at this service, from the roster; "" when nobody is in it. */
-  operator?: string;
   [k: string]: unknown;
 };
 
 /** How many dates a schedule has, from when to when (YYYY-MM-DD). */
 export type Span = { aantal: number; van: string; tot: string };
-export type ScheduleSummary = { collectes: Span; dagen: Span; voorzang: Span; bediening: Span };
+export type ScheduleSummary = { collectes: Span; dagen: Span; voorzang: Span };
 
 /** One date in the coming weeks, from the schedules. */
 export type Upcoming = {
@@ -52,9 +50,6 @@ export type Upcoming = {
   collectes: string[];
   voorzangMorgen: string;
   voorzangMiddag: string;
-  bedieningMorgen: string;
-  bedieningMiddag: string;
-  notities: string[];
 };
 
 /** GET /api/roosters: where the schedules come from (eigen = imported here) and what is coming. */
@@ -64,7 +59,7 @@ export type Schedules = { bron: string; ingelezen: string; eigen: boolean; samen
 export type ImportReport = { bron: string; samenvatting: ScheduleSummary; behouden: string[]; waarschuwingen: string[] };
 
 /** GET /api/roosters/dag: what the schedules say about one date and time. */
-export type ScheduleDay = { dag: string; voorzang: string; collectes: string[]; bediening: string };
+export type ScheduleDay = { dag: string; voorzang: string; collectes: string[] };
 
 export type BoardTheme = { tekst: string; thema: string; punten: string[] };
 export type BoardCustom = { liturgie?: string[] | null; thema?: BoardTheme | null; slotzang?: string | null };

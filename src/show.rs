@@ -144,11 +144,9 @@ pub struct Service {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub website: Option<WebsiteVersion>,
     /// From the church's schedules, worked out again at every change (see `annotate`): the
-    /// special day ("Heilig Avondmaal") and who operates the stream at this service.
+    /// special day ("Heilig Avondmaal").
     #[serde(skip_deserializing)]
     pub special_day: String,
-    #[serde(skip_deserializing)]
-    pub operator: String,
     /// The song of the special day, as the church's Excel has it ("U zij de Glorie" at Easter);
     /// empty on other days. Also worked out at every change.
     #[serde(skip_deserializing)]
@@ -1010,7 +1008,6 @@ fn follow_collecte(svc: &mut Service, old: &Roosters, new: &Roosters) {
 fn annotate(services: &mut [Service], roosters: &Roosters, songs: &Library) {
     for svc in services {
         svc.special_day = roosters.special_day(&svc.date, &svc.time);
-        svc.operator = roosters.operator(&svc.date, &svc.time);
         svc.feast_song = roosters.feast_song(&svc.date, &svc.time);
         for it in &mut svc.items {
             let found = songs.resolve(it).map(|(s, _)| s);
@@ -2031,18 +2028,12 @@ pub(crate) mod tests {
     }
 
     #[tokio::test]
-    async fn services_show_the_special_day_and_who_operates() {
+    async fn services_show_the_special_day() {
         let mut svc = service();
         (svc.id, svc.date, svc.time) = ("2026-12-20 16:00".into(), "2026-12-20".into(), "16:00".into());
         let show = show_with(svc).await;
         let v = show.view();
         assert_eq!(v.service().unwrap().special_day, "Dankzegging Heilig Avondmaal");
-        assert_eq!(v.service().unwrap().operator, "");
-        let mut svc = service();
-        (svc.id, svc.date, svc.time) = ("2024-07-14 09:30".into(), "2024-07-14".into(), "09:30".into());
-        show.save_service(svc, false).await;
-        let v = show.view();
-        assert_eq!(v.services.iter().find(|s| s.id == "2024-07-14 09:30").unwrap().operator, "Bediener 3/Bediener 4");
     }
 
     #[tokio::test]

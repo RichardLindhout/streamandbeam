@@ -241,7 +241,7 @@ function spanText(s: Span) {
 }
 
 function SummaryRows({ s }: { s: ScheduleSummary }) {
-  const rows: [string, Span][] = [["Collectes", s.collectes], ["Bijzondere dagen", s.dagen], ["Voorzang", s.voorzang], ["Bediening", s.bediening]];
+  const rows: [string, Span][] = [["Collectes", s.collectes], ["Bijzondere dagen", s.dagen], ["Voorzang", s.voorzang]];
   const now = today();
   return (
     <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-6 gap-y-1 text-[20px]">
@@ -283,7 +283,6 @@ function ScheduleSettings() {
     setBusy(false);
   }
 
-  const who = (m: string, a: string) => (m && a ? (m === a ? m : `${m} / ${a}`) : m ? `${m} (morgen)` : a ? `${a} (middag)` : "");
   return (
     <div className="grid gap-8">
       <Section title="Roosters">
@@ -305,7 +304,7 @@ function ScheduleSettings() {
           />
         </label>
         <div className="text-[18px] text-muted-foreground">
-          Uit de tabbladen Collecterooster, Voorzang en Streamdienst. De collecte van elke dienst volgt het rooster, behalve wat je zelf hebt getypt.
+          Uit de tabbladen Collecterooster en Voorzang. De collecte van elke dienst volgt het rooster, behalve wat je zelf hebt getypt.
         </div>
         {report && (
           <div className="grid gap-1 rounded-xl border-2 border-ok/40 bg-ok/5 p-3 text-[18px]">
@@ -329,9 +328,6 @@ function ScheduleSettings() {
                 <div>Voorzang: {[u.voorzangMorgen && `morgen ${u.voorzangMorgen}`, u.voorzangMiddag && `middag ${u.voorzangMiddag}`].filter(Boolean).join(" · ")}</div>
               )}
               {u.collectes.length > 0 && <div className="text-muted-foreground">Collecte: {u.collectes.join(" · ")}</div>}
-              {who(u.bedieningMorgen, u.bedieningMiddag) && (
-                <div>Bediening: {who(u.bedieningMorgen, u.bedieningMiddag)}{u.notities.length > 0 && <span className="text-muted-foreground"> · {u.notities.join(", ")}</span>}</div>
-              )}
             </div>
           ))}
         </div>
@@ -436,12 +432,11 @@ export function NewServiceDialog({ open, onOpenChange, onMade, services, copyFro
               </SelectContent>
             </Select>
           </div>
-          {day && (day.voorzang || day.collectes.length > 0 || day.bediening) && (
+          {day && (day.voorzang || day.collectes.length > 0) && (
             <div className="grid gap-1 rounded-xl border-2 bg-background/50 px-4 py-3 text-[18px]">
               <div className="font-semibold">Uit de roosters</div>
               {day.voorzang && <div>Voorzang: {day.voorzang}{copying && <span className="text-muted-foreground"> (de overgenomen liturgie houdt haar eigen voorzang)</span>}</div>}
               {day.collectes.length > 0 && <div>Collecte: {day.collectes.join(" · ")}</div>}
-              {day.bediening && <div>Bediening: {day.bediening}</div>}
             </div>
           )}
           {error && <div className="rounded-xl bg-[#fbe9e7] px-4 py-3 text-[22px] font-semibold text-live">{error}</div>}

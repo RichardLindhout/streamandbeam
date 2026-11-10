@@ -465,10 +465,7 @@ export function Header({ state, svc, status, yt, connected, alarm, setScreen, on
           )}
           {specialDay(svc) && <span className="hymnal ml-3 text-[20px] text-[#7a5a1c] max-md:ml-2 max-md:text-[17px]">{specialDay(svc)}</span>}
         </div>
-        <div className="flex max-w-full min-w-0 items-center gap-3">
-          {svc?.operator && <span className="shrink-0 text-[18px] text-muted-foreground max-md:hidden">Bediening: <b className="font-semibold text-foreground">{svc.operator}</b></span>}
-          <WebsiteInfo state={state} svc={svc} />
-        </div>
+        <WebsiteInfo state={state} svc={svc} />
       </div>
       <div className="contents max-md:order-6 max-md:ml-auto max-md:flex max-md:min-w-0 max-md:items-center max-md:gap-2">
         <LiveArea status={status} svc={svc} yt={yt} />
