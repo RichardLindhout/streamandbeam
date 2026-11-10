@@ -2,6 +2,7 @@
 
 use crate::books::{BibleRef, psalm_ref_string};
 use crate::extract::{Extracted, ExtractedService};
+use crate::kerk::Kerk;
 use crate::layout::Layout;
 use crate::roosters::Roosters;
 use crate::songs::{Library, Song};
@@ -309,6 +310,8 @@ pub struct View {
     pub fresh_board: Option<Slide>,
     /// The screens the church made itself, for the boards and the stream (see `layout`).
     pub layouts: Vec<Layout>,
+    /// The church's name, for the watch page.
+    pub kerk_naam: String,
     /// A screen put on the boards by hand (its id; "" = none), until the operator moves on.
     pub board_layout: String,
     /// A screen put into the stream by hand, likewise.
@@ -329,7 +332,11 @@ impl View {
 }
 
 pub struct Show {
-    liturgy_url: String,
+    /// The page with the services given on the command line (for the tests); empty = the one
+    /// in the church's settings.
+    liturgy_override: String,
+    /// Who the church is (see `crate::kerk`), from the settings.
+    kerk: RwLock<Kerk>,
     path: PathBuf,
     state: Mutex<View>,
     tx: watch::Sender<View>,
@@ -358,7 +365,8 @@ fn fingerprint(text: &str) -> u64 {
 }
 
 impl Show {
-    pub async fn new(path: PathBuf, liturgy_url: String) -> Arc<Show> {
+    /// `liturgy_override`: read the services from this page instead of the church's own.
+    pub async fn new(path: PathBuf, liturgy_override: String) -> Arc<Show> {
         let saved: Saved = read_json(&path).unwrap_or_default();
         let dir = path.parent().unwrap_or(Path::new(".")).to_path_buf();
         let roosters = crate::roosters::load(&dir);
@@ -380,7 +388,8 @@ impl Show {
         view.layouts = crate::layout::load(&dir);
         let (tx, _) = watch::channel(view.clone());
         let show = Arc::new(Show {
-            liturgy_url,
+            liturgy_override,
+            kerk: RwLock::new(Kerk::default()),
             path,
             state: Mutex::new(view),
             tx,
@@ -392,6 +401,29 @@ impl Show {
         show.changed(&mut st);
         drop(st);
         show
+    }
+
+    pub fn kerk(&self) -> Kerk {
+        self.kerk.read().unwrap().clone()
+    }
+
+    /// The church's settings changed: its name on the boards, where its services are listed.
+    pub async fn set_kerk(&self, kerk: Kerk) {
+        if *self.kerk.read().unwrap() == kerk {
+            return;
+        }
+        *self.kerk.write().unwrap() = kerk;
+        let mut st = self.state.lock().await;
+        self.changed(&mut st);
+    }
+
+    /// The page the services are read from.
+    fn liturgy_url(&self) -> anyhow::Result<String> {
+        let url = if self.liturgy_override.is_empty() { self.kerk().liturgie_url } else { self.liturgy_override.clone() };
+        if url.trim().is_empty() {
+            anyhow::bail!("Er is geen pagina met diensten ingesteld (Instellingen, Onze kerk)");
+        }
+        Ok(url.trim().to_string())
     }
 
     /// Folder with the saved liturgy, settings and the board background.
@@ -470,7 +502,7 @@ impl Show {
     }
 
     async fn fetch_services(&self, live: impl Fn() -> bool) -> anyhow::Result<()> {
-        let html = crate::extract::http_get(&self.liturgy_url).await?;
+        let html = crate::extract::http_get(&self.liturgy_url()?).await?;
         let own = crate::extract::read_page(&html, Local::now().date_naive());
         let page = fingerprint(&crate::extract::liturgy_text(&html));
         // The AI's reading of this same page from before, if there is one.
@@ -489,7 +521,7 @@ impl Show {
         let mut st = self.state.lock().await;
         let live = live();
         apply_fetched(&mut st, &own, &checked, &roosters, live);
-        enrich_from_kerktijden(&mut st.services).await;
+        enrich_from_kerktijden(&mut st.services, self.kerk().kerktijden_id).await;
         if st.current.is_empty() || !st.services.iter().any(|s| s.id == st.current) {
             st.current = upcoming(&st.services);
             st.index = 0;
@@ -569,7 +601,7 @@ impl Show {
         st.point = None;
         st.hold = None;
         upsert(&mut st.services, svc);
-        enrich_from_kerktijden(&mut st.services).await;
+        enrich_from_kerktijden(&mut st.services, self.kerk().kerktijden_id).await;
         self.changed(&mut st);
     }
 
@@ -654,7 +686,7 @@ impl Show {
         upsert(&mut st.services, svc);
         if let Some((id, offset)) = keep {
             let songs = self.songs();
-            st.slides = st.service().map(|s| build_slides(s, &songs)).unwrap_or_default();
+            st.slides = st.service().map(|s| build_slides(s, &songs, &self.kerk())).unwrap_or_default();
             let item = st.service().and_then(|s| s.items.iter().position(|i| i.id == id));
             if let Some(item) = item {
                 let mine: Vec<usize> = st.slides.iter().enumerate().filter(|(_, s)| s.item == item).map(|(i, _)| i).collect();
@@ -801,9 +833,10 @@ impl Show {
 
     /// Rebuilds the slides after the services changed.
     fn changed(&self, st: &mut View) {
+        st.kerk_naam = self.kerk().naam;
         let songs = self.songs();
         annotate(&mut st.services, &self.roosters(), &songs);
-        st.slides = st.service().map(|s| build_slides(s, &songs)).unwrap_or_default();
+        st.slides = st.service().map(|s| build_slides(s, &songs, &self.kerk())).unwrap_or_default();
         st.boards = st.service().map(|svc| board_slides(svc, &st.slides, st.slotzang_text)).unwrap_or_default();
         st.index = st.index.min(st.slides.len().saturating_sub(1));
         // Before the hold, so a held slide only differs from the new one by its text.
@@ -859,8 +892,11 @@ fn apply_fetched(st: &mut View, own: &Extracted, checked: &Extracted, roosters: 
 
 /// Fills in the predikant and the next service from kerktijden.nl. Failing is fine:
 /// the operator can type them in.
-async fn enrich_from_kerktijden(services: &mut [Service]) {
-    let gatherings = match crate::kerktijden::gatherings(crate::kerktijden::COMMUNITY_ID, 6).await {
+async fn enrich_from_kerktijden(services: &mut [Service], community: u32) {
+    if community == 0 {
+        return;
+    }
+    let gatherings = match crate::kerktijden::gatherings(community, 6).await {
         Ok(g) => g,
         Err(e) => {
             eprintln!("kerktijden.nl: {e:#}");
@@ -1256,7 +1292,7 @@ pub fn service_title(svc: &Service) -> String {
     parts.join(" · ")
 }
 
-fn build_slides(svc: &Service, songs: &Library) -> Vec<Slide> {
+fn build_slides(svc: &Service, songs: &Library, kerk: &Kerk) -> Vec<Slide> {
     let mut slides = Vec::new();
     for (idx, it) in svc.items.iter().enumerate() {
         // A song from the song library with its words: verse by verse, like a psalm.
@@ -1298,7 +1334,7 @@ fn build_slides(svc: &Service, songs: &Library) -> Vec<Slide> {
         match it.kind.as_str() {
             "welkom" => {
                 let list = liturgy(svc).into_iter().map(|(_, l)| l).collect();
-                add(Slide { header: "Hersteld Hervormde Gemeente Tholen".into(), sub: service_title(svc), list, ..Default::default() });
+                add(Slide { header: kerk.naam.clone(), sub: service_title(svc), list, ..Default::default() });
             }
             "lied" => add(Slide {
                 header: it.label.clone(),
@@ -1397,9 +1433,9 @@ fn build_slides(svc: &Service, songs: &Library) -> Vec<Slide> {
                 None => add(problem("Dit formulier is (nog) niet beschikbaar")),
             },
             "einde" => add(Slide {
-                header: "Hersteld Hervormde Gemeente Tholen".into(),
+                header: kerk.naam.clone(),
                 sub: if svc.next.is_empty() { String::new() } else { format!("Volgende dienst: {}", svc.next) },
-                footer: "www.hhgtholen.nl".into(),
+                footer: kerk.website_text(),
                 ..Default::default()
             }),
             _ => {}
@@ -1661,7 +1697,7 @@ pub(crate) mod tests {
     #[test]
     fn theme_board_names_the_psalm_after_the_sermon() {
         let svc = middagdienst();
-        let boards = board_slides(&svc, &build_slides(&svc, &Library::default()), false);
+        let boards = board_slides(&svc, &build_slides(&svc, &Library::default(), &Kerk::default()), false);
         let themes: Vec<&Slide> = boards.iter().filter(|b| b.kind == "thema").collect();
         assert_eq!(themes.len(), 2);
         assert_eq!((themes[0].sub.as_str(), themes[0].theme.as_str()), ("Zondag 22", "Verrast door vreugde"));
@@ -1671,7 +1707,7 @@ pub(crate) mod tests {
         // Nothing sung after the sermon: no line.
         let mut short = middagdienst();
         short.items.retain(|i| !matches!(i.id.as_str(), "i12" | "i13" | "i14" | "i15"));
-        let boards = board_slides(&short, &build_slides(&short, &Library::default()), false);
+        let boards = board_slides(&short, &build_slides(&short, &Library::default(), &Kerk::default()), false);
         assert_eq!(boards.iter().find(|b| b.kind == "thema").unwrap().footer, "");
     }
 
@@ -1686,7 +1722,7 @@ pub(crate) mod tests {
             board_rows(&svc),
             ["Ps 90:1", "Ps 147:1", "Ps 32:6", "Hab.3:17-19", "1 Petr.1:3-9", "Openb.7:9-12", "", "Ps 27:3,7", "Ps 42:1,5", "Ps 43:4", "", "Na de dienst:", "U zij de glorie"]
         );
-        let slides = build_slides(&svc, &Library::default());
+        let slides = build_slides(&svc, &Library::default(), &Kerk::default());
         assert!(slides[0].list.iter().any(|l| l == "Na de dienst: U zij de glorie"), "{:?}", slides[0].list);
         let boards = board_slides(&svc, &slides, false);
         let last = boards.iter().rev().find(|b| b.kind == "slotzang").unwrap();
@@ -1699,7 +1735,7 @@ pub(crate) mod tests {
     #[test]
     fn slotzang_with_its_text_on_the_boards_when_set() {
         let svc = middagdienst();
-        let slides = build_slides(&svc, &Library::default());
+        let slides = build_slides(&svc, &Library::default(), &Kerk::default());
         let slotzang = |boards: Vec<Slide>| -> Vec<Slide> { boards.into_iter().zip(&slides).filter(|(_, s)| s.kind == "slotzang").map(|(b, _)| b).collect() };
         // Off (the default): only which psalm, also during the verse.
         let off = slotzang(board_slides(&svc, &slides, false));
@@ -1762,7 +1798,7 @@ pub(crate) mod tests {
         let mut svc = service();
         svc.items.insert(4, Item { kind: "preek".into(), label: "Prediking".into(), ..Default::default() });
         svc.items.insert(5, Item { psalm: 3, verses: vec![1], kind: "slotzang".into(), label: "Slotzang".into(), ..Default::default() });
-        let slides = build_slides(&svc, &Library::default());
+        let slides = build_slides(&svc, &Library::default(), &Kerk::default());
         let auto = board_slides(&svc, &slides, false);
         assert_eq!(auto[0].list, ["Ps 1:1,2", "Ps 2:1", "Ps 3:1"]);
         svc.board_custom = BoardCustom {
@@ -1999,6 +2035,26 @@ pub(crate) mod tests {
         show.save_service(svc, false).await;
         let v = show.view();
         assert_eq!(v.services.iter().find(|s| s.id == "2024-07-14 09:30").unwrap().operator, "Bediener 3/Bediener 4");
+    }
+
+    #[tokio::test]
+    async fn another_church_has_its_own_name_on_the_boards() {
+        let mut svc = service();
+        svc.items.push(item("i99", "einde", "Aftiteling"));
+        let show = show_with(svc).await;
+        let v = show.view();
+        assert_eq!(v.slides[0].header, "Hersteld Hervormde Gemeente Tholen");
+        assert_eq!(v.kerk_naam, "Hersteld Hervormde Gemeente Tholen");
+        show.set_kerk(Kerk { naam: "Protestantse Gemeente Ergens".into(), website: "https://www.pgergens.nl/".into(), ..Default::default() }).await;
+        let v = show.view();
+        assert_eq!((v.slides[0].kind.as_str(), v.slides[0].header.as_str()), ("welkom", "Protestantse Gemeente Ergens"));
+        let end = v.slides.iter().find(|s| s.kind == "einde").unwrap();
+        assert_eq!((end.header.as_str(), end.footer.as_str()), ("Protestantse Gemeente Ergens", "www.pgergens.nl"));
+        assert_eq!(v.kerk_naam, "Protestantse Gemeente Ergens");
+        // No page with the services: fetching says where to set it.
+        show.set_kerk(Kerk { liturgie_url: String::new(), ..Default::default() }).await;
+        let e = show.fetch(|| false).await.unwrap_err();
+        assert!(format!("{e:#}").contains("Onze kerk"), "{e:#}");
     }
 
     #[tokio::test]

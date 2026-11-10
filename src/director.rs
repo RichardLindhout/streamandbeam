@@ -127,7 +127,8 @@ impl Director {
         v.stream_layout.clear();
         let (scene, _, _) = picture_for(&v, Duration::from_secs(3600), &self.settings());
         let zones = self.settings().overlay_zones;
-        let key = format!("{scene:?}{zones:?}");
+        let kerk = self.settings().kerk;
+        let key = format!("{scene:?}{zones:?}{kerk:?}");
         if let Some(png) = self.thumbs.lock().unwrap().get(&key) {
             return Some(png.clone());
         }
@@ -152,7 +153,9 @@ impl Director {
         let renderer = self.renderer.lock().unwrap().clone()?;
         let rgba = {
             let mut r = renderer.lock().unwrap();
-            r.set_zones(&self.settings().overlay_zones);
+            let s = self.settings();
+            r.set_zones(&s.overlay_zones);
+            r.set_church(&s.kerk);
             r.render(scene)
         };
         let overlay = image::RgbaImage::from_raw(WIDTH, HEIGHT, rgba)?;
@@ -235,7 +238,7 @@ impl Director {
         let privacy = if settings.youtube_test { "private" } else { settings.youtube_privacy.as_str() };
         let b = self
             .youtube
-            .broadcast_for(&settings.youtube_client_id, &settings.youtube_client_secret, &svc, privacy, &svc.youtube_id, settings.youtube_test)
+            .broadcast_for(&settings.youtube_client_id, &settings.youtube_client_secret, &svc, &settings.kerk.signature(), privacy, &svc.youtube_id, settings.youtube_test)
             .await?;
         println!("YouTube-uitzending: {} ({})", b.title, b.watch_url);
         show.set_youtube_id(&svc.id, &b.id).await;
@@ -372,15 +375,17 @@ impl Director {
                 }
             }
             let (scene, position, until) = picture_for(&view, on_screen.2.elapsed(), &settings);
-            let drawn = (scene.clone(), settings.overlay_zones.clone());
+            let drawn = (scene.clone(), settings.overlay_zones.clone(), settings.kerk.clone());
             if last_scene.as_ref() != Some(&drawn) {
                 last_scene = Some(drawn);
                 let r = renderer.clone();
                 let zones = settings.overlay_zones.clone();
+                let kerk = settings.kerk.clone();
                 let camera = scene.camera_rect();
                 let render = move || {
                     let mut r = r.lock().unwrap();
                     r.set_zones(&zones);
+                    r.set_church(&kerk);
                     r.render(&scene)
                 };
                 if let Ok(pixels) = tokio::task::spawn_blocking(render).await {
@@ -635,9 +640,9 @@ fn scene_for(view: &View, shown: Duration, s: &Settings) -> (Scene, Position, Op
         "einde" if shown < PULPIT_HOLD => (Scene::Camera, Position::Preekstoel, Some(PULPIT_HOLD)),
         "einde" => {
             let mut sentences: Vec<String> = next_sentence(view).into_iter().collect();
-            sentences.push("Voor meer informatie over onze gemeente kijk op www.hhgtholen.nl".into());
+            sentences.extend(s.kerk.more_info());
             let n = (shown - PULPIT_HOLD).as_secs() / SWAP.as_secs();
-            let left = sentences[n as usize % sentences.len()].clone();
+            let left = if sentences.is_empty() { String::new() } else { sentences[n as usize % sentences.len()].clone() };
             let until = (sentences.len() > 1).then(|| PULPIT_HOLD + SWAP * (n as u32 + 1));
             (Scene::Frame { photo: Photo::Inside, left, right: String::new() }, Position::Overzicht, until)
         }

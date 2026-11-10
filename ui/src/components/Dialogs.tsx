@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { CalendarPlus, FileSpreadsheet, Globe, LogIn } from "lucide-react";
 import { toast } from "sonner";
-import type { ImportReport, ScheduleDay, ScheduleSummary, Schedules, Service, Settings, Span, StreamStatus, View } from "@/lib/api";
+import type { ImportReport, Kerk, ScheduleDay, ScheduleSummary, Schedules, Service, Settings, Span, StreamStatus, View } from "@/lib/api";
+import { Picture } from "@/views/Schermen";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { BoardBackground, StreamControls } from "./PrepareCards";
 import { SoundSourcePicker } from "./SoundSource";
@@ -98,6 +99,7 @@ export function SettingsDialog({ open, onOpenChange, state, status, onMade }: {
         <TabsContent value="algemeen" className="flex min-h-0 flex-col max-md:flex-1">
         {s ? (
           <DialogBody className="gap-8 max-md:gap-6">
+            <ChurchSettings kerk={s.kerk} qrLink={s.qrLink} onChange={(kerk, qrLink) => setS({ ...s, kerk, qrLink })} />
             <Section title="Diensten">
               <div className="grid gap-3 sm:grid-cols-2">
                 <Button variant="outline" disabled={fetching} onClick={fetchSite}><Globe /> {fetching ? "Bezig…" : "Diensten ophalen van website"}</Button>
@@ -127,7 +129,6 @@ export function SettingsDialog({ open, onOpenChange, state, status, onMade }: {
                 {f("autoStartMinutes", "Automatisch live (min vooraf, 0 = uit)", "number")}
                 {f("autoStopSeconds", "Stoppen na aftiteling (seconden)", "number")}
                 {sel("autopilot", "Meeluisteren", [["uit", "Uit"], ["suggestie", "Suggestie"], ["automatisch", "Automatisch"]])}
-                {f("qrLink", "Link in QR-code")}
               </div>
               <label className="flex min-h-14 items-center gap-3 text-[20px]">
                 <Switch checked={!!s.slotzangTekst} onCheckedChange={(v) => setS({ ...s, slotzangTekst: v })} />
@@ -192,6 +193,45 @@ export function SettingsDialog({ open, onOpenChange, state, status, onMade }: {
       </DialogContent>
       <NewServiceDialog open={newOpen} onOpenChange={setNewOpen} onMade={onMade} services={state?.services} />
     </Dialog>
+  );
+}
+
+/** Who the church is: a few plain questions. Everything that says "HHG Tholen" comes from here. */
+function ChurchSettings({ kerk, qrLink, onChange }: { kerk: Kerk; qrLink: string; onChange: (k: Kerk, qrLink: string) => void }) {
+  const set = (patch: Partial<Kerk>) => onChange({ ...kerk, ...patch }, qrLink);
+  const text = (k: "naam" | "website" | "liturgieUrl", label: string, hint: string, placeholder: string) => (
+    <div className="grid gap-1.5">
+      <Label htmlFor={`kerk-${k}`}>{label}</Label>
+      <Input id={`kerk-${k}`} value={kerk[k]} placeholder={placeholder} onChange={(e) => set({ [k]: e.target.value })} />
+      <span className="text-[17px] text-muted-foreground">{hint}</span>
+    </div>
+  );
+  const picture = (k: "fotoStart" | "fotoEinde" | "logo", label: string) => (
+    <div className="grid gap-1.5">
+      <Label>{label}</Label>
+      <div className="flex items-center gap-2"><Picture value={kerk[k]} onChange={(v) => set({ [k]: v })} /></div>
+    </div>
+  );
+  return (
+    <Section title="Onze kerk">
+      <div className="grid gap-4 sm:grid-cols-2">
+        {text("naam", "Naam van de gemeente", "Op de borden, onder de uitzending en op de meekijkpagina.", "Hervormde Gemeente …")}
+        {text("website", "Website", "Op het eindbeeld: ‘kijk op …’.", "www.onzekerk.nl")}
+        {text("liturgieUrl", "Pagina met de diensten", "Daar haalt het programma elk uur de liturgie. Leeg: zelf invullen.", "https://www.onzekerk.nl/kerkdiensten")}
+        <div className="grid gap-1.5">
+          <Label htmlFor="kerk-kerktijden">Nummer op kerktijden.nl</Label>
+          <Input id="kerk-kerktijden" type="number" min={0} value={kerk.kerktijdenId} onChange={(e) => set({ kerktijdenId: Math.max(0, Math.round(+e.target.value || 0)) })} />
+          <span className="text-[17px] text-muted-foreground">Voor de predikant en de volgende dienst. 0: niet gebruiken.</span>
+        </div>
+        <div className="grid gap-1.5 sm:col-span-2">
+          <Label htmlFor="kerk-qr">Link in de QR-code</Label>
+          <Input id="kerk-qr" value={qrLink} placeholder="https://www.onzekerk.nl" onChange={(e) => onChange(kerk, e.target.value)} />
+        </div>
+        {picture("fotoStart", "Foto startbeeld")}
+        {picture("fotoEinde", "Foto eindbeeld")}
+        {picture("logo", "Logo (wit op doorzichtig)")}
+      </div>
+    </Section>
   );
 }
 

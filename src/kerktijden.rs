@@ -4,8 +4,6 @@ use anyhow::Result;
 use chrono::NaiveDateTime;
 use serde::Deserialize;
 
-/// HHG Tholen, De Levensbron.
-pub const COMMUNITY_ID: u32 = 57;
 
 #[derive(Debug, Clone)]
 pub struct Gathering {

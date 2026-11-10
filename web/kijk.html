@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HHG Tholen — meekijken</title>
+<title>Meekijken</title>
 <link rel="stylesheet" href="/slide.css">
 <link rel="stylesheet" href="/kijk.css">
 <style>
@@ -26,7 +26,7 @@
 </head>
 <body>
 <header class="top">
-  <div class="brand"><i>✝</i><div>HHG Tholen<small>meekijken</small></div></div>
+  <div class="brand"><i>✝</i><div id="kerk">Kerkdienst<small>meekijken</small></div></div>
   <span class="hint" id="service">—</span>
   <div class="pills"><span class="pill" id="livePill"><span class="dot" id="liveDot"></span><span id="liveText">Niet live</span></span></div>
 </header>
@@ -61,6 +61,11 @@
     else renderSlide($("board"), state.overrideBoard || boards[state.index], state.black, { portrait: true });
   }
   listen(function (st) {
+    // The church's own name, from its settings.
+    if (st.kerkNaam && document.title !== st.kerkNaam + " — meekijken") {
+      document.title = st.kerkNaam + " — meekijken";
+      $("kerk").firstChild.nodeValue = st.kerkNaam;
+    }
     state = st;
     drawBoard();
     var slide = st.slides ? st.slides[st.index] : null;

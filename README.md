@@ -49,6 +49,13 @@ uit Excel bijwerken**, of `streamandbeam importeer-excel Streamupdate.xlsm` (sch
 `data/roosters.json`; zonder dat bestand geldt het ingebouwde rooster). In psalmen en
 gezangen is een streepje "en": Ps. 27: 3-7 is vers 3 en 7.
 
+## Een andere kerk
+
+Wat het programma over de kerk weet, staat in **Instellingen → Onze kerk**: de naam (op de
+borden, onder de uitzending en op de meekijkpagina), de website (op het eindbeeld), de pagina
+met de diensten, het nummer op kerktijden.nl, de link in de QR-code en de foto's voor het
+start- en eindbeeld en het logo. Zonder instellingen zijn het die van HHG Tholen.
+
 ## Eigen schermen en beelden
 
 Onder **⋯ → Schermen en beelden** maak je zelf een bord voor de TV's of een beeld voor de

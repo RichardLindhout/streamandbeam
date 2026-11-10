@@ -168,6 +168,9 @@ pub struct Renderer {
     zones: Vec<Zone>,
     /// Folder with the church's own pictures, for its own screens.
     image_dir: PathBuf,
+    /// The church's pictures for the start and end screen and its logo, by file name (see
+    /// `crate::kerk::Kerk`); the built-in ones when not set.
+    church_pictures: [String; 3],
     /// Pictures already read, by file name, with the file's time (None = built in).
     pictures: HashMap<String, (Option<SystemTime>, Option<Arc<Pixmap>>)>,
 }
@@ -228,6 +231,7 @@ impl Renderer {
             logo: load(images.logo),
             qr,
             image_dir: PathBuf::new(),
+            church_pictures: ["buiten.jpg".into(), "interieur.jpg".into(), "logo-wit.png".into()],
             pictures: HashMap::new(),
         }
     }
@@ -246,6 +250,11 @@ impl Renderer {
 
     pub fn set_zones(&mut self, zones: &[Zone]) {
         self.zones = zones.to_vec();
+    }
+
+    /// The church's pictures for the start and end screen and its logo.
+    pub fn set_church(&mut self, kerk: &crate::kerk::Kerk) {
+        self.church_pictures = [kerk.foto_start.clone(), kerk.foto_einde.clone(), kerk.logo.clone()];
     }
 
     /// Where the church's own pictures are.
@@ -534,10 +543,12 @@ impl Renderer {
         let w = WIDTH as f32;
         pm.fill(color(FRAME_TEAL, 255));
         fill_rect(pm, BAR, 0.0, w - BAR, BAR_TOP, [255; 3], 255);
-        let img = if photo == Photo::Inside { &self.inside } else { &self.outside };
+        let [start, end, logo] = self.church_pictures.clone();
+        let fallback = if photo == Photo::Inside { self.inside.clone() } else { self.outside.clone() };
+        let img = self.picture(if photo == Photo::Inside { &end } else { &start }).or_else(|| fallback.map(Arc::new));
         if let Some(img) = img {
             let mut part = Pixmap::new((w - PHOTO_X) as u32, PHOTO_BOTTOM as u32).unwrap();
-            draw_cover(&mut part, img, 0.0, 0.0, w - PHOTO_X, PHOTO_BOTTOM);
+            draw_cover(&mut part, &img, 0.0, 0.0, w - PHOTO_X, PHOTO_BOTTOM);
             pm.draw_pixmap(PHOTO_X as i32, 0, part.as_ref(), &PixmapPaint::default(), Transform::identity(), None);
         }
         // The thin white L inside the photo.
@@ -545,10 +556,10 @@ impl Renderer {
         fill_rect(pm, PHOTO_X + 8.0, PHOTO_BOTTOM - 11.0, w - PHOTO_X - 8.0, 3.0, [255; 3], 255);
         // Logo, dark on a white tile.
         fill_rect(pm, 0.0, 0.0, 195.0, 140.0, [255; 3], 255);
-        if let Some(logo) = &self.logo {
+        if let Some(logo) = self.picture(&logo).or_else(|| self.logo.clone().map(Arc::new)) {
             let scale = (187.0 / logo.width() as f32).min(134.0 / logo.height() as f32);
             let (lw, lh) = (logo.width() as f32 * scale, logo.height() as f32 * scale);
-            let mut dark = logo.clone();
+            let mut dark = (*logo).clone();
             for px in dark.data_mut().chunks_exact_mut(4) {
                 px[0] = 0;
                 px[1] = 0;

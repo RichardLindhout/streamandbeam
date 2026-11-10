@@ -11,8 +11,6 @@ use serde::Deserialize;
 use serde_json::json;
 use std::sync::LazyLock;
 
-pub const LITURGY_URL: &str = "https://www.hhgtholen.nl/kerkdiensten";
-
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct Extracted {
     pub diensten: Vec<ExtractedService>,
@@ -78,7 +76,7 @@ pub async fn ask_ai(page: &str) -> Result<Extracted> {
         "properties": {"diensten": {"type": "array", "items": service}}
     });
     let prompt = format!(
-        "Below is the HTML of the \"Kerkdiensten\" page of a Dutch Reformed (Hersteld Hervormde) church. It lists the \
+        "Below is the HTML of the \"Kerkdiensten\" page of a Dutch Protestant church. It lists the \
          liturgy of upcoming services. Map every service onto the format. The sermon text (\"Tekst:\") goes in preektekst, \
          not in onderdelen. Ignore discussion questions (\"Vragen\").\n\n{}\n\n{}\n\nHTML:\n{page}",
         crate::claude::RULES,

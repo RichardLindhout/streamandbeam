@@ -86,6 +86,8 @@ pub struct Settings {
     /// The boards also show the full text of the slotzang verses (and of the song after the
     /// service), as the church's PowerPoint did. Off: only which psalm, in large letters.
     pub slotzang_tekst: bool,
+    /// Who the church is: name, website, where its services are listed, its pictures.
+    pub kerk: crate::kerk::Kerk,
 }
 
 impl Settings {
@@ -142,6 +144,7 @@ impl Default for Settings {
             youtube_channel: "UCv0FTJ5pf3aXF7fhVYLwe2g".into(),
             overlay_zones: vec![crate::render::Zone::camera_circle()],
             slotzang_tekst: false,
+            kerk: crate::kerk::Kerk::default(),
         }
     }
 }

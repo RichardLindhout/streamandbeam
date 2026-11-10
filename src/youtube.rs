@@ -196,7 +196,9 @@ impl YouTube {
 
     /// Creates (or reuses) the broadcast for a service and binds it to our stream.
     /// It goes live by itself as soon as video arrives and ends when the video stops.
-    pub async fn broadcast_for(&self, id: &str, secret: &str, svc: &Service, privacy: &str, existing: &str, test: bool) -> Result<Broadcast> {
+    /// `signature` closes the description: the church's name and website (see Kerk::signature).
+    #[allow(clippy::too_many_arguments)]
+    pub async fn broadcast_for(&self, id: &str, secret: &str, svc: &Service, signature: &str, privacy: &str, existing: &str, test: bool) -> Result<Broadcast> {
         let (stream_id, rtmp_url, stream_key) = self.stream(id, secret).await?;
         let title = if test { format!("TEST {}", title_for(svc)) } else { title_for(svc) };
         if !existing.is_empty() {
@@ -209,7 +211,7 @@ impl YouTube {
         let body = json!({
             "snippet": {
                 "title": title,
-                "description": description_for(svc),
+                "description": description_for(svc, signature),
                 "scheduledStartTime": chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true),
             },
             "status": {"privacyStatus": privacy, "selfDeclaredMadeForKids": false},
@@ -285,8 +287,9 @@ pub fn title_for(svc: &Service) -> String {
 /// The description, as the "YouTube stream info" the church copied from its Excel sheet: the
 /// predikant, "Liturgie:" with the psalms in order (voorzang first), the readings on one line,
 /// the text, and the theme with its points. Psalm verses are written with commas: the church
-/// writes "Ps. 27: 3-7" for verses 3 and 7, which viewers would read as a range.
-fn description_for(svc: &Service) -> String {
+/// writes "Ps. 27: 3-7" for verses 3 and 7, which viewers would read as a range. `signature`
+/// (the church's name and website) closes it.
+fn description_for(svc: &Service, signature: &str) -> String {
     let mut first: Vec<String> = Vec::new();
     if !svc.predikant.is_empty() {
         first.push(format!("Voorganger: {}", svc.predikant));
@@ -318,7 +321,7 @@ fn description_for(svc: &Service) -> String {
         theme.push(format!("Thema: {}", svc.theme));
         theme.extend(svc.points.iter().enumerate().map(|(i, p)| format!("{}. {p}", i + 1)));
     }
-    let end = vec!["Hersteld Hervormde Gemeente Tholen — www.hhgtholen.nl".to_string()];
+    let end: Vec<String> = [signature.trim()].into_iter().filter(|s| !s.is_empty()).map(String::from).collect();
     let blocks: Vec<String> = [first, read, theme, end].into_iter().filter(|b| !b.is_empty()).map(|b| b.join("\n")).collect();
     // YouTube refuses a description with < or > in it (and then the broadcast is not made).
     blocks.join("\n\n").replace(['<', '>'], "")
@@ -374,7 +377,7 @@ mod tests {
         let mut svc = crate::show::tests::middagdienst();
         svc.predikant = "ds. A. den Hartog".into();
         assert_eq!(
-            description_for(&svc),
+            description_for(&svc, &crate::kerk::Kerk::default().signature()),
             "Voorganger: ds. A. den Hartog\n\
              Liturgie:\n\
              Psalm 90 : 1\n\
@@ -400,8 +403,11 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(
-            description_for(&morning),
+            description_for(&morning, &crate::kerk::Kerk::default().signature()),
             "Schriftlezing: 1 Samuël 13\nTekst: 1 Samuël 13 : 11\n\nHersteld Hervormde Gemeente Tholen — www.hhgtholen.nl"
         );
+        // Another church closes with its own name; without one there is no closing line.
+        assert!(description_for(&morning, "Protestantse Gemeente Ergens — www.pgergens.nl").ends_with("\n\nProtestantse Gemeente Ergens — www.pgergens.nl"));
+        assert_eq!(description_for(&morning, ""), "Schriftlezing: 1 Samuël 13\nTekst: 1 Samuël 13 : 11");
     }
 }

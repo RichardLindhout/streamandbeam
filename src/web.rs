@@ -594,11 +594,12 @@ async fn save_settings(State(app): State<App>, Query(c): Query<Confirmed>, Json(
             return r;
         }
     }
-    let slotzang_text = s.slotzang_tekst;
+    let (slotzang_text, kerk) = (s.slotzang_tekst, s.kerk.clone());
     match app.director.save_settings(s).await {
         Ok(()) => {
             // The boards follow the setting at once.
             app.show.set_slotzang_text(slotzang_text).await;
+            app.show.set_kerk(kerk).await;
             StatusCode::NO_CONTENT.into_response()
         }
         Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, format!("{e:#}")).into_response(),
@@ -864,7 +865,7 @@ async fn upload_image(State(app): State<App>, Query(q): Query<ImageName>, header
 /// The QR code of the settings as a picture, for the boards and the editor.
 async fn qr_png(State(app): State<App>) -> Response {
     let link = app.director.settings().qr_link;
-    let Ok(code) = qrcode::QrCode::new(if link.is_empty() { "https://www.hhgtholen.nl" } else { link.as_str() }) else {
+    let Ok(code) = qrcode::QrCode::new(if link.is_empty() { " " } else { link.as_str() }) else {
         return StatusCode::NOT_FOUND.into_response();
     };
     let (n, quiet, cell) = (code.width() as u32, 2u32, 10u32);

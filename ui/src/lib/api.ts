@@ -220,6 +220,17 @@ export type SoundInput = { name: string; usb: boolean; default: boolean };
 /** audioSource for an input chosen by name. */
 export const DEVICE = "apparaat:";
 
+/** Who the church is (see kerk.rs). */
+export type Kerk = {
+  naam: string;
+  website: string;
+  liturgieUrl: string;
+  kerktijdenId: number;
+  fotoStart: string;
+  fotoEinde: string;
+  logo: string;
+};
+
 export type Settings = {
   cameraIp: string;
   cameraRtsp: string;
@@ -246,6 +257,7 @@ export type Settings = {
   youtubeTest: boolean;
   autopilot: string;
   youtubeChannel: string;
+  kerk: Kerk;
   /** The boards also show the text of the slotzang verses (off: only which psalm). */
   slotzangTekst: boolean;
   [k: string]: unknown;

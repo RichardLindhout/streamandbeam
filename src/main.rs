@@ -12,6 +12,7 @@ mod director;
 mod excel;
 mod extract;
 mod kerktijden;
+mod kerk;
 mod layout;
 mod listen;
 mod parse;
@@ -31,6 +32,7 @@ use std::path::PathBuf;
 struct Options {
     port: u16,
     data_dir: PathBuf,
+    /// --liturgie-url: read the services from here instead of the page in the church's settings.
     liturgy_url: String,
     /// Port for the read-only watch page (for a Cloudflare tunnel); 0 = off (the default).
     public_port: u16,
@@ -43,7 +45,7 @@ fn parse_args() -> Options {
     let mut opts = Options {
         port: 8080,
         data_dir: "data".into(),
-        liturgy_url: extract::LITURGY_URL.into(),
+        liturgy_url: String::new(),
         public_port: 0,
         command: None,
         args: Vec::new(),
@@ -103,7 +105,12 @@ fn lan_ip() -> String {
 async fn main() -> anyhow::Result<()> {
     let opts = parse_args();
     if opts.command.as_deref() == Some("fetch") {
-        let html = extract::http_get(&opts.liturgy_url).await?;
+        let url = if opts.liturgy_url.is_empty() {
+            texts::read_json::<stream::Settings>(&opts.data_dir.join("instellingen.json")).unwrap_or_default().kerk.liturgie_url
+        } else {
+            opts.liturgy_url.clone()
+        };
+        let html = extract::http_get(&url).await?;
         let mut ex = extract::read_page(&html, chrono::Local::now().date_naive());
         if claude::has_key() {
             match extract::ask_ai(&html).await {
@@ -130,6 +137,7 @@ async fn main() -> anyhow::Result<()> {
     let engine = stream::Engine::new()?;
     let director = director::Director::new(engine.clone(), &opts.data_dir);
     show.set_slotzang_text(director.settings().slotzang_tekst).await;
+    show.set_kerk(director.settings().kerk).await;
     let listener = listen::Listener::new();
     engine.set_listener(listener.clone());
     if director.settings().autopilot != "uit" {

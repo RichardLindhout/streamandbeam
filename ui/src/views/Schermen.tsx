@@ -158,7 +158,7 @@ function Check({ checked, onChange, children }: { checked: boolean; onChange: (b
 }
 
 /** Choose one of the church's pictures, or add a new one. */
-function Picture({ value, onChange }: { value: string; onChange: (name: string) => void }) {
+export function Picture({ value, onChange }: { value: string; onChange: (name: string) => void }) {
   const [names, setNames] = useState<string[]>([]);
   const file = useRef<HTMLInputElement>(null);
   const load = () => fetch("/api/afbeeldingen").then((r) => r.json()).then(setNames).catch(() => {});
