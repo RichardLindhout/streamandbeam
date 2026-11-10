@@ -13,17 +13,33 @@ export function sourceProblem(status: StreamStatus) {
   return status.mode !== "stop" && (status.audioIssue === "niet-gevonden" || status.audioIssue === "geen-invoer");
 }
 
-/** The status light: green, amber (the boards, or the sound outside live) or red, with its lines.
- *  `silent`: what is wrong is that no sound comes in, so the light can say "Geen geluid". */
+/** The status light: green, amber (boards, live without YouTube, or a problem in the preview) or
+ *  red, with its lines. `silent`: what is wrong is that no sound comes in, so the light can say
+ *  "Geen geluid". */
 export function health(status: StreamStatus, yt: YouTubeCheck | null, connected: boolean, alarm: boolean) {
   const live = status.mode === "live";
+  const on = status.mode !== "stop";
+  // Recording or live, a problem is serious; in the preview only a warning, so it is noticed
+  // before the service (and a camera that is off during the week is no alarm).
+  const serious = live || status.mode === "opnemen";
   const lines: Health[] = [];
   if (!connected) lines.push({ label: "Verbinding", ok: false });
-  if (live) lines.push({ label: "YouTube", ok: !status.error });
+  if (on) {
+    lines.push({ label: live ? "Uitzending" : serious ? "Opname" : "Voorbeeld", ok: !status.error, warn: !serious, detail: status.error });
+    lines.push({
+      label: "Camera",
+      ok: !!status.camera && status.cameraLive !== false,
+      warn: !serious,
+      detail: status.camera ? "Geen beeld van de camera. Staat de camera aan?" : "Geen camera ingesteld: testbeeld",
+    });
+  }
+  if (live && status.youtube === "geen") lines.push({ label: "YouTube", ok: false, warn: true, detail: "Geen YouTube ingesteld: alleen opname" });
+  else if (live) lines.push({ label: "YouTube", ok: status.youtube !== "fout", detail: status.youtubeError ? `${status.youtubeError}. We nemen wel op.` : "" });
   let silent = false;
-  if (status.mode !== "stop") {
+  if (on) {
     const ytSilent = !!(live && yt?.at && yt.live && !yt.audio);
-    // In the preview between services silence is normal: only "let op" then.
+    // In the preview between services silence is normal: only "let op" then. A missing sound
+    // input is never normal, also not before the service.
     const warn = !ytSilent && !sourceProblem(status) && (!live || status.audioIssue === "niet-usb");
     const ok = !status.audioIssue && !ytSilent;
     lines.push({ label: "Geluid", ok, warn, detail: status.audioWarning || (ytSilent ? "Geen geluid op YouTube" : "") });
@@ -47,11 +63,13 @@ export function alarms(state: View | null, svc: Service | undefined, status: Str
   const list: Alarm[] = [];
   if (status.autoStartError && !live) list.push({ id: "start", title: "Uitzending start niet", button: "Opnieuw", action: "retry" });
   if (live && status.error) list.push({ id: "hapert", title: "Uitzending hapert", button: "Gezien", action: "seen" });
+  // The recording goes on; YouTube is tried again by itself.
+  if (live && status.youtube === "fout") list.push({ id: "youtube", title: "YouTube werkt niet: we nemen wel op", button: "Gezien", action: "seen" });
   if (sourceProblem(status)) {
     const title = status.audioIssue === "niet-gevonden" ? "Geluidsbron niet aangesloten" : "Geen geluidsinvoer";
     list.push({ id: "geluidsbron", title, button: "Geluidsbron", action: "settings" });
   } else if (live && (status.audioIssue === "stilte" || (yt?.at && yt.live && !yt.audio))) {
-    list.push({ id: "geluid", title: "Geen geluid op YouTube", button: "Gezien", action: "seen" });
+    list.push({ id: "geluid", title: status.youtube === "geen" ? "Geen geluid" : "Geen geluid op YouTube", button: "Gezien", action: "seen" });
   }
   if (!live) return list;
   const slide = state?.slides?.[state.index];

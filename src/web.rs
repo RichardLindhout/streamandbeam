@@ -2,7 +2,7 @@
 
 use crate::director::Director;
 use crate::show::{Service, Show};
-use crate::stream::{Mode, Settings};
+use crate::stream::{Engine, Mode, Settings};
 use axum::{
     Json, Router,
     extract::{Path, Query, State},
@@ -85,6 +85,11 @@ pub fn router(
         .route("/api/listen/accept", post(listen_accept))
         .route("/api/board-override", post(board_override))
         .route("/preview.mjpg", get(preview_mjpeg))
+        // The camera alone, for the operator only (not on the public side: it shows the
+        // church also while the stream shows the start screen).
+        .route("/camera.mjpg", get(camera_mjpeg))
+        .route("/camera.jpg", get(camera))
+        .route("/api/opnames/openen", post(open_recordings))
         .route("/api/thumb", get(thumb))
         .route("/api/youtube-check", get(youtube_check))
         .route("/api/scherm", post(save_layout))
@@ -425,10 +430,20 @@ async fn events(State(app): State<App>, Query(q): Query<EventsQuery>) -> Sse<imp
 
 /// The stream as it leaves the computer, as moving pictures (MJPEG) for an <img>.
 async fn preview_mjpeg(State(app): State<App>) -> Response {
-    let stream = futures::stream::unfold((app, Vec::new()), |(app, last)| async move {
+    mjpeg(app, Engine::preview_jpeg)
+}
+
+/// What the camera sees, without the overlay.
+async fn camera_mjpeg(State(app): State<App>) -> Response {
+    mjpeg(app, Engine::camera_jpeg)
+}
+
+/// Moving pictures (MJPEG) for an <img>: every new picture `frame` gives.
+fn mjpeg(app: App, frame: fn(&Engine) -> Vec<u8>) -> Response {
+    let stream = futures::stream::unfold((app, Vec::new()), move |(app, last)| async move {
         loop {
             tokio::time::sleep(Duration::from_millis(120)).await;
-            let jpeg = app.director.engine.preview_jpeg();
+            let jpeg = frame(&app.director.engine);
             if !jpeg.is_empty() && jpeg != last {
                 let mut part = format!("--frame\r\nContent-Type: image/jpeg\r\nContent-Length: {}\r\n\r\n", jpeg.len()).into_bytes();
                 part.extend_from_slice(&jpeg);
@@ -462,6 +477,9 @@ async fn thumb(State(app): State<App>, Query(q): Query<ThumbQuery>) -> Response 
 async fn stream_status(State(app): State<App>) -> impl IntoResponse {
     let mut v = serde_json::to_value(app.director.engine.status()).unwrap_or_default();
     v["boards"] = app.boards.load(std::sync::atomic::Ordering::Relaxed).into();
+    // Going live without these only records: the console says so before.
+    v["youtubeConfigured"] = app.director.youtube_configured().into();
+    v["recordDir"] = app.director.record_dir().to_string_lossy().into();
     // When the stream starts and stops by itself.
     if let (Some(obj), serde_json::Value::Object(auto)) =
         (v.as_object_mut(), app.director.autopilot_status(&app.show.view(), &app.director.settings()))
@@ -594,11 +612,31 @@ async fn sound_inputs(State(app): State<App>) -> impl IntoResponse {
 }
 
 async fn preview(State(app): State<App>) -> Response {
-    let jpeg = app.director.engine.preview_jpeg();
+    jpeg(app.director.engine.preview_jpeg())
+}
+
+async fn camera(State(app): State<App>) -> Response {
+    jpeg(app.director.engine.camera_jpeg())
+}
+
+fn jpeg(jpeg: Vec<u8>) -> Response {
     if jpeg.is_empty() {
         return StatusCode::NO_CONTENT.into_response();
     }
     ([(header::CONTENT_TYPE, "image/jpeg"), (header::CACHE_CONTROL, "no-store")], jpeg).into_response()
+}
+
+/// Opens the recordings folder in Explorer, on the church PC itself.
+async fn open_recordings(State(app): State<App>) -> Response {
+    let dir = app.director.record_dir();
+    if let Err(e) = std::fs::create_dir_all(&dir) {
+        return (StatusCode::INTERNAL_SERVER_ERROR, format!("Map maken lukt niet: {e}")).into_response();
+    }
+    let opener = if cfg!(windows) { "explorer" } else { "xdg-open" };
+    match std::process::Command::new(opener).arg(&dir).spawn() {
+        Ok(_) => StatusCode::NO_CONTENT.into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, format!("Map openen lukt niet: {e}")).into_response(),
+    }
 }
 
 async fn listen_status(State(app): State<App>) -> impl IntoResponse {
@@ -641,7 +679,8 @@ async fn board_override(State(app): State<App>, Json(o): Json<Override>) -> Stat
 async fn youtube_check(State(app): State<App>) -> impl IntoResponse {
     let mut v = serde_json::to_value(app.check.status()).unwrap_or_default();
     v["channel"] = app.director.settings().youtube_channel.into();
-    v["streaming"] = (app.director.engine.status().mode == crate::stream::Mode::Live).into();
+    // Live without YouTube is only a recording: nothing to watch on the channel.
+    v["streaming"] = app.director.engine.sending_to_youtube().into();
     Json(v)
 }
 

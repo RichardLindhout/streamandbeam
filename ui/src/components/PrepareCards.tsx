@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Circle, Eye, ImageUp, Radio, Square, TreePine } from "lucide-react";
+import { Circle, Eye, FolderOpen, ImageUp, Radio, Square, TreePine } from "lucide-react";
 import { toast } from "sonner";
 import type { Mode, Service, StreamStatus, View } from "@/lib/api";
-import { errorText, quick, saveService, setStreamMode } from "@/lib/api";
+import { errorText, fileName, post, quick, saveService, setStreamMode } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader } from "./ui/card";
 import { Button, buttonVariants } from "./ui/button";
@@ -10,6 +10,7 @@ import { Label } from "./ui/label";
 import { BlurField } from "./BlurField";
 import { Board } from "./Board";
 import { Confirm } from "./Confirm";
+import { GoLive, NO_YOUTUBE } from "./LiveConfirm";
 
 /** A field that saves when you leave it and then says so for a few seconds. */
 function SavingField({ label, value, multiline, rows, onSave }: {
@@ -76,11 +77,16 @@ export function SermonCard({ svc }: { svc: Service }) {
   );
 }
 
-/** Voorbeeld, Opnemen, Live and Stop, for the technician. While live every change is asked first. */
+/** Voorbeeld, Opnemen, Live and Stop, for the technician. While live every change is asked first.
+ *  Below: what is recorded where, and whether YouTube gets it. */
 export function StreamControls({ status }: { status: StreamStatus }) {
   const [ask, setAsk] = useState(false);
   const [stop, setStop] = useState(false);
   const live = status.mode === "live";
+  const openFolder = async () => {
+    const r = await post("/api/opnames/openen");
+    if (r.ok) toast.success("De map staat open op de kerk-PC");
+  };
   const modes: [Mode, string, React.ReactNode][] = [
     ["voorbeeld", "Voorbeeld", <Eye key="v" />],
     ["opnemen", "Opnemen", <Circle key="o" className="fill-current text-live" />],
@@ -101,9 +107,26 @@ export function StreamControls({ status }: { status: StreamStatus }) {
           </Button>
         ))}
       </div>
-      {status.recording && <div className="truncate text-[18px] text-muted-foreground">Opname: {status.recording.split(/[\\/]/).pop()}</div>}
+      {live && status.youtube === "geen" && <div className="rounded-xl border-2 border-warn/50 bg-warn/10 p-3 text-[18px] font-semibold">LIVE (alleen opname): {NO_YOUTUBE}</div>}
+      {live && status.youtube === "fout" && (
+        <div className="rounded-xl border-2 border-live/40 bg-[#fbe9e7] p-3 text-[18px]">
+          <div className="font-semibold text-live">YouTube werkt niet: we nemen wel op</div>
+          {status.youtubeError && <div className="break-words">{status.youtubeError}</div>}
+        </div>
+      )}
       {status.error && <div className="rounded-xl border-2 border-warn/50 bg-warn/10 p-3 text-[18px]">{status.error}</div>}
-      <Confirm open={ask} onOpenChange={setAsk} title="Live gaan?" yes="Ja, live" tone="live" onYes={() => setStreamMode("live")} />
+      <div className="grid gap-2 rounded-xl border-2 bg-background/50 p-3 text-[18px]">
+        <div>
+          {status.recording ? (
+            <><span className="font-semibold">Opname loopt:</span> {fileName(status.recording)}</>
+          ) : (
+            <span className="font-semibold">Opnames (mp4 met beeld en geluid)</span>
+          )}
+        </div>
+        <div className="break-all text-muted-foreground">{status.recordDir || "opnames"}</div>
+        <Button variant="outline" size="sm" className="justify-self-start" onClick={openFolder}><FolderOpen /> Map openen op de kerk-PC</Button>
+      </div>
+      <GoLive open={ask} onOpenChange={setAsk} status={status} />
       <Confirm open={stop} onOpenChange={setStop} title="Uitzending stoppen?" text="Kijkers zien daarna niets meer." yes="Ja, stoppen" tone="live" onYes={() => setStreamMode("stop")} />
     </div>
   );

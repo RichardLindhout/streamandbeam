@@ -88,7 +88,7 @@ export default function App() {
         open={settings} onOpenChange={setSettings} state={state} status={status}
         onMade={() => { setSettings(false); setScreen("voorbereiden"); }}
       />
-      <LiveConfirm />
+      <LiveConfirm status={status} />
       <Toaster />
     </div>
   );

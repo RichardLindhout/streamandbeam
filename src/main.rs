@@ -17,6 +17,7 @@ mod listen;
 mod parse;
 mod render;
 mod roosters;
+mod rtmp;
 mod show;
 mod songs;
 mod stream;
@@ -138,7 +139,8 @@ async fn main() -> anyhow::Result<()> {
     tokio::spawn(listener.clone().suggest_loop(show.clone(), move || d.settings().autopilot));
     let check = ytcheck::YouTubeCheck::new();
     let (d1, d2) = (director.clone(), director.clone());
-    tokio::spawn(check.clone().run(move || d1.settings().youtube_channel, move || d2.engine.status().mode == stream::Mode::Live));
+    // Only while something goes to YouTube (live without YouTube is only a recording).
+    tokio::spawn(check.clone().run(move || d1.settings().youtube_channel, move || d2.engine.sending_to_youtube()));
     tokio::spawn(director.clone().run(show.clone()));
     // The liturgy from the website: at the start and every hour, not while live (then a few
     // minutes later). The program reads it itself; with a key the AI double-checks it.
