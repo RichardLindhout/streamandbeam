@@ -288,7 +288,11 @@ function ScheduleSettings() {
     <div className="grid gap-8">
       <Section title="Roosters">
         <div className="text-[20px] text-muted-foreground">
-          {s ? <>{s.eigen ? "Ingelezen uit" : "Ingebouwd, uit"} <b className="text-foreground">{s.bron || "—"}</b>{s.ingelezen && ` op ${dayMonthYear(s.ingelezen.slice(0, 10))}`}</> : "Laden…"}
+          {!s ? "Laden…" : s.eigen ? (
+            <>Ingelezen uit <b className="text-foreground">{s.bron || "—"}</b>{s.ingelezen && ` op ${dayMonthYear(s.ingelezen.slice(0, 10))}`}</>
+          ) : (
+            "Nog geen roosters. Lees de Excel van de kerk in; tot dan vul je collecte en voorzang zelf in."
+          )}
         </div>
         {s && <SummaryRows s={s.samenvatting} />}
         <label className={cn(buttonVariants({ variant: "outline" }), "cursor-pointer", busy && "pointer-events-none opacity-50")}>

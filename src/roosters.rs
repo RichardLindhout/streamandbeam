@@ -1,8 +1,9 @@
 //! The church's schedules, from its Excel workbook (Streamupdate.xlsm): the collectes and
 //! special days per date (tab Collecterooster), the voorzang of each service (Voorzang) and
 //! who operates the stream (Streamdienst). Read with `streamandbeam importeer-excel <bestand>`
-//! or from the settings; the program has a copy built in (assets/data/roosters.json) and a
-//! newer import in <data>/roosters.json goes before it. The workbook is only read: no macros.
+//! or from the settings, into <data>/roosters.json. Nothing is built in: the schedules hold
+//! the names of volunteers and belong to the church, not in the program (or its public
+//! source). Without an import there are no schedules. The workbook is only read: no macros.
 
 use crate::excel::{Cell, Sheet, Workbook};
 use crate::show::Item;
@@ -68,7 +69,7 @@ pub struct BedieningDag {
     pub datum: String,
     pub morgen: String,
     pub middag: String,
-    /// What else is written beside it, e.g. "Bediener 5 niet".
+    /// What else is written beside it, e.g. "<naam> niet".
     pub notities: Vec<String>,
 }
 
@@ -77,20 +78,23 @@ pub fn morning(time: &str) -> bool {
     NaiveTime::parse_from_str(time.trim(), "%H:%M").map_or(true, |t| t < NaiveTime::from_hms_opt(13, 0, 0).unwrap())
 }
 
-/// The schedules as the program starts with them: an import in `dir`, else the built-in copy.
+/// The schedules as the program starts with them: the import in `dir`, else none.
 pub fn load(dir: &Path) -> Roosters {
     let own = dir.join("roosters.json");
     if own.exists() {
         match crate::texts::read_json(&own) {
             Ok(r) => return r,
-            Err(e) => eprintln!("{}: {e:#}; het ingebouwde rooster wordt gebruikt", own.display()),
+            Err(e) => eprintln!("{}: {e:#}; geen roosters tot de Excel opnieuw is ingelezen", own.display()),
         }
     }
-    builtin()
+    Roosters::default()
 }
 
+/// For the tests: the church's schedules as imported, with every volunteer's name replaced
+/// by "Bediener <n>" (fixtures/roosters.json).
+#[cfg(test)]
 pub fn builtin() -> Roosters {
-    serde_json::from_str(include_str!("../assets/data/roosters.json")).expect("roosters.json")
+    serde_json::from_str(include_str!("../fixtures/roosters.json")).expect("fixtures/roosters.json")
 }
 
 impl Roosters {
@@ -978,7 +982,7 @@ mod tests {
             ("2023-07-30", "Bediener 8", "Bediener 5", &["Bediener 6 niet", "Bediener 11 niet", "Bediener 2 niet"]),
             ("2023-11-15", "Bediener 5", "Bediener 6", &[]), // Dankdag, Wednesday
             ("2024-01-01", "Bediener 6", "", &[]), // the date twice, the first row empty
-            ("2024-01-07", "Bediener 3/Bediener 4", "Bediener 8", &[]), // "Bediener 8 3" beside it is a count, no note
+            ("2024-01-07", "Bediener 3/Bediener 4", "Bediener 8", &[]), // a count beside the name ("<naam> 3"), no note
             ("2024-07-14", "Bediener 3/Bediener 4", "Bediener 1", &["Bediener 5, Bediener 10", "Bediener 9"]),
             ("2024-09-08", "Bediener 3", "Bediener 1", &[]),
             ("2024-11-24", "Bediener 9", "Bediener 3", &[]),
@@ -992,8 +996,8 @@ mod tests {
         assert!(r.bediening.iter().all(|b| b.datum != "2023-01-01"));
     }
 
-    /// Importing the workbook again gives the built-in copy (when the workbook is on this
-    /// computer: STREAMUPDATE_XLSM, or the Downloads folder).
+    /// Importing the workbook again gives the import this computer has (data/roosters.json),
+    /// when the workbook is on it: STREAMUPDATE_XLSM, or the Downloads folder.
     #[test]
     fn importing_the_workbook_gives_the_built_in_copy() {
         let path = std::env::var("STREAMUPDATE_XLSM").unwrap_or_else(|_| r"C:\Users\info\Downloads\Streamupdate.xlsm".into());
@@ -1002,10 +1006,21 @@ mod tests {
             return;
         };
         let (mut r, report) = import(&bytes).unwrap().apply(&Roosters::default(), "Streamupdate.xlsm", NaiveDate::from_ymd_opt(2026, 11, 4).unwrap());
-        let builtin = builtin();
-        r.ingelezen = builtin.ingelezen.clone();
-        assert_eq!(r, builtin);
+        // The import as this computer has it (data/roosters.json), with the real names.
+        let Ok(mine) = crate::texts::read_json::<Roosters>(Path::new("data/roosters.json")) else { return };
+        r.ingelezen = mine.ingelezen.clone();
+        assert_eq!(r, mine);
         assert!(report.behouden.is_empty());
+    }
+
+    #[test]
+    fn without_an_import_there_are_no_schedules() {
+        let dir = std::env::temp_dir().join(format!("sb-geen-rooster-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let r = load(&dir);
+        assert!(r.collectes.is_empty() && r.voorzang.is_empty() && r.bediening.is_empty());
+        assert_eq!((r.collecte_text("2026-11-01"), r.operator("2024-07-14", "09:30")), (String::new(), String::new()));
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

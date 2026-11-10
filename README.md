@@ -46,7 +46,8 @@ nieuwe dienst krijgt de voorzang uit het voorzangrooster (voor 13:00 de ochtend)
 de voorzang op de website af, dan staat dat bij de dienst onder *Nakijken*. De bijzondere
 dag en "Bediening: naam" staan bij de dienst. Bijwerken: **Instellingen → Roosters → Roosters
 uit Excel bijwerken**, of `streamandbeam importeer-excel Streamupdate.xlsm` (schrijft
-`data/roosters.json`; zonder dat bestand geldt het ingebouwde rooster). In psalmen en
+`data/roosters.json`; zonder dat bestand zijn er geen roosters). De roosters zitten niet in
+het programma zelf: er staan namen van vrijwilligers in. In psalmen en
 gezangen is een streepje "en": Ps. 27: 3-7 is vers 3 en 7.
 
 ## Een andere kerk

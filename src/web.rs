@@ -283,7 +283,7 @@ async fn roosters(State(app): State<App>) -> impl IntoResponse {
     Json(serde_json::json!({
         "bron": r.bron,
         "ingelezen": r.ingelezen,
-        // Imported here (data/roosters.json) rather than the copy built into the program.
+        // Imported here (data/roosters.json); without it there are no schedules.
         "eigen": app.show.data_dir().join("roosters.json").exists(),
         "samenvatting": r.summary(),
         "komend": r.upcoming(chrono::Local::now().date_naive(), 56),

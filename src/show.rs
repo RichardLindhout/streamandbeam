@@ -1845,9 +1845,17 @@ pub(crate) mod tests {
         assert_eq!(protected.items.len(), 4);
     }
 
-    async fn show_with(svc: Service) -> Arc<Show> {
+    /// A fresh data folder with the church's schedules imported (the test copy, see
+    /// roosters::builtin), as on the church PC.
+    fn data_dir_with_schedules() -> PathBuf {
         let dir = std::env::temp_dir().join(format!("sb-test-{}-{}", std::process::id(), rand_suffix()));
         std::fs::create_dir_all(&dir).unwrap();
+        write_json(&dir.join("roosters.json"), &crate::roosters::builtin()).unwrap();
+        dir
+    }
+
+    async fn show_with(svc: Service) -> Arc<Show> {
+        let dir = data_dir_with_schedules();
         let show = Show::new(dir.join("liturgie.json"), String::new()).await;
         let id = svc.id.clone();
         show.save_service(svc, false).await;
@@ -2076,8 +2084,7 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn at_start_the_collecte_comes_from_the_schedule() {
-        let dir = std::env::temp_dir().join(format!("sb-test-{}-{}", std::process::id(), rand_suffix()));
-        std::fs::create_dir_all(&dir).unwrap();
+        let dir = data_dir_with_schedules();
         // Saved by an older version: the collecte of the service before, copied.
         let mut svc = service();
         (svc.id, svc.date) = ("2026-11-01 09:30".into(), "2026-11-01".into());

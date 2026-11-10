@@ -1,0 +1,6864 @@
+{
+ "bron": "Streamupdate.xlsm",
+ "ingelezen": "2026-11-04 20:51",
+ "collectes": [
+  {
+   "datum": "2026-01-01",
+   "dag": "Nieuwjaarsdag",
+   "doelen": [
+    "Diaconie",
+    "Kerkvoogdij",
+    "Opleiding predikanten"
+   ]
+  },
+  {
+   "datum": "2026-01-04",
+   "dag": "",
+   "doelen": [
+    "St. SLRO",
+    "Pastoraat & Catechese",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-01-11",
+   "dag": "",
+   "doelen": [
+    "GDC Diaconale projecten Malawi",
+    "Instandhouding predikantsplaats",
+    "Onderhoud orgel"
+   ]
+  },
+  {
+   "datum": "2026-01-18",
+   "dag": "",
+   "doelen": [
+    "St. Een boodschap voor Kerkrade",
+    "Beheer en onderhoud Levensbron",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-01-25",
+   "dag": "",
+   "doelen": [
+    "Diaconie",
+    "Onderhoud gebouwen",
+    "Verwarming"
+   ]
+  },
+  {
+   "datum": "2026-02-01",
+   "dag": "",
+   "doelen": [
+    "St. Shaare Zedek",
+    "Kerkvoogdij",
+    "Plaatselijk jeugdwerk"
+   ]
+  },
+  {
+   "datum": "2026-02-08",
+   "dag": "",
+   "doelen": [
+    "Diaconie",
+    "Instandhouding predikantsplaats",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-02-15",
+   "dag": "",
+   "doelen": [
+    "MAF",
+    "Beheer en onderhoud Levensbron",
+    "Verwarming"
+   ]
+  },
+  {
+   "datum": "2026-02-22",
+   "dag": "",
+   "doelen": [
+    "De vluchtheuvel",
+    "Kerkvoogdij",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-02-25",
+   "dag": "Biddag",
+   "doelen": [
+    "Diaconie (biddagcollecte)",
+    "Biddagcollecte"
+   ]
+  },
+  {
+   "datum": "2026-03-01",
+   "dag": "",
+   "doelen": [
+    "Voorjaarszendingscollecte",
+    "Nalezing biddagcollecte",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-03-08",
+   "dag": "",
+   "doelen": [
+    "Diaconie",
+    "Pastoraat & Catechese",
+    "Onderhoud orgel"
+   ]
+  },
+  {
+   "datum": "2026-03-15",
+   "dag": "Heilig Avondmaal",
+   "doelen": [
+    "St. For a Change",
+    "Kerkvoogdij",
+    "Onderhoud gebouwen"
+   ]
+  },
+  {
+   "datum": "2026-03-22",
+   "dag": "",
+   "doelen": [
+    "Diaconie",
+    "Beheer en onderhoud Levensbron",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-03-29",
+   "dag": "",
+   "doelen": [
+    "GDC Noodhulp en Rampenfonds",
+    "Instandhouding predikantsplaats",
+    "Verwarming"
+   ]
+  },
+  {
+   "datum": "2026-04-03",
+   "dag": "Goede Vrijdag",
+   "doelen": [
+    "Diaconie",
+    "Pastoraat & Catechese",
+    "Plaatselijk jeugdwerk"
+   ]
+  },
+  {
+   "datum": "2026-04-05",
+   "dag": "1e Paasdag",
+   "doelen": [
+    "St. De Hoop",
+    "Kerkvoogdij",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-04-06",
+   "dag": "2e Paasdag",
+   "doelen": [
+    "St. De Hoop",
+    "Kerkvoogdij",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-04-12",
+   "dag": "",
+   "doelen": [
+    "Evangelisatiewerk",
+    "Beheer en onderhoud Levensbron",
+    "Onderhoud orgel"
+   ]
+  },
+  {
+   "datum": "2026-04-19",
+   "dag": "",
+   "doelen": [
+    "Diaconie",
+    "Pastoraat & Catechese",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-04-26",
+   "dag": "",
+   "doelen": [
+    "St. Godonaw Holland",
+    "Kerkvoogdij",
+    "Klimaatbeheersing"
+   ]
+  },
+  {
+   "datum": "2026-05-03",
+   "dag": "",
+   "doelen": [
+    "St. Samen for Aix",
+    "Kerkvoogdij",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-05-10",
+   "dag": "",
+   "doelen": [
+    "Wycliff bijbelvertalers",
+    "Pastoraat & Catechese",
+    "Onderhoud pastorie"
+   ]
+  },
+  {
+   "datum": "2026-05-14",
+   "dag": "Hemelvaartsdag",
+   "doelen": [
+    "Diaconie",
+    "Beheer en onderhoud Levensbron",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-05-17",
+   "dag": "",
+   "doelen": [
+    "St. Evangelisatie Sjofar",
+    "Kerkvoogdij",
+    "Plaatselijk jeugdwerk"
+   ]
+  },
+  {
+   "datum": "2026-05-24",
+   "dag": "1e Pinksterdag",
+   "doelen": [
+    "Zendingscollecte",
+    "Instandhouding predikantsplaats",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-05-25",
+   "dag": "2e Pinksterdag",
+   "doelen": [
+    "Zendingscollecte",
+    "Instandhouding predikantsplaats",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-05-31",
+   "dag": "",
+   "doelen": [
+    "Diaconie",
+    "Pastoraat & Catechese",
+    "Onderhoud orgel"
+   ]
+  },
+  {
+   "datum": "2026-06-07",
+   "dag": "",
+   "doelen": [
+    "De Schutse Hospice",
+    "Kerkvoogdij",
+    "Plaatselijk jeugdwerk"
+   ]
+  },
+  {
+   "datum": "2026-06-14",
+   "dag": "",
+   "doelen": [
+    "Diaconie",
+    "Pastoraat & Catechese",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-06-21",
+   "dag": "Heilig Avondmaal",
+   "doelen": [
+    "St. Serve India",
+    "Instandhouding predikantsplaats",
+    "Klimaatbeheersing"
+   ]
+  },
+  {
+   "datum": "2026-06-28",
+   "dag": "",
+   "doelen": [
+    "St. Friedenstimme",
+    "Beheer en onderhoud Levensbron",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-07-05",
+   "dag": "",
+   "doelen": [
+    "Diaconie",
+    "Kerkvoogdij",
+    "Plaatselijk jeugdwerk"
+   ]
+  },
+  {
+   "datum": "2026-07-12",
+   "dag": "",
+   "doelen": [
+    "GDC Chr. voortgezet onderwijs Malawi",
+    "Pastoraat & Catechese",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-07-19",
+   "dag": "",
+   "doelen": [
+    "Diaconie",
+    "Instandhouding predikantsplaats",
+    "Klimaatbeheersing"
+   ]
+  },
+  {
+   "datum": "2026-07-26",
+   "dag": "",
+   "doelen": [
+    "St. Kom over en help",
+    "Beheer en onderhoud Levensbron",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-08-02",
+   "dag": "",
+   "doelen": [
+    "Diaconie",
+    "Kerkvoogdij",
+    "Onderhoud gebouwen"
+   ]
+  },
+  {
+   "datum": "2026-08-09",
+   "dag": "",
+   "doelen": [
+    "St. Kimon",
+    "Pastoraat & Catechese",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-08-16",
+   "dag": "",
+   "doelen": [
+    "St. De herberg",
+    "Instandhouding predikantsplaats",
+    "Klimaatbeheersing"
+   ]
+  },
+  {
+   "datum": "2026-08-23",
+   "dag": "",
+   "doelen": [
+    "MAF",
+    "Beheer en onderhoud Levensbron",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-08-30",
+   "dag": "",
+   "doelen": [
+    "Diaconie",
+    "Kerkvoogdij",
+    "Onderhoud orgel"
+   ]
+  },
+  {
+   "datum": "2026-09-06",
+   "dag": "",
+   "doelen": [
+    "Wycliff bijbelvertalers",
+    "Pastoraat & Catechese",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-09-13",
+   "dag": "",
+   "doelen": [
+    "Diaconie",
+    "Instandhouding predikantsplaats",
+    "Onderhoud pastorie"
+   ]
+  },
+  {
+   "datum": "2026-09-20",
+   "dag": "Heilig Avondmaal",
+   "doelen": [
+    "St. Hudson Taylor",
+    "Beheer en onderhoud Levensbron",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-09-27",
+   "dag": "",
+   "doelen": [
+    "St. Gave",
+    "Kerkvoogdij",
+    "Plaatselijk jeugdwerk"
+   ]
+  },
+  {
+   "datum": "2026-10-04",
+   "dag": "Israëlzondag",
+   "doelen": [
+    "Werk onder het Joodse volk in Israël",
+    "Pastoraat & Catechese",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-10-11",
+   "dag": "",
+   "doelen": [
+    "Diaconie",
+    "Instandhouding predikantsplaats",
+    "Onderhoud gebouwen"
+   ]
+  },
+  {
+   "datum": "2026-10-18",
+   "dag": "",
+   "doelen": [
+    "GDC Noodhulp en Rampenfonds",
+    "Beheer en onderhoud Levensbron",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-10-25",
+   "dag": "",
+   "doelen": [
+    "Diaconie",
+    "Kerkvoogdij",
+    "Onderhoud orgel"
+   ]
+  },
+  {
+   "datum": "2026-11-01",
+   "dag": "",
+   "doelen": [
+    "Najaarszendingscollecte",
+    "Pastoraat & Catechese",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-11-08",
+   "dag": "",
+   "doelen": [
+    "Diaconie",
+    "Instandhouding predikantsplaats",
+    "Plaatselijk jeugdwerk"
+   ]
+  },
+  {
+   "datum": "2026-11-15",
+   "dag": "",
+   "doelen": [
+    "St Schreeuw om leven",
+    "Beheer en onderhoud Levensbron",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-11-22",
+   "dag": "",
+   "doelen": [
+    "St. De oase",
+    "Kerkvoogdij",
+    "Verwarming"
+   ]
+  },
+  {
+   "datum": "2026-11-25",
+   "dag": "Dankdag",
+   "doelen": [
+    "Diaconie (oogstcollecte)",
+    "Oogstcollecte"
+   ]
+  },
+  {
+   "datum": "2026-11-29",
+   "dag": "",
+   "doelen": [
+    "St. For a Change",
+    "Nalezing oogstcollecte",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-12-06",
+   "dag": "",
+   "doelen": [
+    "St. Friedenstimme",
+    "Pastoraat & Catechese",
+    "Verwarming"
+   ]
+  },
+  {
+   "datum": "2026-12-13",
+   "dag": "",
+   "doelen": [
+    "Diaconie (gezinspakketten en boekjes)",
+    "Instandhouding predikantsplaats",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-12-20",
+   "dag": "Heilig Avondmaal",
+   "doelen": [
+    "St. Eleos",
+    "Beheer en onderhoud Levensbron",
+    "Onderhoud gebouwen"
+   ]
+  },
+  {
+   "datum": "2026-12-25",
+   "dag": "Eerste Kerstdag",
+   "doelen": [
+    "Evangelisatiewerk",
+    "Kerkvoogdij",
+    "Boekjes zondagschool"
+   ]
+  },
+  {
+   "datum": "2026-12-26",
+   "dag": "Tweede Kerstdag",
+   "doelen": [
+    "Evangelisatiewerk",
+    "Kerkvoogdij",
+    "Boekjes zondagschool"
+   ]
+  },
+  {
+   "datum": "2026-12-27",
+   "dag": "",
+   "doelen": [
+    "St. Kom over en help",
+    "Pastoraat & Catechese",
+    "Aflossing Bouwfonds"
+   ]
+  },
+  {
+   "datum": "2026-12-31",
+   "dag": "Oudejaarsdag",
+   "doelen": [
+    "Diaconie",
+    "Kerkvoogdij",
+    "Opleiding predikanten"
+   ]
+  }
+ ],
+ "voorzang": [
+  {
+   "datum": "2023-01-01",
+   "morgen": {
+    "tekst": "Ps. 26: 8 (1) en 12",
+    "soort": "psalm",
+    "nummer": 26,
+    "naam": "Psalm 26",
+    "verzen": [
+     8,
+     12
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 91: 5",
+    "soort": "psalm",
+    "nummer": 91,
+    "naam": "Psalm 91",
+    "verzen": [
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2023-01-08",
+   "morgen": {
+    "tekst": "Ps. 93: 1 en 4 (2)",
+    "soort": "psalm",
+    "nummer": 93,
+    "naam": "Psalm 93",
+    "verzen": [
+     1,
+     4
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 32: 3 (3)",
+    "soort": "psalm",
+    "nummer": 32,
+    "naam": "Psalm 32",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2023-01-15",
+   "morgen": {
+    "tekst": "Ps. 130: 4 (2)",
+    "soort": "psalm",
+    "nummer": 130,
+    "naam": "Psalm 130",
+    "verzen": [
+     4
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 77: 8 (3)",
+    "soort": "psalm",
+    "nummer": 77,
+    "naam": "Psalm 77",
+    "verzen": [
+     8
+    ]
+   }
+  },
+  {
+   "datum": "2023-01-22",
+   "morgen": {
+    "tekst": "Ps. 135: 3 (1)",
+    "soort": "psalm",
+    "nummer": 135,
+    "naam": "Psalm 135",
+    "verzen": [
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 81: 11 en 12 (2)",
+    "soort": "psalm",
+    "nummer": 81,
+    "naam": "Psalm 81",
+    "verzen": [
+     11,
+     12
+    ]
+   }
+  },
+  {
+   "datum": "2023-01-29",
+   "morgen": {
+    "tekst": "Ps. 9: 1 (2) en 2",
+    "soort": "psalm",
+    "nummer": 9,
+    "naam": "Psalm 9",
+    "verzen": [
+     1,
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 86: 3 (3)",
+    "soort": "psalm",
+    "nummer": 86,
+    "naam": "Psalm 86",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2023-02-05",
+   "morgen": {
+    "tekst": "Ps. 75: 1 (1)",
+    "soort": "psalm",
+    "nummer": 75,
+    "naam": "Psalm 75",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 25: 2 en 6 (2)",
+    "soort": "psalm",
+    "nummer": 25,
+    "naam": "Psalm 25",
+    "verzen": [
+     2,
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2023-02-12",
+   "morgen": {
+    "tekst": "Ps. 145: 3 (3)",
+    "soort": "psalm",
+    "nummer": 145,
+    "naam": "Psalm 145",
+    "verzen": [
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 103: 1 (2)",
+    "soort": "psalm",
+    "nummer": 103,
+    "naam": "Psalm 103",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2023-02-19",
+   "morgen": {
+    "tekst": "Ps. 80: 11 (2)",
+    "soort": "psalm",
+    "nummer": 80,
+    "naam": "Psalm 80",
+    "verzen": [
+     11
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 119: 17 (3)",
+    "soort": "psalm",
+    "nummer": 119,
+    "naam": "Psalm 119",
+    "verzen": [
+     17
+    ]
+   }
+  },
+  {
+   "datum": "2023-02-22",
+   "morgen": {
+    "tekst": "Morgenzang : 3, 4 en 5 (2)",
+    "soort": "gezang",
+    "nummer": 9,
+    "naam": "Morgenzang",
+    "verzen": [
+     3,
+     4,
+     5
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 145: 5 (3) en 6",
+    "soort": "psalm",
+    "nummer": 145,
+    "naam": "Psalm 145",
+    "verzen": [
+     5,
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2023-02-26",
+   "morgen": {
+    "tekst": "Ps. 16: 6 (2)",
+    "soort": "psalm",
+    "nummer": 16,
+    "naam": "Psalm 16",
+    "verzen": [
+     6
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 146: 5 en 6 (1 en 3)",
+    "soort": "psalm",
+    "nummer": 146,
+    "naam": "Psalm 146",
+    "verzen": [
+     5,
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2023-03-05",
+   "morgen": {
+    "tekst": "Ps. 30: 3 (3)",
+    "soort": "psalm",
+    "nummer": 30,
+    "naam": "Psalm 30",
+    "verzen": [
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 103: 6 (3)",
+    "soort": "psalm",
+    "nummer": 103,
+    "naam": "Psalm 103",
+    "verzen": [
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2023-03-12",
+   "morgen": {
+    "tekst": "Ps. 54: 1 en 2 (3)",
+    "soort": "psalm",
+    "nummer": 54,
+    "naam": "Psalm 54",
+    "verzen": [
+     1,
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 69: 4 (2)",
+    "soort": "psalm",
+    "nummer": 69,
+    "naam": "Psalm 69",
+    "verzen": [
+     4
+    ]
+   }
+  },
+  {
+   "datum": "2023-03-19",
+   "morgen": {
+    "tekst": "Ps. 31: 11 (1)",
+    "soort": "psalm",
+    "nummer": 31,
+    "naam": "Psalm 31",
+    "verzen": [
+     11
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 22: 1 (3)",
+    "soort": "psalm",
+    "nummer": 22,
+    "naam": "Psalm 22",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2023-03-26",
+   "morgen": {
+    "tekst": "Ps. 22: 16",
+    "soort": "psalm",
+    "nummer": 22,
+    "naam": "Psalm 22",
+    "verzen": [
+     16
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 40: 3",
+    "soort": "psalm",
+    "nummer": 40,
+    "naam": "Psalm 40",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2023-04-02",
+   "morgen": {
+    "tekst": "Ps. 116: 2 (1) en 3",
+    "soort": "psalm",
+    "nummer": 116,
+    "naam": "Psalm 116",
+    "verzen": [
+     2,
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 69: 5",
+    "soort": "psalm",
+    "nummer": 69,
+    "naam": "Psalm 69",
+    "verzen": [
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2023-04-07",
+   "middag": {
+    "tekst": "Ps. 130: 1",
+    "soort": "psalm",
+    "nummer": 130,
+    "naam": "Psalm 130",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2023-04-09",
+   "morgen": {
+    "tekst": "Ps. 9: 10 en 11 (1)",
+    "soort": "psalm",
+    "nummer": 9,
+    "naam": "Psalm 9",
+    "verzen": [
+     10,
+     11
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 118: 11 (3)",
+    "soort": "psalm",
+    "nummer": 118,
+    "naam": "Psalm 118",
+    "verzen": [
+     11
+    ]
+   }
+  },
+  {
+   "datum": "2023-04-10",
+   "morgen": {
+    "tekst": "Ps. 75: 1 (2)",
+    "soort": "psalm",
+    "nummer": 75,
+    "naam": "Psalm 75",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2023-04-16",
+   "morgen": {
+    "tekst": "Ps. 30: 2 (3)",
+    "soort": "psalm",
+    "nummer": 30,
+    "naam": "Psalm 30",
+    "verzen": [
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 71: 17 (1)",
+    "soort": "psalm",
+    "nummer": 71,
+    "naam": "Psalm 71",
+    "verzen": [
+     17
+    ]
+   }
+  },
+  {
+   "datum": "2023-04-23",
+   "morgen": {
+    "tekst": "Ps. 116 : 1 (2) en 11",
+    "soort": "psalm",
+    "nummer": 116,
+    "naam": "Psalm 116",
+    "verzen": [
+     1,
+     11
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 73: 13 (3)",
+    "soort": "psalm",
+    "nummer": 73,
+    "naam": "Psalm 73",
+    "verzen": [
+     13
+    ]
+   }
+  },
+  {
+   "datum": "2023-04-30",
+   "morgen": {
+    "tekst": "Ps. 105: 4 (2) en 5",
+    "soort": "psalm",
+    "nummer": 105,
+    "naam": "Psalm 105",
+    "verzen": [
+     4,
+     5
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 16: 6 (3)",
+    "soort": "psalm",
+    "nummer": 16,
+    "naam": "Psalm 16",
+    "verzen": [
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2023-05-07",
+   "morgen": {
+    "tekst": "Ps. 72: 10 en 11 (1)",
+    "soort": "psalm",
+    "nummer": 72,
+    "naam": "Psalm 72",
+    "verzen": [
+     10,
+     11
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 124: 1 en 4 (2)",
+    "soort": "psalm",
+    "nummer": 124,
+    "naam": "Psalm 124",
+    "verzen": [
+     1,
+     4
+    ]
+   }
+  },
+  {
+   "datum": "2023-05-14",
+   "morgen": {
+    "tekst": "Ps. 139: 14 (3)",
+    "soort": "psalm",
+    "nummer": 139,
+    "naam": "Psalm 139",
+    "verzen": [
+     14
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 119: 3 (2)",
+    "soort": "psalm",
+    "nummer": 119,
+    "naam": "Psalm 119",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2023-05-18",
+   "morgen": {
+    "tekst": "Ps. 150: 1",
+    "soort": "psalm",
+    "nummer": 150,
+    "naam": "Psalm 150",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2023-05-21",
+   "morgen": {
+    "tekst": "Ps. 48: 1 (3)",
+    "soort": "psalm",
+    "nummer": 48,
+    "naam": "Psalm 48",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 105: 1 (1)",
+    "soort": "psalm",
+    "nummer": 105,
+    "naam": "Psalm 105",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2023-05-28",
+   "morgen": {
+    "tekst": "Ps. 133: 1 en 3 (2)",
+    "soort": "psalm",
+    "nummer": 133,
+    "naam": "Psalm 133",
+    "verzen": [
+     1,
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 24: 5 (3)",
+    "soort": "psalm",
+    "nummer": 24,
+    "naam": "Psalm 24",
+    "verzen": [
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2023-05-29",
+   "morgen": {
+    "tekst": "Ps. 66: 10 (1)",
+    "soort": "psalm",
+    "nummer": 66,
+    "naam": "Psalm 66",
+    "verzen": [
+     10
+    ]
+   }
+  },
+  {
+   "datum": "2023-06-04",
+   "morgen": {
+    "tekst": "Ps. 51: 4 (3)",
+    "soort": "psalm",
+    "nummer": 51,
+    "naam": "Psalm 51",
+    "verzen": [
+     4
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 42: 1 en 5 (2)",
+    "soort": "psalm",
+    "nummer": 42,
+    "naam": "Psalm 42",
+    "verzen": [
+     1,
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2023-06-11",
+   "morgen": {
+    "tekst": "Ps. 6: 1 en 9 (1)",
+    "soort": "psalm",
+    "nummer": 6,
+    "naam": "Psalm 6",
+    "verzen": [
+     1,
+     9
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 89: 12 (3)",
+    "soort": "psalm",
+    "nummer": 89,
+    "naam": "Psalm 89",
+    "verzen": [
+     12
+    ]
+   }
+  },
+  {
+   "datum": "2023-06-18",
+   "morgen": {
+    "tekst": "Ps. 121: 1 (2)",
+    "soort": "psalm",
+    "nummer": 121,
+    "naam": "Psalm 121",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 97: 7 (3)",
+    "soort": "psalm",
+    "nummer": 97,
+    "naam": "Psalm 97",
+    "verzen": [
+     7
+    ]
+   }
+  },
+  {
+   "datum": "2023-06-25",
+   "morgen": {
+    "tekst": "Geb.d.H: 3 (2) en 6 (3)",
+    "soort": "gezang",
+    "nummer": 5,
+    "naam": "Gebed des HEEREN",
+    "verzen": [
+     3,
+     6
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 103: 2 (3)",
+    "soort": "psalm",
+    "nummer": 103,
+    "naam": "Psalm 103",
+    "verzen": [
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2023-07-02",
+   "morgen": {
+    "tekst": "Ps. 107: 22 (1)",
+    "soort": "psalm",
+    "nummer": 107,
+    "naam": "Psalm 107",
+    "verzen": [
+     22
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 100: 1 (2) en 4",
+    "soort": "psalm",
+    "nummer": 100,
+    "naam": "Psalm 100",
+    "verzen": [
+     1,
+     4
+    ]
+   }
+  },
+  {
+   "datum": "2023-07-09",
+   "morgen": {
+    "tekst": "Ps. 32: 6 (3)",
+    "soort": "psalm",
+    "nummer": 32,
+    "naam": "Psalm 32",
+    "verzen": [
+     6
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 73: 14 (3)",
+    "soort": "psalm",
+    "nummer": 73,
+    "naam": "Psalm 73",
+    "verzen": [
+     14
+    ]
+   }
+  },
+  {
+   "datum": "2023-07-16",
+   "morgen": {
+    "tekst": "Ps. 18: Vz en 1",
+    "soort": "psalm",
+    "nummer": 18,
+    "naam": "Psalm 18",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 19: 1 en 2",
+    "soort": "psalm",
+    "nummer": 19,
+    "naam": "Psalm 19",
+    "verzen": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2023-07-23",
+   "morgen": {
+    "tekst": "Ps. 20: 1 en 2",
+    "soort": "psalm",
+    "nummer": 20,
+    "naam": "Psalm 20",
+    "verzen": [
+     1,
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 21: 1 en 2",
+    "soort": "psalm",
+    "nummer": 21,
+    "naam": "Psalm 21",
+    "verzen": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2023-07-30",
+   "morgen": {
+    "tekst": "Ps. 22: 1 en 2",
+    "soort": "psalm",
+    "nummer": 22,
+    "naam": "Psalm 22",
+    "verzen": [
+     1,
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 23: 1 en 2",
+    "soort": "psalm",
+    "nummer": 23,
+    "naam": "Psalm 23",
+    "verzen": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2023-08-06",
+   "morgen": {
+    "tekst": "Ps. 24 : 1 en 2",
+    "soort": "psalm",
+    "nummer": 24,
+    "naam": "Psalm 24",
+    "verzen": [
+     1,
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 25: 1 en 2",
+    "soort": "psalm",
+    "nummer": 25,
+    "naam": "Psalm 25",
+    "verzen": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2023-08-13",
+   "morgen": {
+    "tekst": "Ps. 26: 1 en 2",
+    "soort": "psalm",
+    "nummer": 26,
+    "naam": "Psalm 26",
+    "verzen": [
+     1,
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 27: 1 en 2",
+    "soort": "psalm",
+    "nummer": 27,
+    "naam": "Psalm 27",
+    "verzen": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2023-08-20",
+   "morgen": {
+    "tekst": "Ps. 28: 1 en 2",
+    "soort": "psalm",
+    "nummer": 28,
+    "naam": "Psalm 28",
+    "verzen": [
+     1,
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 29: 1 en 2",
+    "soort": "psalm",
+    "nummer": 29,
+    "naam": "Psalm 29",
+    "verzen": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2023-08-27",
+   "morgen": {
+    "tekst": "Ps. 30: 1 en 2",
+    "soort": "psalm",
+    "nummer": 30,
+    "naam": "Psalm 30",
+    "verzen": [
+     1,
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 31: 1 en 2",
+    "soort": "psalm",
+    "nummer": 31,
+    "naam": "Psalm 31",
+    "verzen": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2023-09-03",
+   "morgen": {
+    "tekst": "Ps. 32: 1 en 2",
+    "soort": "psalm",
+    "nummer": 32,
+    "naam": "Psalm 32",
+    "verzen": [
+     1,
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "Ps. 33: 1 en 2",
+    "soort": "psalm",
+    "nummer": 33,
+    "naam": "Psalm 33",
+    "verzen": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2023-09-17",
+   "morgen": {
+    "tekst": "5: 12",
+    "soort": "psalm",
+    "nummer": 5,
+    "naam": "Psalm 5",
+    "verzen": [
+     12
+    ]
+   },
+   "middag": {
+    "tekst": "122: 1",
+    "soort": "psalm",
+    "nummer": 122,
+    "naam": "Psalm 122",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2023-09-24",
+   "morgen": {
+    "tekst": "146:03",
+    "soort": "psalm",
+    "nummer": 146,
+    "naam": "Psalm 146",
+    "verzen": [
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "13: 5",
+    "soort": "psalm",
+    "nummer": 13,
+    "naam": "Psalm 13",
+    "verzen": [
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2023-10-01",
+   "morgen": {
+    "tekst": "123: 1",
+    "soort": "psalm",
+    "nummer": 123,
+    "naam": "Psalm 123",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "26: 8",
+    "soort": "psalm",
+    "nummer": 26,
+    "naam": "Psalm 26",
+    "verzen": [
+     8
+    ]
+   }
+  },
+  {
+   "datum": "2023-10-08",
+   "morgen": {
+    "tekst": "122:02",
+    "soort": "psalm",
+    "nummer": 122,
+    "naam": "Psalm 122",
+    "verzen": [
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "28: 5",
+    "soort": "psalm",
+    "nummer": 28,
+    "naam": "Psalm 28",
+    "verzen": [
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2023-10-15",
+   "morgen": {
+    "tekst": "30:1",
+    "soort": "psalm",
+    "nummer": 30,
+    "naam": "Psalm 30",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "20: 1",
+    "soort": "psalm",
+    "nummer": 20,
+    "naam": "Psalm 20",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2023-10-22",
+   "morgen": {
+    "tekst": "39: 3",
+    "soort": "psalm",
+    "nummer": 39,
+    "naam": "Psalm 39",
+    "verzen": [
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "27: 7",
+    "soort": "psalm",
+    "nummer": 27,
+    "naam": "Psalm 27",
+    "verzen": [
+     7
+    ]
+   }
+  },
+  {
+   "datum": "2023-10-29",
+   "morgen": {
+    "tekst": "36: 1",
+    "soort": "psalm",
+    "nummer": 36,
+    "naam": "Psalm 36",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "27: 3",
+    "soort": "psalm",
+    "nummer": 27,
+    "naam": "Psalm 27",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2023-11-05",
+   "morgen": {
+    "tekst": "86: 6",
+    "soort": "psalm",
+    "nummer": 86,
+    "naam": "Psalm 86",
+    "verzen": [
+     6
+    ]
+   },
+   "middag": {
+    "tekst": "1: 4",
+    "soort": "psalm",
+    "nummer": 1,
+    "naam": "Psalm 1",
+    "verzen": [
+     4
+    ]
+   }
+  },
+  {
+   "datum": "2023-11-12",
+   "morgen": {
+    "tekst": "139: 9-14",
+    "soort": "psalm",
+    "nummer": 139,
+    "naam": "Psalm 139",
+    "verzen": [
+     9,
+     14
+    ]
+   },
+   "middag": {
+    "tekst": "64: 10",
+    "soort": "psalm",
+    "nummer": 64,
+    "naam": "Psalm 64",
+    "verzen": [
+     10
+    ]
+   }
+  },
+  {
+   "datum": "2023-11-15",
+   "morgen": {
+    "tekst": "65: 6",
+    "soort": "psalm",
+    "nummer": 65,
+    "naam": "Psalm 65",
+    "verzen": [
+     6
+    ]
+   },
+   "middag": {
+    "tekst": "67: 3",
+    "soort": "psalm",
+    "nummer": 67,
+    "naam": "Psalm 67",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2023-11-19",
+   "morgen": {
+    "tekst": "25: 6",
+    "soort": "psalm",
+    "nummer": 25,
+    "naam": "Psalm 25",
+    "verzen": [
+     6
+    ]
+   },
+   "middag": {
+    "tekst": "96: 6",
+    "soort": "psalm",
+    "nummer": 96,
+    "naam": "Psalm 96",
+    "verzen": [
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2023-11-26",
+   "morgen": {
+    "tekst": "139: 1",
+    "soort": "psalm",
+    "nummer": 139,
+    "naam": "Psalm 139",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "32: 4",
+    "soort": "psalm",
+    "nummer": 32,
+    "naam": "Psalm 32",
+    "verzen": [
+     4
+    ]
+   }
+  },
+  {
+   "datum": "2023-12-03",
+   "morgen": {
+    "tekst": "139: 14",
+    "soort": "psalm",
+    "nummer": 139,
+    "naam": "Psalm 139",
+    "verzen": [
+     14
+    ]
+   },
+   "middag": {
+    "tekst": "146: 6",
+    "soort": "psalm",
+    "nummer": 146,
+    "naam": "Psalm 146",
+    "verzen": [
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2023-12-10",
+   "morgen": {
+    "tekst": "Gez 2: 3",
+    "soort": "gezang",
+    "nummer": 2,
+    "naam": "Lofzang van Maria",
+    "verzen": [
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "137: 7",
+    "soort": "psalm",
+    "nummer": 137,
+    "naam": "Psalm 137",
+    "verzen": [
+     7
+    ]
+   }
+  },
+  {
+   "datum": "2023-12-17",
+   "morgen": {
+    "tekst": "133: 1",
+    "soort": "psalm",
+    "nummer": 133,
+    "naam": "Psalm 133",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "138: 4",
+    "soort": "psalm",
+    "nummer": 138,
+    "naam": "Psalm 138",
+    "verzen": [
+     4
+    ]
+   }
+  },
+  {
+   "datum": "2023-12-24",
+   "morgen": {
+    "tekst": "126: 3",
+    "soort": "psalm",
+    "nummer": 126,
+    "naam": "Psalm 126",
+    "verzen": [
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "Gez 3: 1",
+    "soort": "gezang",
+    "nummer": 3,
+    "naam": "Lofzang van Zacharias",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2023-12-25",
+   "morgen": {
+    "tekst": "63: 1",
+    "soort": "psalm",
+    "nummer": 63,
+    "naam": "Psalm 63",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2023-12-26",
+   "morgen": {
+    "tekst": "Gez 2: 1",
+    "soort": "gezang",
+    "nummer": 2,
+    "naam": "Lofzang van Maria",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2023-12-31",
+   "morgen": {
+    "tekst": "90: 6",
+    "soort": "psalm",
+    "nummer": 90,
+    "naam": "Psalm 90",
+    "verzen": [
+     6
+    ]
+   },
+   "middag": {
+    "tekst": "51: 3",
+    "soort": "psalm",
+    "nummer": 51,
+    "naam": "Psalm 51",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2024-01-01",
+   "morgen": {
+    "tekst": "121: 1 en 4",
+    "soort": "psalm",
+    "nummer": 121,
+    "naam": "Psalm 121",
+    "verzen": [
+     1,
+     4
+    ]
+   }
+  },
+  {
+   "datum": "2024-01-07",
+   "morgen": {
+    "tekst": "54:4",
+    "soort": "psalm",
+    "nummer": 54,
+    "naam": "Psalm 54",
+    "verzen": [
+     4
+    ]
+   },
+   "middag": {
+    "tekst": "82: 1",
+    "soort": "psalm",
+    "nummer": 82,
+    "naam": "Psalm 82",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2024-01-14",
+   "morgen": {
+    "tekst": "gez 4: 2",
+    "soort": "gezang",
+    "nummer": 4,
+    "naam": "Lofzang van Simeon",
+    "verzen": [
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "gez 4: 1",
+    "soort": "gezang",
+    "nummer": 4,
+    "naam": "Lofzang van Simeon",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2024-01-21",
+   "morgen": {
+    "tekst": "95: 1",
+    "soort": "psalm",
+    "nummer": 95,
+    "naam": "Psalm 95",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "33: 11",
+    "soort": "psalm",
+    "nummer": 33,
+    "naam": "Psalm 33",
+    "verzen": [
+     11
+    ]
+   }
+  },
+  {
+   "datum": "2024-01-28",
+   "morgen": {
+    "tekst": "117: 1",
+    "soort": "psalm",
+    "nummer": 117,
+    "naam": "Psalm 117",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "35: 1",
+    "soort": "psalm",
+    "nummer": 35,
+    "naam": "Psalm 35",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2024-02-04",
+   "morgen": {
+    "tekst": "143: 10",
+    "soort": "psalm",
+    "nummer": 143,
+    "naam": "Psalm 143",
+    "verzen": [
+     10
+    ]
+   },
+   "middag": {
+    "tekst": "36: 3",
+    "soort": "psalm",
+    "nummer": 36,
+    "naam": "Psalm 36",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2024-02-11",
+   "morgen": {
+    "tekst": "44: 1",
+    "soort": "psalm",
+    "nummer": 44,
+    "naam": "Psalm 44",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "149: 5",
+    "soort": "psalm",
+    "nummer": 149,
+    "naam": "Psalm 149",
+    "verzen": [
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2024-02-18",
+   "morgen": {
+    "tekst": "81: 13",
+    "soort": "psalm",
+    "nummer": 81,
+    "naam": "Psalm 81",
+    "verzen": [
+     13
+    ]
+   },
+   "middag": {
+    "tekst": "103: 8",
+    "soort": "psalm",
+    "nummer": 103,
+    "naam": "Psalm 103",
+    "verzen": [
+     8
+    ]
+   }
+  },
+  {
+   "datum": "2024-02-25",
+   "morgen": {
+    "tekst": "93: 4",
+    "soort": "psalm",
+    "nummer": 93,
+    "naam": "Psalm 93",
+    "verzen": [
+     4
+    ]
+   },
+   "middag": {
+    "tekst": "114: 1",
+    "soort": "psalm",
+    "nummer": 114,
+    "naam": "Psalm 114",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2024-02-28",
+   "morgen": {
+    "tekst": "133: 3",
+    "soort": "psalm",
+    "nummer": 133,
+    "naam": "Psalm 133",
+    "verzen": [
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "",
+    "soort": "psalm",
+    "nummer": 45,
+    "naam": "Psalm 45",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2024-03-03",
+   "morgen": {
+    "tekst": "32:3",
+    "soort": "psalm",
+    "nummer": 32,
+    "naam": "Psalm 32",
+    "verzen": [
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "22: 14",
+    "soort": "psalm",
+    "nummer": 22,
+    "naam": "Psalm 22",
+    "verzen": [
+     14
+    ]
+   }
+  },
+  {
+   "datum": "2024-03-10",
+   "morgen": {
+    "tekst": "48: 6",
+    "soort": "psalm",
+    "nummer": 48,
+    "naam": "Psalm 48",
+    "verzen": [
+     6
+    ]
+   },
+   "middag": {
+    "tekst": "128: 1",
+    "soort": "psalm",
+    "nummer": 128,
+    "naam": "Psalm 128",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2024-03-17",
+   "morgen": {
+    "tekst": "145: 6",
+    "soort": "psalm",
+    "nummer": 145,
+    "naam": "Psalm 145",
+    "verzen": [
+     6
+    ]
+   },
+   "middag": {
+    "tekst": "118: 11",
+    "soort": "psalm",
+    "nummer": 118,
+    "naam": "Psalm 118",
+    "verzen": [
+     11
+    ]
+   }
+  },
+  {
+   "datum": "2024-03-24",
+   "morgen": {
+    "tekst": "65: 2",
+    "soort": "psalm",
+    "nummer": 65,
+    "naam": "Psalm 65",
+    "verzen": [
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "144: 1",
+    "soort": "psalm",
+    "nummer": 144,
+    "naam": "Psalm 144",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2024-03-29",
+   "middag": {
+    "tekst": "69:1",
+    "soort": "psalm",
+    "nummer": 69,
+    "naam": "Psalm 69",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2024-03-31",
+   "morgen": {
+    "tekst": "88: 4",
+    "soort": "psalm",
+    "nummer": 88,
+    "naam": "Psalm 88",
+    "verzen": [
+     4
+    ]
+   },
+   "middag": {
+    "tekst": "118: 12",
+    "soort": "psalm",
+    "nummer": 118,
+    "naam": "Psalm 118",
+    "verzen": [
+     12
+    ]
+   }
+  },
+  {
+   "datum": "2024-04-01",
+   "morgen": {
+    "tekst": "50: 1",
+    "soort": "psalm",
+    "nummer": 50,
+    "naam": "Psalm 50",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2024-04-07",
+   "morgen": {
+    "tekst": "125: 2",
+    "soort": "psalm",
+    "nummer": 125,
+    "naam": "Psalm 125",
+    "verzen": [
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "149: 1",
+    "soort": "psalm",
+    "nummer": 149,
+    "naam": "Psalm 149",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2024-04-14",
+   "morgen": {
+    "tekst": "100: 1",
+    "soort": "psalm",
+    "nummer": 100,
+    "naam": "Psalm 100",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "42: 5",
+    "soort": "psalm",
+    "nummer": 42,
+    "naam": "Psalm 42",
+    "verzen": [
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2024-04-21",
+   "morgen": {
+    "tekst": "48: 4",
+    "soort": "psalm",
+    "nummer": 48,
+    "naam": "Psalm 48",
+    "verzen": [
+     4
+    ]
+   },
+   "middag": {
+    "tekst": "100: 4",
+    "soort": "psalm",
+    "nummer": 100,
+    "naam": "Psalm 100",
+    "verzen": [
+     4
+    ]
+   }
+  },
+  {
+   "datum": "2024-04-28",
+   "morgen": {
+    "tekst": "68: 10",
+    "soort": "psalm",
+    "nummer": 68,
+    "naam": "Psalm 68",
+    "verzen": [
+     10
+    ]
+   },
+   "middag": {
+    "tekst": "62: 5",
+    "soort": "psalm",
+    "nummer": 62,
+    "naam": "Psalm 62",
+    "verzen": [
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2024-05-05",
+   "morgen": {
+    "tekst": "49: 1",
+    "soort": "psalm",
+    "nummer": 49,
+    "naam": "Psalm 49",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "66: 10",
+    "soort": "psalm",
+    "nummer": 66,
+    "naam": "Psalm 66",
+    "verzen": [
+     10
+    ]
+   }
+  },
+  {
+   "datum": "2024-05-09",
+   "morgen": {
+    "tekst": "47: 3",
+    "soort": "psalm",
+    "nummer": 47,
+    "naam": "Psalm 47",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2024-05-12",
+   "morgen": {
+    "tekst": "105: 5",
+    "soort": "psalm",
+    "nummer": 105,
+    "naam": "Psalm 105",
+    "verzen": [
+     5
+    ]
+   },
+   "middag": {
+    "tekst": "24: 4",
+    "soort": "psalm",
+    "nummer": 24,
+    "naam": "Psalm 24",
+    "verzen": [
+     4
+    ]
+   }
+  },
+  {
+   "datum": "2024-05-19",
+   "morgen": {
+    "tekst": "60: 7",
+    "soort": "psalm",
+    "nummer": 60,
+    "naam": "Psalm 60",
+    "verzen": [
+     7
+    ]
+   },
+   "middag": {
+    "tekst": "22: 14",
+    "soort": "psalm",
+    "nummer": 22,
+    "naam": "Psalm 22",
+    "verzen": [
+     14
+    ]
+   }
+  },
+  {
+   "datum": "2024-05-20",
+   "morgen": {
+    "tekst": "87: 3 en 4",
+    "soort": "psalm",
+    "nummer": 87,
+    "naam": "Psalm 87",
+    "verzen": [
+     3,
+     4
+    ]
+   }
+  },
+  {
+   "datum": "2024-05-26",
+   "morgen": {
+    "tekst": "99: 2",
+    "soort": "psalm",
+    "nummer": 99,
+    "naam": "Psalm 99",
+    "verzen": [
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "79: 4",
+    "soort": "psalm",
+    "nummer": 79,
+    "naam": "Psalm 79",
+    "verzen": [
+     4
+    ]
+   }
+  },
+  {
+   "datum": "2024-06-02",
+   "morgen": {
+    "tekst": "116: 11",
+    "soort": "psalm",
+    "nummer": 116,
+    "naam": "Psalm 116",
+    "verzen": [
+     11
+    ]
+   },
+   "middag": {
+    "tekst": "104: 17",
+    "soort": "psalm",
+    "nummer": 104,
+    "naam": "Psalm 104",
+    "verzen": [
+     17
+    ]
+   }
+  },
+  {
+   "datum": "2024-06-09",
+   "morgen": {
+    "tekst": "1:9",
+    "soort": "gezang",
+    "nummer": 1,
+    "naam": "Tien Geboden des HEEREN",
+    "verzen": [
+     9
+    ]
+   },
+   "middag": {
+    "tekst": "92: 1",
+    "soort": "psalm",
+    "nummer": 92,
+    "naam": "Psalm 92",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2024-06-16",
+   "morgen": {
+    "tekst": "83: 10",
+    "soort": "psalm",
+    "nummer": 83,
+    "naam": "Psalm 83",
+    "verzen": [
+     10
+    ]
+   },
+   "middag": {
+    "tekst": "11: 1",
+    "soort": "psalm",
+    "nummer": 11,
+    "naam": "Psalm 11",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2024-06-23",
+   "morgen": {
+    "tekst": "136: 26",
+    "soort": "psalm",
+    "nummer": 136,
+    "naam": "Psalm 136",
+    "verzen": [
+     26
+    ]
+   },
+   "middag": {
+    "tekst": "10: 9",
+    "soort": "psalm",
+    "nummer": 10,
+    "naam": "Psalm 10",
+    "verzen": [
+     9
+    ]
+   }
+  },
+  {
+   "datum": "2024-06-30",
+   "morgen": {
+    "tekst": "84: 1",
+    "soort": "psalm",
+    "nummer": 84,
+    "naam": "Psalm 84",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "7: 5",
+    "soort": "psalm",
+    "nummer": 7,
+    "naam": "Psalm 7",
+    "verzen": [
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2024-07-07",
+   "morgen": {
+    "tekst": "108: 1",
+    "soort": "psalm",
+    "nummer": 108,
+    "naam": "Psalm 108",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "4: 4",
+    "soort": "psalm",
+    "nummer": 4,
+    "naam": "Psalm 4",
+    "verzen": [
+     4
+    ]
+   }
+  },
+  {
+   "datum": "2024-07-14",
+   "morgen": {
+    "tekst": "89: 3",
+    "soort": "psalm",
+    "nummer": 89,
+    "naam": "Psalm 89",
+    "verzen": [
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "38: 15",
+    "soort": "psalm",
+    "nummer": 38,
+    "naam": "Psalm 38",
+    "verzen": [
+     15
+    ]
+   }
+  },
+  {
+   "datum": "2024-07-21",
+   "morgen": {
+    "tekst": "49: 2",
+    "soort": "psalm",
+    "nummer": 49,
+    "naam": "Psalm 49",
+    "verzen": [
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "91: 1",
+    "soort": "psalm",
+    "nummer": 91,
+    "naam": "Psalm 91",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2024-07-28",
+   "morgen": {
+    "tekst": "52: 1",
+    "soort": "psalm",
+    "nummer": 52,
+    "naam": "Psalm 52",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "93: 1",
+    "soort": "psalm",
+    "nummer": 93,
+    "naam": "Psalm 93",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2024-08-04",
+   "morgen": {
+    "tekst": "110: 1",
+    "soort": "psalm",
+    "nummer": 110,
+    "naam": "Psalm 110",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "7: 1",
+    "soort": "psalm",
+    "nummer": 7,
+    "naam": "Psalm 7",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2024-08-11",
+   "morgen": {
+    "tekst": "9:1",
+    "soort": "gezang",
+    "nummer": 9,
+    "naam": "Morgenzang",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "112:1",
+    "soort": "psalm",
+    "nummer": 112,
+    "naam": "Psalm 112",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2024-08-18",
+   "morgen": {
+    "tekst": "11:1",
+    "soort": "gezang",
+    "nummer": 11,
+    "naam": "Dankzang na het eten",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "83: 1",
+    "soort": "psalm",
+    "nummer": 83,
+    "naam": "Psalm 83",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2024-08-25",
+   "morgen": {
+    "tekst": "116: 1 en 10",
+    "soort": "psalm",
+    "nummer": 116,
+    "naam": "Psalm 116",
+    "verzen": [
+     1,
+     10
+    ]
+   },
+   "middag": {
+    "tekst": "145: 3",
+    "soort": "psalm",
+    "nummer": 145,
+    "naam": "Psalm 145",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2024-09-01",
+   "morgen": {
+    "tekst": "3: 3",
+    "soort": "psalm",
+    "nummer": 3,
+    "naam": "Psalm 3",
+    "verzen": [
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "23: 1",
+    "soort": "psalm",
+    "nummer": 23,
+    "naam": "Psalm 23",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2024-09-08",
+   "morgen": {
+    "tekst": "17: 8",
+    "soort": "psalm",
+    "nummer": 17,
+    "naam": "Psalm 17",
+    "verzen": [
+     8
+    ]
+   },
+   "middag": {
+    "tekst": "94: 8",
+    "soort": "psalm",
+    "nummer": 94,
+    "naam": "Psalm 94",
+    "verzen": [
+     8
+    ]
+   }
+  },
+  {
+   "datum": "2024-09-15",
+   "morgen": {
+    "tekst": "19: 1",
+    "soort": "psalm",
+    "nummer": 19,
+    "naam": "Psalm 19",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "34: 6",
+    "soort": "psalm",
+    "nummer": 34,
+    "naam": "Psalm 34",
+    "verzen": [
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2024-09-22",
+   "morgen": {
+    "tekst": "22: 16",
+    "soort": "psalm",
+    "nummer": 22,
+    "naam": "Psalm 22",
+    "verzen": [
+     16
+    ]
+   },
+   "middag": {
+    "tekst": "37: 2",
+    "soort": "psalm",
+    "nummer": 37,
+    "naam": "Psalm 37",
+    "verzen": [
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2024-09-29",
+   "morgen": {
+    "tekst": "29: 6",
+    "soort": "psalm",
+    "nummer": 29,
+    "naam": "Psalm 29",
+    "verzen": [
+     6
+    ]
+   },
+   "middag": {
+    "tekst": "50: 1",
+    "soort": "psalm",
+    "nummer": 50,
+    "naam": "Psalm 50",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2024-10-06",
+   "morgen": {
+    "tekst": "19:1",
+    "soort": "psalm",
+    "nummer": 19,
+    "naam": "Psalm 19",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "17:8",
+    "soort": "psalm",
+    "nummer": 17,
+    "naam": "Psalm 17",
+    "verzen": [
+     8
+    ]
+   }
+  },
+  {
+   "datum": "2024-10-13",
+   "morgen": {
+    "tekst": "25: 2",
+    "soort": "psalm",
+    "nummer": 25,
+    "naam": "Psalm 25",
+    "verzen": [
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "38: 15",
+    "soort": "psalm",
+    "nummer": 38,
+    "naam": "Psalm 38",
+    "verzen": [
+     15
+    ]
+   }
+  },
+  {
+   "datum": "2024-10-20",
+   "morgen": {
+    "tekst": "31: 19",
+    "soort": "psalm",
+    "nummer": 31,
+    "naam": "Psalm 31",
+    "verzen": [
+     19
+    ]
+   },
+   "middag": {
+    "tekst": "90: 1",
+    "soort": "psalm",
+    "nummer": 90,
+    "naam": "Psalm 90",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2024-10-27",
+   "morgen": {
+    "tekst": "6: 2",
+    "soort": "psalm",
+    "nummer": 6,
+    "naam": "Psalm 6",
+    "verzen": [
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "16: 6",
+    "soort": "psalm",
+    "nummer": 16,
+    "naam": "Psalm 16",
+    "verzen": [
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2024-11-03",
+   "morgen": {
+    "tekst": "43: 3",
+    "soort": "psalm",
+    "nummer": 43,
+    "naam": "Psalm 43",
+    "verzen": [
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "55:1",
+    "soort": "psalm",
+    "nummer": 55,
+    "naam": "Psalm 55",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2024-11-10",
+   "morgen": {
+    "tekst": "32: 6",
+    "soort": "psalm",
+    "nummer": 32,
+    "naam": "Psalm 32",
+    "verzen": [
+     6
+    ]
+   },
+   "middag": {
+    "tekst": "52: 7",
+    "soort": "psalm",
+    "nummer": 52,
+    "naam": "Psalm 52",
+    "verzen": [
+     7
+    ]
+   }
+  },
+  {
+   "datum": "2024-11-17",
+   "morgen": {
+    "tekst": "34: 11",
+    "soort": "psalm",
+    "nummer": 34,
+    "naam": "Psalm 34",
+    "verzen": [
+     11
+    ]
+   },
+   "middag": {
+    "tekst": "46:1",
+    "soort": "psalm",
+    "nummer": 46,
+    "naam": "Psalm 46",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2024-11-20",
+   "morgen": {
+    "tekst": "38: 22",
+    "soort": "psalm",
+    "nummer": 38,
+    "naam": "Psalm 38",
+    "verzen": [
+     22
+    ]
+   },
+   "middag": {
+    "tekst": "66: 10",
+    "soort": "psalm",
+    "nummer": 66,
+    "naam": "Psalm 66",
+    "verzen": [
+     10
+    ]
+   }
+  },
+  {
+   "datum": "2024-11-24",
+   "morgen": {
+    "tekst": "111: 2",
+    "soort": "psalm",
+    "nummer": 111,
+    "naam": "Psalm 111",
+    "verzen": [
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "105: 5",
+    "soort": "psalm",
+    "nummer": 105,
+    "naam": "Psalm 105",
+    "verzen": [
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2024-12-01",
+   "morgen": {
+    "tekst": "132: 12",
+    "soort": "psalm",
+    "nummer": 132,
+    "naam": "Psalm 132",
+    "verzen": [
+     12
+    ]
+   },
+   "middag": {
+    "tekst": "97: 7",
+    "soort": "psalm",
+    "nummer": 97,
+    "naam": "Psalm 97",
+    "verzen": [
+     7
+    ]
+   }
+  },
+  {
+   "datum": "2024-12-08",
+   "morgen": {
+    "tekst": "Gez 4: 2",
+    "soort": "gezang",
+    "nummer": 4,
+    "naam": "Lofzang van Simeon",
+    "verzen": [
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "Gez 2: 1",
+    "soort": "gezang",
+    "nummer": 2,
+    "naam": "Lofzang van Maria",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2024-12-15",
+   "morgen": {
+    "tekst": "42: 1",
+    "soort": "psalm",
+    "nummer": 42,
+    "naam": "Psalm 42",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "Gez 3: 5",
+    "soort": "gezang",
+    "nummer": 3,
+    "naam": "Lofzang van Zacharias",
+    "verzen": [
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2024-12-22",
+   "morgen": {
+    "tekst": "Gez 4: 1",
+    "soort": "gezang",
+    "nummer": 4,
+    "naam": "Lofzang van Simeon",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "98: 2",
+    "soort": "psalm",
+    "nummer": 98,
+    "naam": "Psalm 98",
+    "verzen": [
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2024-12-25",
+   "morgen": {
+    "tekst": "Gez 3: 5",
+    "soort": "gezang",
+    "nummer": 3,
+    "naam": "Lofzang van Zacharias",
+    "verzen": [
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2024-12-26",
+   "morgen": {
+    "tekst": "Gez 4: 1",
+    "soort": "gezang",
+    "nummer": 4,
+    "naam": "Lofzang van Simeon",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2024-12-29",
+   "morgen": {
+    "tekst": "132: 12",
+    "soort": "psalm",
+    "nummer": 132,
+    "naam": "Psalm 132",
+    "verzen": [
+     12
+    ]
+   },
+   "middag": {
+    "tekst": "Gez 2: 7",
+    "soort": "gezang",
+    "nummer": 2,
+    "naam": "Lofzang van Maria",
+    "verzen": [
+     7
+    ]
+   }
+  },
+  {
+   "datum": "2024-12-31",
+   "morgen": {
+    "tekst": "90: 1 en 6",
+    "soort": "psalm",
+    "nummer": 90,
+    "naam": "Psalm 90",
+    "verzen": [
+     1,
+     6
+    ]
+   },
+   "middag": {
+    "tekst": "90: 1 en 6",
+    "soort": "psalm",
+    "nummer": 90,
+    "naam": "Psalm 90",
+    "verzen": [
+     1,
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2025-01-01",
+   "morgen": {
+    "tekst": "91: 5",
+    "soort": "psalm",
+    "nummer": 91,
+    "naam": "Psalm 91",
+    "verzen": [
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2025-01-05",
+   "morgen": {
+    "tekst": "77: 8",
+    "soort": "psalm",
+    "nummer": 77,
+    "naam": "Psalm 77",
+    "verzen": [
+     8
+    ]
+   },
+   "middag": {
+    "tekst": "119: 3",
+    "soort": "psalm",
+    "nummer": 119,
+    "naam": "Psalm 119",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2025-01-12",
+   "morgen": {
+    "tekst": "74: 16",
+    "soort": "psalm",
+    "nummer": 74,
+    "naam": "Psalm 74",
+    "verzen": [
+     16
+    ]
+   },
+   "middag": {
+    "tekst": "56: 5",
+    "soort": "psalm",
+    "nummer": 56,
+    "naam": "Psalm 56",
+    "verzen": [
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2025-01-19",
+   "morgen": {
+    "tekst": "75: 6",
+    "soort": "psalm",
+    "nummer": 75,
+    "naam": "Psalm 75",
+    "verzen": [
+     6
+    ]
+   },
+   "middag": {
+    "tekst": "57: 1",
+    "soort": "psalm",
+    "nummer": 57,
+    "naam": "Psalm 57",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2025-01-26",
+   "morgen": {
+    "tekst": "72: 11",
+    "soort": "psalm",
+    "nummer": 72,
+    "naam": "Psalm 72",
+    "verzen": [
+     11
+    ]
+   },
+   "middag": {
+    "tekst": "76: 1",
+    "soort": "psalm",
+    "nummer": 76,
+    "naam": "Psalm 76",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2025-02-02",
+   "morgen": {
+    "tekst": "81: 1",
+    "soort": "psalm",
+    "nummer": 81,
+    "naam": "Psalm 81",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "103: 1",
+    "soort": "psalm",
+    "nummer": 103,
+    "naam": "Psalm 103",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2025-02-09",
+   "morgen": {
+    "tekst": "93: 1",
+    "soort": "psalm",
+    "nummer": 93,
+    "naam": "Psalm 93",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "101: 2",
+    "soort": "psalm",
+    "nummer": 101,
+    "naam": "Psalm 101",
+    "verzen": [
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2025-02-16",
+   "morgen": {
+    "tekst": "40: 4",
+    "soort": "psalm",
+    "nummer": 40,
+    "naam": "Psalm 40",
+    "verzen": [
+     4
+    ]
+   },
+   "middag": {
+    "tekst": "2: 7",
+    "soort": "psalm",
+    "nummer": 2,
+    "naam": "Psalm 2",
+    "verzen": [
+     7
+    ]
+   }
+  },
+  {
+   "datum": "2025-02-23",
+   "morgen": {
+    "tekst": "110: 1",
+    "soort": "psalm",
+    "nummer": 110,
+    "naam": "Psalm 110",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "69: 4",
+    "soort": "psalm",
+    "nummer": 69,
+    "naam": "Psalm 69",
+    "verzen": [
+     4
+    ]
+   }
+  },
+  {
+   "datum": "2025-02-26",
+   "morgen": {
+    "tekst": "121: 1",
+    "soort": "psalm",
+    "nummer": 121,
+    "naam": "Psalm 121",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "129: 2",
+    "soort": "psalm",
+    "nummer": 129,
+    "naam": "Psalm 129",
+    "verzen": [
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2025-03-02",
+   "morgen": {
+    "tekst": "Gez 12: 1",
+    "soort": "gezang",
+    "nummer": 12,
+    "naam": "Avondzang",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "23:1",
+    "soort": "psalm",
+    "nummer": 23,
+    "naam": "Psalm 23",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2025-03-09",
+   "morgen": {
+    "tekst": "106: 4",
+    "soort": "psalm",
+    "nummer": 106,
+    "naam": "Psalm 106",
+    "verzen": [
+     4
+    ]
+   },
+   "middag": {
+    "tekst": "22:1",
+    "soort": "psalm",
+    "nummer": 22,
+    "naam": "Psalm 22",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2025-03-16",
+   "morgen": {
+    "tekst": "131: 4",
+    "soort": "psalm",
+    "nummer": 131,
+    "naam": "Psalm 131",
+    "verzen": [
+     4
+    ]
+   },
+   "middag": {
+    "tekst": "147: 6",
+    "soort": "psalm",
+    "nummer": 147,
+    "naam": "Psalm 147",
+    "verzen": [
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2025-03-23",
+   "morgen": {
+    "tekst": "46:6",
+    "soort": "psalm",
+    "nummer": 46,
+    "naam": "Psalm 46",
+    "verzen": [
+     6
+    ]
+   },
+   "middag": {
+    "tekst": "8: 4",
+    "soort": "psalm",
+    "nummer": 8,
+    "naam": "Psalm 8",
+    "verzen": [
+     4
+    ]
+   }
+  },
+  {
+   "datum": "2025-03-30",
+   "morgen": {
+    "tekst": "21:5",
+    "soort": "psalm",
+    "nummer": 21,
+    "naam": "Psalm 21",
+    "verzen": [
+     5
+    ]
+   },
+   "middag": {
+    "tekst": "68:9",
+    "soort": "psalm",
+    "nummer": 68,
+    "naam": "Psalm 68",
+    "verzen": [
+     9
+    ]
+   }
+  },
+  {
+   "datum": "2025-04-06",
+   "morgen": {
+    "tekst": "100: 4",
+    "soort": "psalm",
+    "nummer": 100,
+    "naam": "Psalm 100",
+    "verzen": [
+     4
+    ]
+   },
+   "middag": {
+    "tekst": "73: 12",
+    "soort": "psalm",
+    "nummer": 73,
+    "naam": "Psalm 73",
+    "verzen": [
+     12
+    ]
+   }
+  },
+  {
+   "datum": "2025-04-13",
+   "morgen": {
+    "tekst": "47:3",
+    "soort": "psalm",
+    "nummer": 47,
+    "naam": "Psalm 47",
+    "verzen": [
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "78:3",
+    "soort": "psalm",
+    "nummer": 78,
+    "naam": "Psalm 78",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2025-04-18",
+   "morgen": {
+    "tekst": "111: 5",
+    "soort": "psalm",
+    "nummer": 111,
+    "naam": "Psalm 111",
+    "verzen": [
+     5
+    ]
+   },
+   "middag": {
+    "tekst": "111: 5",
+    "soort": "psalm",
+    "nummer": 111,
+    "naam": "Psalm 111",
+    "verzen": [
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2025-04-20",
+   "morgen": {
+    "tekst": "18: 9",
+    "soort": "psalm",
+    "nummer": 18,
+    "naam": "Psalm 18",
+    "verzen": [
+     9
+    ]
+   },
+   "middag": {
+    "tekst": "22:1",
+    "soort": "psalm",
+    "nummer": 22,
+    "naam": "Psalm 22",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2025-04-21",
+   "morgen": {
+    "tekst": "24: 5",
+    "soort": "psalm",
+    "nummer": 24,
+    "naam": "Psalm 24",
+    "verzen": [
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2025-04-27",
+   "morgen": {
+    "tekst": "118: 12",
+    "soort": "psalm",
+    "nummer": 118,
+    "naam": "Psalm 118",
+    "verzen": [
+     12
+    ]
+   },
+   "middag": {
+    "tekst": "113:2",
+    "soort": "psalm",
+    "nummer": 113,
+    "naam": "Psalm 113",
+    "verzen": [
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2025-05-02",
+   "morgen": {
+    "tekst": "",
+    "soort": "psalm",
+    "nummer": 1,
+    "naam": "Psalm 1",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "",
+    "soort": "psalm",
+    "nummer": 100,
+    "naam": "Psalm 100",
+    "verzen": [
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2025-05-04",
+   "morgen": {
+    "tekst": "42: 5",
+    "soort": "psalm",
+    "nummer": 42,
+    "naam": "Psalm 42",
+    "verzen": [
+     5
+    ]
+   },
+   "middag": {
+    "tekst": "43:3",
+    "soort": "psalm",
+    "nummer": 43,
+    "naam": "Psalm 43",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2025-05-11",
+   "morgen": {
+    "tekst": "127:1",
+    "soort": "psalm",
+    "nummer": 127,
+    "naam": "Psalm 127",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "87:3",
+    "soort": "psalm",
+    "nummer": 87,
+    "naam": "Psalm 87",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2025-05-14",
+   "middag": {
+    "tekst": "",
+    "soort": "psalm",
+    "nummer": 1,
+    "naam": "Psalm 1",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2025-05-18",
+   "morgen": {
+    "tekst": "145: 7",
+    "soort": "psalm",
+    "nummer": 145,
+    "naam": "Psalm 145",
+    "verzen": [
+     7
+    ]
+   },
+   "middag": {
+    "tekst": "67:1",
+    "soort": "psalm",
+    "nummer": 67,
+    "naam": "Psalm 67",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2025-05-25",
+   "morgen": {
+    "tekst": "Gez 1:1",
+    "soort": "gezang",
+    "nummer": 1,
+    "naam": "Tien Geboden des HEEREN",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "135:1",
+    "soort": "psalm",
+    "nummer": 135,
+    "naam": "Psalm 135",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2025-05-29",
+   "morgen": {
+    "tekst": "",
+    "soort": "psalm",
+    "nummer": 80,
+    "naam": "Psalm 80",
+    "verzen": [
+     11
+    ]
+   }
+  },
+  {
+   "datum": "2025-06-01",
+   "morgen": {
+    "tekst": "150: 1",
+    "soort": "psalm",
+    "nummer": 150,
+    "naam": "Psalm 150",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "68: 9",
+    "soort": "psalm",
+    "nummer": 68,
+    "naam": "Psalm 68",
+    "verzen": [
+     9
+    ]
+   }
+  },
+  {
+   "datum": "2025-06-06",
+   "middag": {
+    "tekst": "",
+    "soort": "psalm",
+    "nummer": 116,
+    "naam": "Psalm 116",
+    "verzen": [
+     11
+    ]
+   }
+  },
+  {
+   "datum": "2025-06-08",
+   "morgen": {
+    "tekst": "136: 1",
+    "soort": "psalm",
+    "nummer": 136,
+    "naam": "Psalm 136",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "148: 3",
+    "soort": "psalm",
+    "nummer": 148,
+    "naam": "Psalm 148",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2025-06-09",
+   "morgen": {
+    "tekst": "116:1",
+    "soort": "psalm",
+    "nummer": 116,
+    "naam": "Psalm 116",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2025-06-15",
+   "morgen": {
+    "tekst": "134:1",
+    "soort": "psalm",
+    "nummer": 134,
+    "naam": "Psalm 134",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "71:12",
+    "soort": "psalm",
+    "nummer": 71,
+    "naam": "Psalm 71",
+    "verzen": [
+     12
+    ]
+   }
+  },
+  {
+   "datum": "2025-06-22",
+   "morgen": {
+    "tekst": "88: 1",
+    "soort": "psalm",
+    "nummer": 88,
+    "naam": "Psalm 88",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "141: 1",
+    "soort": "psalm",
+    "nummer": 141,
+    "naam": "Psalm 141",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2025-06-29",
+   "morgen": {
+    "tekst": "99:1",
+    "soort": "psalm",
+    "nummer": 99,
+    "naam": "Psalm 99",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "85: 3",
+    "soort": "psalm",
+    "nummer": 85,
+    "naam": "Psalm 85",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2025-07-06",
+   "morgen": {
+    "tekst": "Gez 12: 7",
+    "soort": "gezang",
+    "nummer": 12,
+    "naam": "Avondzang",
+    "verzen": [
+     7
+    ]
+   },
+   "middag": {
+    "tekst": "3: 2",
+    "soort": "psalm",
+    "nummer": 3,
+    "naam": "Psalm 3",
+    "verzen": [
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2025-07-13",
+   "morgen": {
+    "tekst": "108: 1",
+    "soort": "psalm",
+    "nummer": 108,
+    "naam": "Psalm 108",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "1: 1",
+    "soort": "psalm",
+    "nummer": 1,
+    "naam": "Psalm 1",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2025-07-20",
+   "morgen": {
+    "tekst": "8: 9",
+    "soort": "psalm",
+    "nummer": 8,
+    "naam": "Psalm 8",
+    "verzen": [
+     9
+    ]
+   },
+   "middag": {
+    "tekst": "16: 1",
+    "soort": "psalm",
+    "nummer": 16,
+    "naam": "Psalm 16",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2025-07-27",
+   "morgen": {
+    "tekst": "56: 1",
+    "soort": "psalm",
+    "nummer": 56,
+    "naam": "Psalm 56",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "146: 1",
+    "soort": "psalm",
+    "nummer": 146,
+    "naam": "Psalm 146",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2025-08-03",
+   "morgen": {
+    "tekst": "Gez 5: 7",
+    "soort": "gezang",
+    "nummer": 5,
+    "naam": "Gebed des HEEREN",
+    "verzen": [
+     7
+    ]
+   },
+   "middag": {
+    "tekst": "140: 1 en 13",
+    "soort": "psalm",
+    "nummer": 140,
+    "naam": "Psalm 140",
+    "verzen": [
+     1,
+     13
+    ]
+   }
+  },
+  {
+   "datum": "2025-08-10",
+   "morgen": {
+    "tekst": "136: 3",
+    "soort": "psalm",
+    "nummer": 136,
+    "naam": "Psalm 136",
+    "verzen": [
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "84: 2",
+    "soort": "psalm",
+    "nummer": 84,
+    "naam": "Psalm 84",
+    "verzen": [
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2025-08-17",
+   "morgen": {
+    "tekst": "81: 12",
+    "soort": "psalm",
+    "nummer": 81,
+    "naam": "Psalm 81",
+    "verzen": [
+     12
+    ]
+   },
+   "middag": {
+    "tekst": "72: 8",
+    "soort": "psalm",
+    "nummer": 72,
+    "naam": "Psalm 72",
+    "verzen": [
+     8
+    ]
+   }
+  },
+  {
+   "datum": "2025-08-24",
+   "morgen": {
+    "tekst": "75: 1",
+    "soort": "psalm",
+    "nummer": 75,
+    "naam": "Psalm 75",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "124: 4",
+    "soort": "psalm",
+    "nummer": 124,
+    "naam": "Psalm 124",
+    "verzen": [
+     4
+    ]
+   }
+  },
+  {
+   "datum": "2025-08-31",
+   "morgen": {
+    "tekst": "120: 1",
+    "soort": "psalm",
+    "nummer": 120,
+    "naam": "Psalm 120",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "79: 7",
+    "soort": "psalm",
+    "nummer": 79,
+    "naam": "Psalm 79",
+    "verzen": [
+     7
+    ]
+   }
+  },
+  {
+   "datum": "2025-09-07",
+   "morgen": {
+    "tekst": "5: 12",
+    "soort": "psalm",
+    "nummer": 5,
+    "naam": "Psalm 5",
+    "verzen": [
+     12
+    ]
+   },
+   "middag": {
+    "tekst": "122: 1",
+    "soort": "psalm",
+    "nummer": 122,
+    "naam": "Psalm 122",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2025-09-14",
+   "morgen": {
+    "tekst": "146: 3",
+    "soort": "psalm",
+    "nummer": 146,
+    "naam": "Psalm 146",
+    "verzen": [
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "13: 5",
+    "soort": "psalm",
+    "nummer": 13,
+    "naam": "Psalm 13",
+    "verzen": [
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2025-09-21",
+   "morgen": {
+    "tekst": "123: 1",
+    "soort": "psalm",
+    "nummer": 123,
+    "naam": "Psalm 123",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "26: 8",
+    "soort": "psalm",
+    "nummer": 26,
+    "naam": "Psalm 26",
+    "verzen": [
+     8
+    ]
+   }
+  },
+  {
+   "datum": "2025-09-28",
+   "morgen": {
+    "tekst": "84: 2",
+    "soort": "psalm",
+    "nummer": 84,
+    "naam": "Psalm 84",
+    "verzen": [
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "28: 5",
+    "soort": "psalm",
+    "nummer": 28,
+    "naam": "Psalm 28",
+    "verzen": [
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2025-10-05",
+   "morgen": {
+    "tekst": "20:1",
+    "soort": "psalm",
+    "nummer": 20,
+    "naam": "Psalm 20",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "30: 1",
+    "soort": "psalm",
+    "nummer": 30,
+    "naam": "Psalm 30",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2025-10-12",
+   "morgen": {
+    "tekst": "75: 1",
+    "soort": "psalm",
+    "nummer": 75,
+    "naam": "Psalm 75",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "124: 4",
+    "soort": "psalm",
+    "nummer": 124,
+    "naam": "Psalm 124",
+    "verzen": [
+     4
+    ]
+   }
+  },
+  {
+   "datum": "2025-10-19",
+   "morgen": {
+    "tekst": "39: 3",
+    "soort": "psalm",
+    "nummer": 39,
+    "naam": "Psalm 39",
+    "verzen": [
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "27: 7",
+    "soort": "psalm",
+    "nummer": 27,
+    "naam": "Psalm 27",
+    "verzen": [
+     7
+    ]
+   }
+  },
+  {
+   "datum": "2025-10-26",
+   "morgen": {
+    "tekst": "86: 6",
+    "soort": "psalm",
+    "nummer": 86,
+    "naam": "Psalm 86",
+    "verzen": [
+     6
+    ]
+   },
+   "middag": {
+    "tekst": "86: 6",
+    "soort": "psalm",
+    "nummer": 86,
+    "naam": "Psalm 86",
+    "verzen": [
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2025-11-02",
+   "morgen": {
+    "tekst": "64: 10",
+    "soort": "psalm",
+    "nummer": 64,
+    "naam": "Psalm 64",
+    "verzen": [
+     10
+    ]
+   },
+   "middag": {
+    "tekst": "25: 2",
+    "soort": "psalm",
+    "nummer": 25,
+    "naam": "Psalm 25",
+    "verzen": [
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2025-11-09",
+   "morgen": {
+    "tekst": "133: 1",
+    "soort": "psalm",
+    "nummer": 133,
+    "naam": "Psalm 133",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "124: 4",
+    "soort": "psalm",
+    "nummer": 124,
+    "naam": "Psalm 124",
+    "verzen": [
+     4
+    ]
+   }
+  },
+  {
+   "datum": "2025-11-16",
+   "morgen": {
+    "tekst": "25: 6",
+    "soort": "psalm",
+    "nummer": 25,
+    "naam": "Psalm 25",
+    "verzen": [
+     6
+    ]
+   },
+   "middag": {
+    "tekst": "139: 1",
+    "soort": "psalm",
+    "nummer": 139,
+    "naam": "Psalm 139",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2025-11-23",
+   "morgen": {
+    "tekst": "126: 3",
+    "soort": "psalm",
+    "nummer": 126,
+    "naam": "Psalm 126",
+    "verzen": [
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "146: 6",
+    "soort": "psalm",
+    "nummer": 146,
+    "naam": "Psalm 146",
+    "verzen": [
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2025-11-26",
+   "morgen": {
+    "tekst": "38: 22",
+    "soort": "psalm",
+    "nummer": 38,
+    "naam": "Psalm 38",
+    "verzen": [
+     22
+    ]
+   },
+   "middag": {
+    "tekst": "66: 10",
+    "soort": "psalm",
+    "nummer": 66,
+    "naam": "Psalm 66",
+    "verzen": [
+     10
+    ]
+   }
+  },
+  {
+   "datum": "2025-11-30",
+   "morgen": {
+    "tekst": "32: 6",
+    "soort": "psalm",
+    "nummer": 32,
+    "naam": "Psalm 32",
+    "verzen": [
+     6
+    ]
+   },
+   "middag": {
+    "tekst": "96: 6",
+    "soort": "psalm",
+    "nummer": 96,
+    "naam": "Psalm 96",
+    "verzen": [
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2025-12-07",
+   "morgen": {
+    "tekst": "138: 4",
+    "soort": "psalm",
+    "nummer": 138,
+    "naam": "Psalm 138",
+    "verzen": [
+     4
+    ]
+   },
+   "middag": {
+    "tekst": "L v Maria: 3",
+    "soort": "gezang",
+    "nummer": 2,
+    "naam": "Lofzang van Maria",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2025-12-14",
+   "morgen": {
+    "tekst": "L v Zach: 1",
+    "soort": "gezang",
+    "nummer": 3,
+    "naam": "Lofzang van Zacharias",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "63: 1",
+    "soort": "psalm",
+    "nummer": 63,
+    "naam": "Psalm 63",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2025-12-21",
+   "morgen": {
+    "tekst": "132: 12",
+    "soort": "psalm",
+    "nummer": 132,
+    "naam": "Psalm 132",
+    "verzen": [
+     12
+    ]
+   },
+   "middag": {
+    "tekst": "L v Sim: 1",
+    "soort": "gezang",
+    "nummer": 4,
+    "naam": "Lofzang van Simeon",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2025-12-25",
+   "morgen": {
+    "tekst": "Gez 12: 7",
+    "soort": "gezang",
+    "nummer": 12,
+    "naam": "Avondzang",
+    "verzen": [
+     7
+    ]
+   }
+  },
+  {
+   "datum": "2025-12-26",
+   "morgen": {
+    "tekst": "111: 2",
+    "soort": "psalm",
+    "nummer": 111,
+    "naam": "Psalm 111",
+    "verzen": [
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2025-12-28",
+   "morgen": {
+    "tekst": "81: 12",
+    "soort": "psalm",
+    "nummer": 81,
+    "naam": "Psalm 81",
+    "verzen": [
+     12
+    ]
+   },
+   "middag": {
+    "tekst": "98: 2",
+    "soort": "psalm",
+    "nummer": 98,
+    "naam": "Psalm 98",
+    "verzen": [
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2025-12-31",
+   "middag": {
+    "tekst": "90: 1 en 6",
+    "soort": "psalm",
+    "nummer": 90,
+    "naam": "Psalm 90",
+    "verzen": [
+     1,
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2026-01-01",
+   "morgen": {
+    "tekst": "91: 5",
+    "soort": "psalm",
+    "nummer": 91,
+    "naam": "Psalm 91",
+    "verzen": [
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2026-01-04",
+   "morgen": {
+    "tekst": "Gez. 5: 4",
+    "soort": "gezang",
+    "nummer": 5,
+    "naam": "Gebed des HEEREN",
+    "verzen": [
+     4
+    ]
+   },
+   "middag": {
+    "tekst": "L v Sim: 1",
+    "soort": "gezang",
+    "nummer": 4,
+    "naam": "Lofzang van Simeon",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2026-01-11",
+   "morgen": {
+    "tekst": "149: 5",
+    "soort": "psalm",
+    "nummer": 149,
+    "naam": "Psalm 149",
+    "verzen": [
+     5
+    ]
+   },
+   "middag": {
+    "tekst": "33: 11",
+    "soort": "psalm",
+    "nummer": 33,
+    "naam": "Psalm 33",
+    "verzen": [
+     11
+    ]
+   }
+  },
+  {
+   "datum": "2026-01-18",
+   "morgen": {
+    "tekst": "95: 1",
+    "soort": "psalm",
+    "nummer": 95,
+    "naam": "Psalm 95",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "117: 1",
+    "soort": "psalm",
+    "nummer": 117,
+    "naam": "Psalm 117",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2026-01-25",
+   "morgen": {
+    "tekst": "36: 3",
+    "soort": "psalm",
+    "nummer": 36,
+    "naam": "Psalm 36",
+    "verzen": [
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "143: 10",
+    "soort": "psalm",
+    "nummer": 143,
+    "naam": "Psalm 143",
+    "verzen": [
+     10
+    ]
+   }
+  },
+  {
+   "datum": "2026-02-01",
+   "morgen": {
+    "tekst": "81: 13",
+    "soort": "psalm",
+    "nummer": 81,
+    "naam": "Psalm 81",
+    "verzen": [
+     13
+    ]
+   },
+   "middag": {
+    "tekst": "103: 8",
+    "soort": "psalm",
+    "nummer": 103,
+    "naam": "Psalm 103",
+    "verzen": [
+     8
+    ]
+   }
+  },
+  {
+   "datum": "2026-02-08",
+   "morgen": {
+    "tekst": "45: 1",
+    "soort": "psalm",
+    "nummer": 45,
+    "naam": "Psalm 45",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "114: 1",
+    "soort": "psalm",
+    "nummer": 114,
+    "naam": "Psalm 114",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2026-02-15",
+   "morgen": {
+    "tekst": "133: 3",
+    "soort": "psalm",
+    "nummer": 133,
+    "naam": "Psalm 133",
+    "verzen": [
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "32: 3",
+    "soort": "psalm",
+    "nummer": 32,
+    "naam": "Psalm 32",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2026-02-22",
+   "morgen": {
+    "tekst": "103: 9",
+    "soort": "psalm",
+    "nummer": 103,
+    "naam": "Psalm 103",
+    "verzen": [
+     9
+    ]
+   },
+   "middag": {
+    "tekst": "138: 4",
+    "soort": "psalm",
+    "nummer": 138,
+    "naam": "Psalm 138",
+    "verzen": [
+     4
+    ]
+   }
+  },
+  {
+   "datum": "2026-02-25",
+   "morgen": {
+    "tekst": "150: 1",
+    "soort": "psalm",
+    "nummer": 150,
+    "naam": "Psalm 150",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "121: 1",
+    "soort": "psalm",
+    "nummer": 121,
+    "naam": "Psalm 121",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2026-03-01",
+   "morgen": {
+    "tekst": "41: 1",
+    "soort": "psalm",
+    "nummer": 41,
+    "naam": "Psalm 41",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "48: 6",
+    "soort": "psalm",
+    "nummer": 48,
+    "naam": "Psalm 48",
+    "verzen": [
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2026-03-08",
+   "morgen": {
+    "tekst": "51: 1",
+    "soort": "psalm",
+    "nummer": 51,
+    "naam": "Psalm 51",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "145: 6",
+    "soort": "psalm",
+    "nummer": 145,
+    "naam": "Psalm 145",
+    "verzen": [
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2026-03-15",
+   "morgen": {
+    "tekst": "118: 11",
+    "soort": "psalm",
+    "nummer": 118,
+    "naam": "Psalm 118",
+    "verzen": [
+     11
+    ]
+   },
+   "middag": {
+    "tekst": "65: 2",
+    "soort": "psalm",
+    "nummer": 65,
+    "naam": "Psalm 65",
+    "verzen": [
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2026-03-22",
+   "morgen": {
+    "tekst": "149: 1",
+    "soort": "psalm",
+    "nummer": 149,
+    "naam": "Psalm 149",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "125: 2",
+    "soort": "psalm",
+    "nummer": 125,
+    "naam": "Psalm 125",
+    "verzen": [
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2026-03-29",
+   "morgen": {
+    "tekst": "100: 1",
+    "soort": "psalm",
+    "nummer": 100,
+    "naam": "Psalm 100",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "42: 5",
+    "soort": "psalm",
+    "nummer": 42,
+    "naam": "Psalm 42",
+    "verzen": [
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2026-04-03",
+   "middag": {
+    "tekst": "22: 1",
+    "soort": "psalm",
+    "nummer": 22,
+    "naam": "Psalm 22",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2026-04-05",
+   "morgen": {
+    "tekst": "18: 9",
+    "soort": "psalm",
+    "nummer": 18,
+    "naam": "Psalm 18",
+    "verzen": [
+     9
+    ]
+   },
+   "middag": {
+    "tekst": "11:05",
+    "soort": "psalm",
+    "nummer": 62,
+    "naam": "Psalm 62",
+    "verzen": [
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2026-04-06",
+   "morgen": {
+    "tekst": "119: 3",
+    "soort": "psalm",
+    "nummer": 119,
+    "naam": "Psalm 119",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2026-04-12",
+   "morgen": {
+    "tekst": "62: 5",
+    "soort": "psalm",
+    "nummer": 62,
+    "naam": "Psalm 62",
+    "verzen": [
+     5
+    ]
+   },
+   "middag": {
+    "tekst": "",
+    "soort": "psalm",
+    "nummer": 48,
+    "naam": "Psalm 48",
+    "verzen": [
+     4
+    ]
+   }
+  },
+  {
+   "datum": "2026-04-19",
+   "morgen": {
+    "tekst": "27: 1",
+    "soort": "psalm",
+    "nummer": 27,
+    "naam": "Psalm 27",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "3: 3",
+    "soort": "psalm",
+    "nummer": 3,
+    "naam": "Psalm 3",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2026-04-26",
+   "morgen": {
+    "tekst": "99: 1",
+    "soort": "psalm",
+    "nummer": 99,
+    "naam": "Psalm 99",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "84: 6",
+    "soort": "psalm",
+    "nummer": 84,
+    "naam": "Psalm 84",
+    "verzen": [
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2026-05-03",
+   "morgen": {
+    "tekst": "105: 5",
+    "soort": "psalm",
+    "nummer": 105,
+    "naam": "Psalm 105",
+    "verzen": [
+     5
+    ]
+   },
+   "middag": {
+    "tekst": "24: 4",
+    "soort": "psalm",
+    "nummer": 24,
+    "naam": "Psalm 24",
+    "verzen": [
+     4
+    ]
+   }
+  },
+  {
+   "datum": "2026-05-10",
+   "morgen": {
+    "tekst": "79: 4",
+    "soort": "psalm",
+    "nummer": 79,
+    "naam": "Psalm 79",
+    "verzen": [
+     4
+    ]
+   },
+   "middag": {
+    "tekst": "60: 7",
+    "soort": "psalm",
+    "nummer": 60,
+    "naam": "Psalm 60",
+    "verzen": [
+     7
+    ]
+   }
+  },
+  {
+   "datum": "2026-05-14",
+   "morgen": {
+    "tekst": "62: 1",
+    "soort": "psalm",
+    "nummer": 62,
+    "naam": "Psalm 62",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2026-05-17",
+   "morgen": {
+    "tekst": "116: 11",
+    "soort": "psalm",
+    "nummer": 116,
+    "naam": "Psalm 116",
+    "verzen": [
+     11
+    ]
+   },
+   "middag": {
+    "tekst": "91: 1",
+    "soort": "psalm",
+    "nummer": 91,
+    "naam": "Psalm 91",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2026-05-21",
+   "middag": {
+    "tekst": "",
+    "soort": "psalm",
+    "nummer": 1,
+    "naam": "Psalm 1",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2026-05-24",
+   "morgen": {
+    "tekst": "87: 1 en 3",
+    "soort": "psalm",
+    "nummer": 87,
+    "naam": "Psalm 87",
+    "verzen": [
+     1,
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "26: 3",
+    "soort": "psalm",
+    "nummer": 26,
+    "naam": "Psalm 26",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2026-05-25",
+   "morgen": {
+    "tekst": "116: 10",
+    "soort": "psalm",
+    "nummer": 116,
+    "naam": "Psalm 116",
+    "verzen": [
+     10
+    ]
+   }
+  },
+  {
+   "datum": "2026-05-31",
+   "morgen": {
+    "tekst": "102: 15",
+    "soort": "psalm",
+    "nummer": 102,
+    "naam": "Psalm 102",
+    "verzen": [
+     15
+    ]
+   },
+   "middag": {
+    "tekst": "10 Geb: 9",
+    "soort": "gezang",
+    "nummer": 1,
+    "naam": "Tien Geboden des HEEREN",
+    "verzen": [
+     9
+    ]
+   }
+  },
+  {
+   "datum": "2026-06-07",
+   "morgen": {
+    "tekst": "83: 10",
+    "soort": "psalm",
+    "nummer": 83,
+    "naam": "Psalm 83",
+    "verzen": [
+     10
+    ]
+   },
+   "middag": {
+    "tekst": "11: 1",
+    "soort": "psalm",
+    "nummer": 11,
+    "naam": "Psalm 11",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2026-06-14",
+   "morgen": {
+    "tekst": "136: 26",
+    "soort": "psalm",
+    "nummer": 136,
+    "naam": "Psalm 136",
+    "verzen": [
+     26
+    ]
+   },
+   "middag": {
+    "tekst": "89: 1",
+    "soort": "psalm",
+    "nummer": 89,
+    "naam": "Psalm 89",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2026-06-21",
+   "morgen": {
+    "tekst": "7: 5",
+    "soort": "psalm",
+    "nummer": 7,
+    "naam": "Psalm 7",
+    "verzen": [
+     5
+    ]
+   },
+   "middag": {
+    "tekst": "141: 3",
+    "soort": "psalm",
+    "nummer": 141,
+    "naam": "Psalm 141",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2026-06-28",
+   "morgen": {
+    "tekst": "108: 1",
+    "soort": "psalm",
+    "nummer": 108,
+    "naam": "Psalm 108",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "4: 4",
+    "soort": "psalm",
+    "nummer": 4,
+    "naam": "Psalm 4",
+    "verzen": [
+     4
+    ]
+   }
+  },
+  {
+   "datum": "2026-07-05",
+   "morgen": {
+    "tekst": "3: 2",
+    "soort": "psalm",
+    "nummer": 3,
+    "naam": "Psalm 3",
+    "verzen": [
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "2: 6",
+    "soort": "psalm",
+    "nummer": 2,
+    "naam": "Psalm 2",
+    "verzen": [
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2026-07-12",
+   "morgen": {
+    "tekst": "107: 12",
+    "soort": "psalm",
+    "nummer": 107,
+    "naam": "Psalm 107",
+    "verzen": [
+     12
+    ]
+   },
+   "middag": {
+    "tekst": "85: 1",
+    "soort": "psalm",
+    "nummer": 85,
+    "naam": "Psalm 85",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2026-07-19",
+   "morgen": {
+    "tekst": "119: 88",
+    "soort": "psalm",
+    "nummer": 119,
+    "naam": "Psalm 119",
+    "verzen": [
+     88
+    ]
+   },
+   "middag": {
+    "tekst": "6: 2",
+    "soort": "psalm",
+    "nummer": 6,
+    "naam": "Psalm 6",
+    "verzen": [
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2026-07-26",
+   "morgen": {
+    "tekst": "8:1",
+    "soort": "psalm",
+    "nummer": 8,
+    "naam": "Psalm 8",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "17: 3",
+    "soort": "psalm",
+    "nummer": 17,
+    "naam": "Psalm 17",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2026-08-02",
+   "morgen": {
+    "tekst": "121: 1 en 4",
+    "soort": "psalm",
+    "nummer": 121,
+    "naam": "Psalm 121",
+    "verzen": [
+     1,
+     4
+    ]
+   },
+   "middag": {
+    "tekst": "122: 1",
+    "soort": "psalm",
+    "nummer": 122,
+    "naam": "Psalm 122",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2026-08-09",
+   "morgen": {
+    "tekst": "23: 1",
+    "soort": "psalm",
+    "nummer": 23,
+    "naam": "Psalm 23",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "36: 2",
+    "soort": "psalm",
+    "nummer": 36,
+    "naam": "Psalm 36",
+    "verzen": [
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2026-08-16",
+   "morgen": {
+    "tekst": "68: 10",
+    "soort": "psalm",
+    "nummer": 68,
+    "naam": "Psalm 68",
+    "verzen": [
+     10
+    ]
+   },
+   "middag": {
+    "tekst": "92: 1",
+    "soort": "psalm",
+    "nummer": 92,
+    "naam": "Psalm 92",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2026-08-23",
+   "morgen": {
+    "tekst": "73: 12",
+    "soort": "psalm",
+    "nummer": 73,
+    "naam": "Psalm 73",
+    "verzen": [
+     12
+    ]
+   },
+   "middag": {
+    "tekst": "86: 6",
+    "soort": "psalm",
+    "nummer": 86,
+    "naam": "Psalm 86",
+    "verzen": [
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2026-08-30",
+   "morgen": {
+    "tekst": "",
+    "soort": "psalm",
+    "nummer": 9,
+    "naam": "Psalm 9",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "",
+    "soort": "psalm",
+    "nummer": 23,
+    "naam": "Psalm 23",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2026-09-06",
+   "morgen": {
+    "tekst": "17:8",
+    "soort": "psalm",
+    "nummer": 17,
+    "naam": "Psalm 17",
+    "verzen": [
+     8
+    ]
+   },
+   "middag": {
+    "tekst": "94:8",
+    "soort": "psalm",
+    "nummer": 94,
+    "naam": "Psalm 94",
+    "verzen": [
+     8
+    ]
+   }
+  },
+  {
+   "datum": "2026-09-13",
+   "morgen": {
+    "tekst": "3:3",
+    "soort": "psalm",
+    "nummer": 3,
+    "naam": "Psalm 3",
+    "verzen": [
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "6:9",
+    "soort": "psalm",
+    "nummer": 6,
+    "naam": "Psalm 6",
+    "verzen": [
+     9
+    ]
+   }
+  },
+  {
+   "datum": "2026-09-20",
+   "morgen": {
+    "tekst": "6:2",
+    "soort": "psalm",
+    "nummer": 6,
+    "naam": "Psalm 6",
+    "verzen": [
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "16:6",
+    "soort": "psalm",
+    "nummer": 16,
+    "naam": "Psalm 16",
+    "verzen": [
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2026-09-27",
+   "morgen": {
+    "tekst": "15:5",
+    "soort": "psalm",
+    "nummer": 15,
+    "naam": "Psalm 15",
+    "verzen": [
+     5
+    ]
+   },
+   "middag": {
+    "tekst": "34:6",
+    "soort": "psalm",
+    "nummer": 34,
+    "naam": "Psalm 34",
+    "verzen": [
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2026-10-04",
+   "morgen": {
+    "tekst": "22:16",
+    "soort": "psalm",
+    "nummer": 22,
+    "naam": "Psalm 22",
+    "verzen": [
+     16
+    ]
+   },
+   "middag": {
+    "tekst": "37:2",
+    "soort": "psalm",
+    "nummer": 37,
+    "naam": "Psalm 37",
+    "verzen": [
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2026-10-11",
+   "morgen": {
+    "tekst": "19:1",
+    "soort": "psalm",
+    "nummer": 19,
+    "naam": "Psalm 19",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "50:1",
+    "soort": "psalm",
+    "nummer": 50,
+    "naam": "Psalm 50",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2026-10-18",
+   "morgen": {
+    "tekst": "38:15",
+    "soort": "psalm",
+    "nummer": 38,
+    "naam": "Psalm 38",
+    "verzen": [
+     15
+    ]
+   },
+   "middag": {
+    "tekst": "55:1",
+    "soort": "psalm",
+    "nummer": 55,
+    "naam": "Psalm 55",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2026-10-25",
+   "morgen": {
+    "tekst": "36:1",
+    "soort": "psalm",
+    "nummer": 36,
+    "naam": "Psalm 36",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "42:6",
+    "soort": "psalm",
+    "nummer": 42,
+    "naam": "Psalm 42",
+    "verzen": [
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2026-11-01",
+   "morgen": {
+    "tekst": "31:19",
+    "soort": "psalm",
+    "nummer": 31,
+    "naam": "Psalm 31",
+    "verzen": [
+     19
+    ]
+   },
+   "middag": {
+    "tekst": "90:1",
+    "soort": "psalm",
+    "nummer": 90,
+    "naam": "Psalm 90",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2026-11-08",
+   "morgen": {
+    "tekst": "34:11",
+    "soort": "psalm",
+    "nummer": 34,
+    "naam": "Psalm 34",
+    "verzen": [
+     11
+    ]
+   },
+   "middag": {
+    "tekst": "43:3",
+    "soort": "psalm",
+    "nummer": 43,
+    "naam": "Psalm 43",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2026-11-15",
+   "morgen": {
+    "tekst": "25:2",
+    "soort": "psalm",
+    "nummer": 25,
+    "naam": "Psalm 25",
+    "verzen": [
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "52:7",
+    "soort": "psalm",
+    "nummer": 52,
+    "naam": "Psalm 52",
+    "verzen": [
+     7
+    ]
+   }
+  },
+  {
+   "datum": "2026-11-22",
+   "morgen": {
+    "tekst": "25:2",
+    "soort": "psalm",
+    "nummer": 25,
+    "naam": "Psalm 25",
+    "verzen": [
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "46:1",
+    "soort": "psalm",
+    "nummer": 46,
+    "naam": "Psalm 46",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2026-11-25",
+   "morgen": {
+    "tekst": "147:1",
+    "soort": "psalm",
+    "nummer": 147,
+    "naam": "Psalm 147",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "136:25",
+    "soort": "psalm",
+    "nummer": 136,
+    "naam": "Psalm 136",
+    "verzen": [
+     25
+    ]
+   }
+  },
+  {
+   "datum": "2026-11-29",
+   "morgen": {
+    "tekst": "66:10",
+    "soort": "psalm",
+    "nummer": 66,
+    "naam": "Psalm 66",
+    "verzen": [
+     10
+    ]
+   },
+   "middag": {
+    "tekst": "97:7",
+    "soort": "psalm",
+    "nummer": 97,
+    "naam": "Psalm 97",
+    "verzen": [
+     7
+    ]
+   }
+  },
+  {
+   "datum": "2026-12-06",
+   "morgen": {
+    "tekst": "72:11",
+    "soort": "psalm",
+    "nummer": 72,
+    "naam": "Psalm 72",
+    "verzen": [
+     11
+    ]
+   },
+   "middag": {
+    "tekst": "77:8",
+    "soort": "psalm",
+    "nummer": 77,
+    "naam": "Psalm 77",
+    "verzen": [
+     8
+    ]
+   }
+  },
+  {
+   "datum": "2026-12-13",
+   "morgen": {
+    "tekst": "LvM:1",
+    "soort": "gezang",
+    "nummer": 2,
+    "naam": "Lofzang van Maria",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "119:3",
+    "soort": "psalm",
+    "nummer": 119,
+    "naam": "Psalm 119",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2026-12-20",
+   "morgen": {
+    "tekst": "LvS:2",
+    "soort": "gezang",
+    "nummer": 4,
+    "naam": "Lofzang van Simeon",
+    "verzen": [
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "LvZ:1",
+    "soort": "gezang",
+    "nummer": 3,
+    "naam": "Lofzang van Zacharias",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2026-12-25",
+   "morgen": {
+    "tekst": "118:13",
+    "soort": "psalm",
+    "nummer": 118,
+    "naam": "Psalm 118",
+    "verzen": [
+     13
+    ]
+   }
+  },
+  {
+   "datum": "2026-12-26",
+   "morgen": {
+    "tekst": "LvM:7",
+    "soort": "gezang",
+    "nummer": 2,
+    "naam": "Lofzang van Maria",
+    "verzen": [
+     7
+    ]
+   }
+  },
+  {
+   "datum": "2026-12-27",
+   "morgen": {
+    "tekst": "LvM:2",
+    "soort": "gezang",
+    "nummer": 2,
+    "naam": "Lofzang van Maria",
+    "verzen": [
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "LvS:2",
+    "soort": "gezang",
+    "nummer": 4,
+    "naam": "Lofzang van Simeon",
+    "verzen": [
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2026-12-31",
+   "middag": {
+    "tekst": "90:6",
+    "soort": "psalm",
+    "nummer": 90,
+    "naam": "Psalm 90",
+    "verzen": [
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2027-01-01",
+   "morgen": {
+    "tekst": "91:5",
+    "soort": "psalm",
+    "nummer": 91,
+    "naam": "Psalm 91",
+    "verzen": [
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2027-01-03",
+   "morgen": {
+    "tekst": "LvZ:4",
+    "soort": "gezang",
+    "nummer": 3,
+    "naam": "Lofzang van Zacharias",
+    "verzen": [
+     4
+    ]
+   },
+   "middag": {
+    "tekst": "121:2",
+    "soort": "psalm",
+    "nummer": 121,
+    "naam": "Psalm 121",
+    "verzen": [
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2027-01-10",
+   "morgen": {
+    "tekst": "38:2",
+    "soort": "psalm",
+    "nummer": 38,
+    "naam": "Psalm 38",
+    "verzen": [
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "132:12",
+    "soort": "psalm",
+    "nummer": 132,
+    "naam": "Psalm 132",
+    "verzen": [
+     12
+    ]
+   }
+  },
+  {
+   "datum": "2027-01-17",
+   "morgen": {
+    "tekst": "74:16",
+    "soort": "psalm",
+    "nummer": 74,
+    "naam": "Psalm 74",
+    "verzen": [
+     16
+    ]
+   },
+   "middag": {
+    "tekst": "56:5",
+    "soort": "psalm",
+    "nummer": 56,
+    "naam": "Psalm 56",
+    "verzen": [
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2027-01-24",
+   "morgen": {
+    "tekst": "75:6",
+    "soort": "psalm",
+    "nummer": 75,
+    "naam": "Psalm 75",
+    "verzen": [
+     6
+    ]
+   },
+   "middag": {
+    "tekst": "57:1",
+    "soort": "psalm",
+    "nummer": 57,
+    "naam": "Psalm 57",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2027-01-31",
+   "morgen": {
+    "tekst": "76:1",
+    "soort": "psalm",
+    "nummer": 76,
+    "naam": "Psalm 76",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "58:1",
+    "soort": "psalm",
+    "nummer": 58,
+    "naam": "Psalm 58",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2027-02-07",
+   "morgen": {
+    "tekst": "103:1",
+    "soort": "psalm",
+    "nummer": 103,
+    "naam": "Psalm 103",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "54:1",
+    "soort": "psalm",
+    "nummer": 54,
+    "naam": "Psalm 54",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2027-02-14",
+   "morgen": {
+    "tekst": "27:6",
+    "soort": "psalm",
+    "nummer": 27,
+    "naam": "Psalm 27",
+    "verzen": [
+     6
+    ]
+   },
+   "middag": {
+    "tekst": "127:2",
+    "soort": "psalm",
+    "nummer": 127,
+    "naam": "Psalm 127",
+    "verzen": [
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2027-02-21",
+   "morgen": {
+    "tekst": "93:1",
+    "soort": "psalm",
+    "nummer": 93,
+    "naam": "Psalm 93",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "101:2",
+    "soort": "psalm",
+    "nummer": 101,
+    "naam": "Psalm 101",
+    "verzen": [
+     2
+    ]
+   }
+  },
+  {
+   "datum": "2027-02-24",
+   "morgen": {
+    "tekst": "65:3",
+    "soort": "psalm",
+    "nummer": 65,
+    "naam": "Psalm 65",
+    "verzen": [
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "67:3",
+    "soort": "psalm",
+    "nummer": 67,
+    "naam": "Psalm 67",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2027-02-28",
+   "morgen": {
+    "tekst": "121:1",
+    "soort": "psalm",
+    "nummer": 121,
+    "naam": "Psalm 121",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "106:4",
+    "soort": "psalm",
+    "nummer": 106,
+    "naam": "Psalm 106",
+    "verzen": [
+     4
+    ]
+   }
+  },
+  {
+   "datum": "2027-03-07",
+   "morgen": {
+    "tekst": "110:1",
+    "soort": "psalm",
+    "nummer": 110,
+    "naam": "Psalm 110",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "69:4",
+    "soort": "psalm",
+    "nummer": 69,
+    "naam": "Psalm 69",
+    "verzen": [
+     4
+    ]
+   }
+  },
+  {
+   "datum": "2027-03-14",
+   "morgen": {
+    "tekst": "40:4",
+    "soort": "psalm",
+    "nummer": 40,
+    "naam": "Psalm 40",
+    "verzen": [
+     4
+    ]
+   },
+   "middag": {
+    "tekst": "22:1",
+    "soort": "psalm",
+    "nummer": 22,
+    "naam": "Psalm 22",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2027-03-21",
+   "morgen": {
+    "tekst": "70:3",
+    "soort": "psalm",
+    "nummer": 70,
+    "naam": "Psalm 70",
+    "verzen": [
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "147:6",
+    "soort": "psalm",
+    "nummer": 147,
+    "naam": "Psalm 147",
+    "verzen": [
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2027-03-26",
+   "middag": {
+    "tekst": "22:4",
+    "soort": "psalm",
+    "nummer": 22,
+    "naam": "Psalm 22",
+    "verzen": [
+     4
+    ]
+   }
+  },
+  {
+   "datum": "2027-03-28",
+   "morgen": {
+    "tekst": "131:4",
+    "soort": "psalm",
+    "nummer": 131,
+    "naam": "Psalm 131",
+    "verzen": [
+     4
+    ]
+   },
+   "middag": {
+    "tekst": "118:12",
+    "soort": "psalm",
+    "nummer": 118,
+    "naam": "Psalm 118",
+    "verzen": [
+     12
+    ]
+   }
+  },
+  {
+   "datum": "2027-03-29",
+   "morgen": {
+    "tekst": "118:13",
+    "soort": "psalm",
+    "nummer": 118,
+    "naam": "Psalm 118",
+    "verzen": [
+     13
+    ]
+   }
+  },
+  {
+   "datum": "2027-04-11",
+   "morgen": {
+    "tekst": "21:4",
+    "soort": "psalm",
+    "nummer": 21,
+    "naam": "Psalm 21",
+    "verzen": [
+     4
+    ]
+   },
+   "middag": {
+    "tekst": "68:9",
+    "soort": "psalm",
+    "nummer": 68,
+    "naam": "Psalm 68",
+    "verzen": [
+     9
+    ]
+   }
+  },
+  {
+   "datum": "2027-04-18",
+   "morgen": {
+    "tekst": "47:3",
+    "soort": "psalm",
+    "nummer": 47,
+    "naam": "Psalm 47",
+    "verzen": [
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "111:5",
+    "soort": "psalm",
+    "nummer": 111,
+    "naam": "Psalm 111",
+    "verzen": [
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2027-04-25",
+   "morgen": {
+    "tekst": "113:2",
+    "soort": "psalm",
+    "nummer": 113,
+    "naam": "Psalm 113",
+    "verzen": [
+     2
+    ]
+   },
+   "middag": {
+    "tekst": "78:3",
+    "soort": "psalm",
+    "nummer": 78,
+    "naam": "Psalm 78",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2027-05-02",
+   "morgen": {
+    "tekst": "39:6",
+    "soort": "psalm",
+    "nummer": 39,
+    "naam": "Psalm 39",
+    "verzen": [
+     6
+    ]
+   },
+   "middag": {
+    "tekst": "140:7",
+    "soort": "psalm",
+    "nummer": 140,
+    "naam": "Psalm 140",
+    "verzen": [
+     7
+    ]
+   }
+  },
+  {
+   "datum": "2027-05-06",
+   "morgen": {
+    "tekst": "47:3",
+    "soort": "psalm",
+    "nummer": 47,
+    "naam": "Psalm 47",
+    "verzen": [
+     3
+    ]
+   }
+  },
+  {
+   "datum": "2027-05-09",
+   "morgen": {
+    "tekst": "119:3",
+    "soort": "psalm",
+    "nummer": 119,
+    "naam": "Psalm 119",
+    "verzen": [
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "14:7",
+    "soort": "psalm",
+    "nummer": 14,
+    "naam": "Psalm 14",
+    "verzen": [
+     7
+    ]
+   }
+  },
+  {
+   "datum": "2027-05-16",
+   "morgen": {
+    "tekst": "46:6",
+    "soort": "psalm",
+    "nummer": 46,
+    "naam": "Psalm 46",
+    "verzen": [
+     6
+    ]
+   },
+   "middag": {
+    "tekst": "53:6",
+    "soort": "psalm",
+    "nummer": 53,
+    "naam": "Psalm 53",
+    "verzen": [
+     6
+    ]
+   }
+  },
+  {
+   "datum": "2027-05-27",
+   "morgen": {
+    "tekst": "68:9",
+    "soort": "psalm",
+    "nummer": 68,
+    "naam": "Psalm 68",
+    "verzen": [
+     9
+    ]
+   }
+  },
+  {
+   "datum": "2027-05-30",
+   "morgen": {
+    "tekst": "100:4",
+    "soort": "psalm",
+    "nummer": 100,
+    "naam": "Psalm 100",
+    "verzen": [
+     4
+    ]
+   },
+   "middag": {
+    "tekst": "145:7",
+    "soort": "psalm",
+    "nummer": 145,
+    "naam": "Psalm 145",
+    "verzen": [
+     7
+    ]
+   }
+  },
+  {
+   "datum": "2027-06-06",
+   "morgen": {
+    "tekst": "Avondzang:7",
+    "soort": "gezang",
+    "nummer": 12,
+    "naam": "Avondzang",
+    "verzen": [
+     7
+    ]
+   },
+   "middag": {
+    "tekst": "135:1",
+    "soort": "psalm",
+    "nummer": 135,
+    "naam": "Psalm 135",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2027-06-13",
+   "morgen": {
+    "tekst": "80:11",
+    "soort": "psalm",
+    "nummer": 80,
+    "naam": "Psalm 80",
+    "verzen": [
+     11
+    ]
+   },
+   "middag": {
+    "tekst": "150:1",
+    "soort": "psalm",
+    "nummer": 150,
+    "naam": "Psalm 150",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2027-06-20",
+   "morgen": {
+    "tekst": "87:3",
+    "soort": "psalm",
+    "nummer": 87,
+    "naam": "Psalm 87",
+    "verzen": [
+     3
+    ]
+   },
+   "middag": {
+    "tekst": "71:12",
+    "soort": "psalm",
+    "nummer": 71,
+    "naam": "Psalm 71",
+    "verzen": [
+     12
+    ]
+   }
+  },
+  {
+   "datum": "2027-06-27",
+   "morgen": {
+    "tekst": "119:7",
+    "soort": "psalm",
+    "nummer": 119,
+    "naam": "Psalm 119",
+    "verzen": [
+     7
+    ]
+   },
+   "middag": {
+    "tekst": "49:5",
+    "soort": "psalm",
+    "nummer": 49,
+    "naam": "Psalm 49",
+    "verzen": [
+     5
+    ]
+   }
+  },
+  {
+   "datum": "2027-07-04",
+   "morgen": {
+    "tekst": "Morgenzang:1",
+    "soort": "gezang",
+    "nummer": 9,
+    "naam": "Morgenzang",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "99:1",
+    "soort": "psalm",
+    "nummer": 99,
+    "naam": "Psalm 99",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2027-07-11",
+   "morgen": {
+    "tekst": "115:6",
+    "soort": "psalm",
+    "nummer": 115,
+    "naam": "Psalm 115",
+    "verzen": [
+     6
+    ]
+   },
+   "middag": {
+    "tekst": "130:1",
+    "soort": "psalm",
+    "nummer": 130,
+    "naam": "Psalm 130",
+    "verzen": [
+     1
+    ]
+   }
+  },
+  {
+   "datum": "2027-07-18",
+   "morgen": {
+    "tekst": "TGdH:1",
+    "soort": "gezang",
+    "nummer": 1,
+    "naam": "Tien Geboden des HEEREN",
+    "verzen": [
+     1
+    ]
+   },
+   "middag": {
+    "tekst": "88:1",
+    "soort": "psalm",
+    "nummer": 88,
+    "naam": "Psalm 88",
+    "verzen": [
+     1
+    ]
+   }
+  }
+ ],
+ "bediening": [
+  {
+   "datum": "2023-02-19",
+   "morgen": "Bediener 10",
+   "middag": "Bediener 8",
+   "notities": []
+  },
+  {
+   "datum": "2023-02-22",
+   "morgen": "Bediener 8",
+   "middag": "Bediener 10",
+   "notities": []
+  },
+  {
+   "datum": "2023-02-26",
+   "morgen": "Bediener 6",
+   "middag": "Bediener 7",
+   "notities": []
+  },
+  {
+   "datum": "2023-03-05",
+   "morgen": "Bediener 1",
+   "middag": "Bediener 5",
+   "notities": []
+  },
+  {
+   "datum": "2023-03-12",
+   "morgen": "Bediener 10",
+   "middag": "Bediener 3/Bediener 4",
+   "notities": []
+  },
+  {
+   "datum": "2023-03-19",
+   "morgen": "Bediener 1",
+   "middag": "Bediener 8",
+   "notities": []
+  },
+  {
+   "datum": "2023-03-26",
+   "morgen": "Bediener 5",
+   "middag": "Bediener 6",
+   "notities": []
+  },
+  {
+   "datum": "2023-04-07",
+   "morgen": "Bediener 5",
+   "middag": "",
+   "notities": []
+  },
+  {
+   "datum": "2023-04-09",
+   "morgen": "Bediener 10",
+   "middag": "Bediener 1",
+   "notities": []
+  },
+  {
+   "datum": "2023-04-10",
+   "morgen": "Bediener 8",
+   "middag": "",
+   "notities": []
+  },
+  {
+   "datum": "2023-04-16",
+   "morgen": "Bediener 3",
+   "middag": "Bediener 6",
+   "notities": []
+  },
+  {
+   "datum": "2023-04-23",
+   "morgen": "Bediener 5",
+   "middag": "Bediener 8",
+   "notities": []
+  },
+  {
+   "datum": "2023-04-30",
+   "morgen": "Bediener 1",
+   "middag": "Bediener 10",
+   "notities": []
+  },
+  {
+   "datum": "2023-05-07",
+   "morgen": "Bediener 4",
+   "middag": "Bediener 6",
+   "notities": []
+  },
+  {
+   "datum": "2023-05-14",
+   "morgen": "Bediener 8",
+   "middag": "Bediener 5",
+   "notities": []
+  },
+  {
+   "datum": "2023-05-18",
+   "morgen": "Bediener 10",
+   "middag": "",
+   "notities": []
+  },
+  {
+   "datum": "2023-05-21",
+   "morgen": "Bediener 1",
+   "middag": "Bediener 6",
+   "notities": []
+  },
+  {
+   "datum": "2023-05-28",
+   "morgen": "Bediener 8",
+   "middag": "Bediener 3/Bediener 4",
+   "notities": []
+  },
+  {
+   "datum": "2023-05-29",
+   "morgen": "Bediener 5",
+   "middag": "",
+   "notities": []
+  },
+  {
+   "datum": "2023-06-04",
+   "morgen": "Bediener 10",
+   "middag": "Bediener 1",
+   "notities": []
+  },
+  {
+   "datum": "2023-06-11",
+   "morgen": "Bediener 8",
+   "middag": "Bediener 5",
+   "notities": []
+  },
+  {
+   "datum": "2023-06-18",
+   "morgen": "Bediener 10",
+   "middag": "Bediener 6",
+   "notities": []
+  },
+  {
+   "datum": "2023-06-25",
+   "morgen": "Bediener 3/Bediener 4",
+   "middag": "Bediener 1",
+   "notities": [
+    "Bediener 5 niet"
+   ]
+  },
+  {
+   "datum": "2023-07-02",
+   "morgen": "Bediener 10",
+   "middag": "Bediener 6",
+   "notities": [
+    "Bediener 5 niet"
+   ]
+  },
+  {
+   "datum": "2023-07-09",
+   "morgen": "Bediener 8",
+   "middag": "Bediener 1",
+   "notities": [
+    "Bediener 5 niet"
+   ]
+  },
+  {
+   "datum": "2023-07-16",
+   "morgen": "Bediener 3/Bediener 4",
+   "middag": "Bediener 5",
+   "notities": []
+  },
+  {
+   "datum": "2023-07-23",
+   "morgen": "Bediener 10",
+   "middag": "Bediener 6",
+   "notities": [
+    "Bediener 2 niet"
+   ]
+  },
+  {
+   "datum": "2023-07-30",
+   "morgen": "Bediener 8",
+   "middag": "Bediener 5",
+   "notities": [
+    "Bediener 6 niet",
+    "Bediener 11 niet",
+    "Bediener 2 niet"
+   ]
+  },
+  {
+   "datum": "2023-08-06",
+   "morgen": "Bediener 10",
+   "middag": "Bediener 6",
+   "notities": [
+    "Bediener 11 niet",
+    "Bediener 2 niet"
+   ]
+  },
+  {
+   "datum": "2023-08-13",
+   "morgen": "Bediener 8",
+   "middag": "Bediener 5",
+   "notities": [
+    "Bediener 11 niet",
+    "Bediener 2 niet"
+   ]
+  },
+  {
+   "datum": "2023-08-20",
+   "morgen": "Bediener 1",
+   "middag": "Bediener 6",
+   "notities": [
+    "Bediener 10 niet"
+   ]
+  },
+  {
+   "datum": "2023-08-27",
+   "morgen": "Bediener 3/Bediener 4",
+   "middag": "Bediener 10",
+   "notities": []
+  },
+  {
+   "datum": "2023-09-17",
+   "morgen": "Bediener 5",
+   "middag": "Bediener 6",
+   "notities": []
+  },
+  {
+   "datum": "2023-09-24",
+   "morgen": "Bediener 3/Bediener 4",
+   "middag": "Bediener 1",
+   "notities": []
+  },
+  {
+   "datum": "2023-10-01",
+   "morgen": "Bediener 8",
+   "middag": "Bediener 10",
+   "notities": []
+  },
+  {
+   "datum": "2023-10-08",
+   "morgen": "Bediener 5",
+   "middag": "Bediener 6",
+   "notities": []
+  },
+  {
+   "datum": "2023-10-15",
+   "morgen": "Bediener 3/Bediener 4",
+   "middag": "Bediener 8",
+   "notities": []
+  },
+  {
+   "datum": "2023-10-22",
+   "morgen": "Bediener 1",
+   "middag": "Bediener 10",
+   "notities": []
+  },
+  {
+   "datum": "2023-10-29",
+   "morgen": "Bediener 5",
+   "middag": "Bediener 6",
+   "notities": []
+  },
+  {
+   "datum": "2023-11-05",
+   "morgen": "Bediener 3/Bediener 4",
+   "middag": "Bediener 1",
+   "notities": []
+  },
+  {
+   "datum": "2023-11-12",
+   "morgen": "Bediener 8",
+   "middag": "Bediener 10",
+   "notities": []
+  },
+  {
+   "datum": "2023-11-15",
+   "morgen": "Bediener 5",
+   "middag": "Bediener 6",
+   "notities": []
+  },
+  {
+   "datum": "2023-11-19",
+   "morgen": "Bediener 3/Bediener 4",
+   "middag": "Bediener 8",
+   "notities": []
+  },
+  {
+   "datum": "2023-11-26",
+   "morgen": "Bediener 1",
+   "middag": "Bediener 10",
+   "notities": []
+  },
+  {
+   "datum": "2023-12-03",
+   "morgen": "Bediener 5",
+   "middag": "Bediener 6",
+   "notities": []
+  },
+  {
+   "datum": "2023-12-10",
+   "morgen": "Bediener 3/Bediener 4",
+   "middag": "Bediener 1",
+   "notities": []
+  },
+  {
+   "datum": "2023-12-17",
+   "morgen": "Bediener 8",
+   "middag": "Bediener 10",
+   "notities": []
+  },
+  {
+   "datum": "2023-12-24",
+   "morgen": "Bediener 5",
+   "middag": "Bediener 6",
+   "notities": []
+  },
+  {
+   "datum": "2023-12-25",
+   "morgen": "Bediener 3/Bediener 4",
+   "middag": "Bediener 8",
+   "notities": []
+  },
+  {
+   "datum": "2023-12-26",
+   "morgen": "Bediener 1",
+   "middag": "",
+   "notities": []
+  },
+  {
+   "datum": "2023-12-31",
+   "morgen": "Bediener 10",
+   "middag": "Bediener 5",
+   "notities": []
+  },
+  {
+   "datum": "2024-01-01",
+   "morgen": "Bediener 6",
+   "middag": "",
+   "notities": []
+  },
+  {
+   "datum": "2024-01-07",
+   "morgen": "Bediener 3/Bediener 4",
+   "middag": "Bediener 8",
+   "notities": []
+  },
+  {
+   "datum": "2024-01-14",
+   "morgen": "Bediener 5",
+   "middag": "Bediener 10",
+   "notities": []
+  },
+  {
+   "datum": "2024-01-21",
+   "morgen": "Bediener 1",
+   "middag": "Bediener 6",
+   "notities": []
+  },
+  {
+   "datum": "2024-01-28",
+   "morgen": "Bediener 3/Bediener 4",
+   "middag": "Bediener 8",
+   "notities": []
+  },
+  {
+   "datum": "2024-02-04",
+   "morgen": "Bediener 5",
+   "middag": "Bediener 10",
+   "notities": []
+  },
+  {
+   "datum": "2024-02-11",
+   "morgen": "Bediener 6",
+   "middag": "Bediener 3/Bediener 4",
+   "notities": []
+  },
+  {
+   "datum": "2024-02-18",
+   "morgen": "Bediener 1",
+   "middag": "Bediener 8",
+   "notities": []
+  },
+  {
+   "datum": "2024-02-25",
+   "morgen": "Bediener 5",
+   "middag": "Bediener 10",
+   "notities": []
+  },
+  {
+   "datum": "2024-02-28",
+   "morgen": "Bediener 6",
+   "middag": "Bediener 3/Bediener 4",
+   "notities": []
+  },
+  {
+   "datum": "2024-03-03",
+   "morgen": "Bediener 3/Bediener 4",
+   "middag": "Bediener 8",
+   "notities": []
+  },
+  {
+   "datum": "2024-03-10",
+   "morgen": "Bediener 1",
+   "middag": "Bediener 5",
+   "notities": []
+  },
+  {
+   "datum": "2024-03-17",
+   "morgen": "Bediener 10",
+   "middag": "Bediener 6",
+   "notities": []
+  },
+  {
+   "datum": "2024-03-24",
+   "morgen": "Bediener 9",
+   "middag": "Bediener 3/Bediener 4",
+   "notities": []
+  },
+  {
+   "datum": "2024-03-31",
+   "morgen": "Bediener 8",
+   "middag": "Bediener 5",
+   "notities": []
+  },
+  {
+   "datum": "2024-04-07",
+   "morgen": "Bediener 1",
+   "middag": "Bediener 6",
+   "notities": []
+  },
+  {
+   "datum": "2024-04-14",
+   "morgen": "Bediener 10",
+   "middag": "Bediener 9",
+   "notities": []
+  },
+  {
+   "datum": "2024-04-21",
+   "morgen": "Bediener 3/Bediener 4",
+   "middag": "Bediener 8",
+   "notities": []
+  },
+  {
+   "datum": "2024-04-28",
+   "morgen": "Bediener 5",
+   "middag": "Bediener 6",
+   "notities": []
+  },
+  {
+   "datum": "2024-05-05",
+   "morgen": "Bediener 10",
+   "middag": "Bediener 1",
+   "notities": []
+  },
+  {
+   "datum": "2024-05-12",
+   "morgen": "Bediener 9",
+   "middag": "Bediener 3/Bediener 4",
+   "notities": []
+  },
+  {
+   "datum": "2024-05-19",
+   "morgen": "Bediener 8",
+   "middag": "Bediener 5",
+   "notities": []
+  },
+  {
+   "datum": "2024-05-26",
+   "morgen": "Bediener 10",
+   "middag": "Bediener 6",
+   "notities": []
+  },
+  {
+   "datum": "2024-06-02",
+   "morgen": "Bediener 1",
+   "middag": "Bediener 9",
+   "notities": []
+  },
+  {
+   "datum": "2024-06-09",
+   "morgen": "Bediener 3/Bediener 4",
+   "middag": "Bediener 6",
+   "notities": []
+  },
+  {
+   "datum": "2024-06-16",
+   "morgen": "Bediener 10",
+   "middag": "Bediener 5",
+   "notities": []
+  },
+  {
+   "datum": "2024-06-23",
+   "morgen": "Bediener 8",
+   "middag": "Bediener 9",
+   "notities": []
+  },
+  {
+   "datum": "2024-06-30",
+   "morgen": "Bediener 1",
+   "middag": "Bediener 3/Bediener 4",
+   "notities": []
+  },
+  {
+   "datum": "2024-07-07",
+   "morgen": "Bediener 8",
+   "middag": "Bediener 6",
+   "notities": [
+    "Bediener 5, Bediener 10"
+   ]
+  },
+  {
+   "datum": "2024-07-14",
+   "morgen": "Bediener 3/Bediener 4",
+   "middag": "Bediener 1",
+   "notities": [
+    "Bediener 5, Bediener 10",
+    "Bediener 9"
+   ]
+  },
+  {
+   "datum": "2024-07-21",
+   "morgen": "Bediener 10",
+   "middag": "Bediener 5",
+   "notities": [
+    "Bediener 9"
+   ]
+  },
+  {
+   "datum": "2024-07-28",
+   "morgen": "Bediener 8",
+   "middag": "Bediener 6",
+   "notities": [
+    "Bediener 1",
+    "Bediener 9"
+   ]
+  },
+  {
+   "datum": "2024-08-04",
+   "morgen": "Bediener 10",
+   "middag": "Bediener 5",
+   "notities": [
+    "Bediener 1",
+    "Bediener 9"
+   ]
+  },
+  {
+   "datum": "2024-08-11",
+   "morgen": "Bediener 8",
+   "middag": "Bediener 1",
+   "notities": []
+  },
+  {
+   "datum": "2024-08-18",
+   "morgen": "Bediener 3/Bediener 4",
+   "middag": "Bediener 6",
+   "notities": []
+  },
+  {
+   "datum": "2024-08-25",
+   "morgen": "Bediener 5",
+   "middag": "Bediener 9",
+   "notities": []
+  },
+  {
+   "datum": "2024-09-01",
+   "morgen": "Bediener 10",
+   "middag": "Bediener 8",
+   "notities": []
+  },
+  {
+   "datum": "2024-09-08",
+   "morgen": "Bediener 3",
+   "middag": "Bediener 1",
+   "notities": []
+  },
+  {
+   "datum": "2024-09-15",
+   "morgen": "Bediener 5",
+   "middag": "Bediener 6",
+   "notities": []
+  },
+  {
+   "datum": "2024-09-22",
+   "morgen": "Bediener 9",
+   "middag": "Bediener 10",
+   "notities": []
+  },
+  {
+   "datum": "2024-09-29",
+   "morgen": "Bediener 8",
+   "middag": "Bediener 3",
+   "notities": []
+  },
+  {
+   "datum": "2024-10-06",
+   "morgen": "Bediener 1",
+   "middag": "Bediener 5",
+   "notities": []
+  },
+  {
+   "datum": "2024-10-13",
+   "morgen": "Bediener 9",
+   "middag": "Bediener 6",
+   "notities": []
+  },
+  {
+   "datum": "2024-10-20",
+   "morgen": "Bediener 10",
+   "middag": "Bediener 8",
+   "notities": []
+  },
+  {
+   "datum": "2024-10-27",
+   "morgen": "Bediener 3",
+   "middag": "Bediener 5",
+   "notities": []
+  },
+  {
+   "datum": "2024-11-03",
+   "morgen": "Bediener 1",
+   "middag": "Bediener 6",
+   "notities": []
+  },
+  {
+   "datum": "2024-11-10",
+   "morgen": "Bediener 9",
+   "middag": "Bediener 10",
+   "notities": []
+  },
+  {
+   "datum": "2024-11-17",
+   "morgen": "Bediener 8",
+   "middag": "Bediener 5",
+   "notities": []
+  },
+  {
+   "datum": "2024-11-24",
+   "morgen": "Bediener 9",
+   "middag": "Bediener 3",
+   "notities": []
+  }
+ ]
+}
