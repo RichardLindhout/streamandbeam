@@ -235,10 +235,23 @@ impl Director {
         self.settings.lock().unwrap().clone()
     }
 
-    pub fn save_settings(&self, s: Settings) -> anyhow::Result<()> {
+    /// Saves the settings. Another camera, sound source or encoder counts at once: a running
+    /// stream starts again with it in the same mode. When that does not work, the old
+    /// settings stay (the stream runs on with them).
+    pub async fn save_settings(&self, s: Settings) -> anyhow::Result<()> {
+        let old = self.settings();
         write_json(&self.path, &s)?;
-        *self.settings.lock().unwrap() = s;
+        *self.settings.lock().unwrap() = s.clone();
         self.settings_changed.notify_one();
+        if crate::stream::pipeline_changed(&old, &s) {
+            let engine = self.engine.clone();
+            if let Err(e) = tokio::task::spawn_blocking(move || engine.restart(&s)).await? {
+                write_json(&self.path, &old)?;
+                *self.settings.lock().unwrap() = old;
+                self.settings_changed.notify_one();
+                anyhow::bail!("Niet opgeslagen: zo start de uitzending niet ({})", e.root_cause());
+            }
+        }
         Ok(())
     }
 
@@ -556,7 +569,13 @@ fn scene_for(view: &View, shown: Duration, s: &Settings) -> (Scene, Position, Op
             let prev = view.index.checked_sub(1).and_then(|i| view.slides.get(i));
             let first_verse = prev.is_none_or(|p| p.item != slide.item || p.lines.is_empty());
             if first_verse && shown < intro {
-                (bar(&slide.sub, &slide.header), Position::Preekstoel, Some(intro))
+                // All verses that will be sung, as the church's stream showed during the prelude
+                // ("Psalm 27 : 3, 7"); the operator's own slides keep their own heading.
+                let all = svc
+                    .and_then(|s| s.items.get(slide.item))
+                    .filter(|it| it.custom.is_empty() && !it.reference.is_empty())
+                    .map_or(slide.header.as_str(), |it| it.reference.as_str());
+                (bar(&slide.sub, all), Position::Preekstoel, Some(intro))
             } else {
                 (panel(&slide.sub, &slide.header, slide.lines.clone(), Body::Lines, "", false), Position::Orgel, None)
             }
@@ -689,5 +708,17 @@ mod tests {
         let v = view(vec![svc("2026-10-18", "16:00", "")], "2026-10-18 16:00");
         assert_eq!(next_sentence(&v), None);
         assert_eq!(next_sentence(&view(vec![], "")), None);
+    }
+
+    #[test]
+    fn psalm_announcement_names_all_verses() {
+        let svc = crate::show::tests::middagdienst();
+        let mut v = view(vec![svc.clone()], &svc.id);
+        // The first verse of "Ps. 27: 3-7" (item 9): verses 3 and 7.
+        v.slides = vec![crate::show::Slide { item: 9, kind: "psalm".into(), header: "Psalm 27 : 3".into(), sub: "Zingen".into(), lines: vec!["…".into()], ..Default::default() }];
+        let s = Settings::default();
+        assert_eq!(scene_for(&v, Duration::ZERO, &s).0, Scene::Bar { label: "Zingen".into(), text: "Psalm 27 : 3, 7".into() });
+        // After the prelude: the verse itself.
+        assert!(matches!(scene_for(&v, Duration::from_secs(60), &s).0, Scene::Panel { title, .. } if title == "Psalm 27 : 3"));
     }
 }

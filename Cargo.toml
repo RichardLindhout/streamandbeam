@@ -26,3 +26,6 @@ image = { version = "0.25.10", default-features = false, features = ["jpeg", "pn
 gstreamer-rtsp-server = "0.25.2"
 qrcode = { version = "0.14.1", default-features = false }
 whisper-rs = "0.16.0"
+# Reading the church's Excel workbook (an .xlsx/.xlsm is a zip of XML files).
+flate2 = "1"
+roxmltree = "0.20"

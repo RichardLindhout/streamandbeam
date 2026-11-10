@@ -15,7 +15,8 @@ import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, Dia
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Confirm } from "./Confirm";
 import { toast } from "sonner";
-import { ServiceTiles } from "./ServiceTiles";
+import { ServiceTiles, specialDay } from "./ServiceTiles";
+import { SoundMeter } from "./SoundSource";
 
 export type Screen = "dienst" | "voorbereiden" | "schermen";
 
@@ -34,16 +35,19 @@ function StatusLight({ status, yt, connected, alarm }: { status: StreamStatus; y
       <PopoverTrigger asChild>
         <button className="flex h-[72px] shrink-0 items-center gap-3 rounded-xl px-4 text-[22px] font-semibold transition hover:bg-accent">
           <span className="size-5 rounded-full" style={{ background: l.dot }} />
-          {l.word}
+          {h.silent && h.level === "warn" ? "Geen geluid" : l.word}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-auto min-w-72 p-5">
+      <PopoverContent align="start" className="w-auto min-w-72 max-w-xl p-5">
         <div className="grid gap-3">
           {h.lines.map((x) => (
-            <div key={x.label} className="flex items-center gap-4 text-[24px]">
-              <span className="size-4 rounded-full" style={{ background: x.ok ? LIGHT.ok.dot : x.label.startsWith("Borden") ? LIGHT.warn.dot : LIGHT.bad.dot }} />
-              <span className="flex-1">{x.label}</span>
-              <span className="font-semibold">{x.ok ? "goed" : "niet goed"}</span>
+            <div key={x.label} className="grid gap-1">
+              <div className="flex items-center gap-4 text-[24px]">
+                <span className="size-4 rounded-full" style={{ background: x.ok ? LIGHT.ok.dot : x.warn ? LIGHT.warn.dot : LIGHT.bad.dot }} />
+                <span className="flex-1">{x.label}</span>
+                <span className="font-semibold">{x.ok ? "goed" : "niet goed"}</span>
+              </div>
+              {!x.ok && x.detail && <div className="pl-8 text-[18px] text-muted-foreground">{x.detail}</div>}
             </div>
           ))}
         </div>
@@ -306,8 +310,9 @@ function when(t?: number) {
   return `${name} ${hhmm(d)}`;
 }
 
-/** Quietly under the service name: when the website was last read. Tap for what was not
- *  understood, a newer website version, and fetching now. */
+/** Quietly under the service name: when the website was last read. Tap for what to check
+ *  (not understood, read differently by the AI double check, or another voorzang than in
+ *  the voorzangrooster), a newer website version, and fetching now. */
 function WebsiteInfo({ state, svc }: { state: View | null; svc?: Service }) {
   const [busy, setBusy] = useState(false);
   const last = when(state?.lastFetched);
@@ -331,7 +336,7 @@ function WebsiteInfo({ state, svc }: { state: View | null; svc?: Service }) {
         {svc?.websiteChanged && <WebsiteChanged svc={svc} />}
         {problems.length > 0 && (
           <div className="grid gap-1">
-            <div className="font-semibold">Niet herkend</div>
+            <div className="font-semibold">Nakijken</div>
             {problems.map((p) => <div key={p} className="text-[#7a4a00]">{p}</div>)}
           </div>
         )}
@@ -341,6 +346,7 @@ function WebsiteInfo({ state, svc }: { state: View | null; svc?: Service }) {
             <div className="line-clamp-3 text-[18px] break-words text-muted-foreground">{state.fetchError}</div>
           </div>
         )}
+        {state?.fetchNote && <div className="text-[18px] text-muted-foreground">{state.fetchNote}</div>}
         <Button variant="outline" disabled={busy} onClick={fetchNow}>
           {busy ? <LoaderCircle className="animate-spin" /> : <Globe />} Nu ophalen
         </Button>
@@ -372,11 +378,18 @@ export function Header({ state, svc, status, yt, connected, alarm, setScreen, on
     <header className="flex h-24 shrink-0 items-center gap-4 border-b-2 border-walnut/15 bg-[#efe5cc] px-4">
       <StatusLight status={status} yt={yt} connected={connected} alarm={alarm} />
       <div className="flex min-w-0 flex-1 flex-col items-center leading-tight">
-        <div className="max-w-full truncate text-[22px]">{svc ? `${longDate(svc)} · ${svc.label}` : "Geen dienst"}</div>
-        <WebsiteInfo state={state} svc={svc} />
+        <div className="max-w-full truncate text-[22px]">
+          {svc ? `${longDate(svc)} · ${svc.label}` : "Geen dienst"}
+          {specialDay(svc) && <span className="hymnal ml-3 text-[20px] text-[#7a5a1c]">{specialDay(svc)}</span>}
+        </div>
+        <div className="flex max-w-full min-w-0 items-center gap-3">
+          {svc?.operator && <span className="shrink-0 text-[18px] text-muted-foreground">Bediening: <b className="font-semibold text-foreground">{svc.operator}</b></span>}
+          <WebsiteInfo state={state} svc={svc} />
+        </div>
       </div>
       <LiveArea status={status} svc={svc} yt={yt} />
       <PreviewThumb status={status} />
+      <SoundMeter status={status} />
       <MainMenu state={state} svc={svc} status={status} setScreen={setScreen} onSettings={onSettings} />
     </header>
   );

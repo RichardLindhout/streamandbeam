@@ -157,8 +157,8 @@
 .canvas.portrait.black { background: #000; }
 .canvas.portrait.black::before { display: none; }
 
-.bord .rows, .vrij .rows { position: absolute; top: var(--top); left: 64px; right: 36px; }
-.bord .row, .vrij .row {
+.bord .rows, .vrij .rows, .slotzang .rows { position: absolute; top: var(--top); left: 64px; right: 36px; }
+.bord .row, .vrij .row, .slotzang .row {
   box-sizing: border-box;
   height: var(--row);
   display: flex;
@@ -181,8 +181,8 @@
 .canvas.portrait.slotzang .announce small { color: rgba(255, 255, 255, .8); }
 .canvas.portrait.slotzang .announce strong { font-family: "Source Sans 3", Arial, sans-serif; font-weight: 700; text-shadow: 0 3px 6px rgba(0, 0, 0, .35); }
 
-.vrij .row { font-size: calc(var(--row) * .5); font-weight: 600; }
-.vrij .row.head { font-size: calc(var(--row) * .66); font-weight: 700; }
+.vrij .row, .slotzang .row { font-size: calc(var(--row) * .5); font-weight: 600; }
+.vrij .row.head, .slotzang .row.head { font-size: calc(var(--row) * .66); font-weight: 700; }
 
 /* Theme: lines of text on the ledges. */
 .thema .flow {
@@ -197,6 +197,7 @@
 }
 .thema .flow .ref { color: rgba(255, 255, 255, .78); font-weight: 400; }
 .thema .flow .t { font-weight: 700; font-size: calc(var(--row) * .6); }
+.thema .flow .na { margin-top: var(--row); color: rgba(255, 255, 255, .78); font-weight: 400; }
 
 .canvas.portrait .announce { position: absolute; }
 

@@ -53,9 +53,11 @@ export function SermonCard({ svc }: { svc: Service }) {
           label="Tekst"
           value={svc.text?.ref || ""}
           onSave={async (v) => {
+            if (!v.trim()) return save({ text: { id: "", kind: "", label: "", ref: "", text: "", problem: "", custom: [] } });
             try {
-              const [it] = await quick(v);
-              return it ? save({ text: it }) : false;
+              // As the text of the sermon: one reading or catechism ("Psalm 116 vers 7 t/m 9" is read, not sung).
+              const [it] = await quick(`Tekst: ${v}`);
+              return it && it.kind !== "mededeling" ? save({ text: it }) : false;
             } catch {
               return false;
             }

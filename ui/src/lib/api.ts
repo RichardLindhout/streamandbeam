@@ -34,8 +34,37 @@ export type Service = {
   /** The website has a newer version, waiting in `website`. */
   websiteChanged?: boolean;
   website?: { summary: string; problems: string[] } | null;
+  /** From the church's schedules: the special day ("Heilig Avondmaal"), "" on other days. */
+  specialDay?: string;
+  /** Who operates the stream at this service, from the roster; "" when nobody is in it. */
+  operator?: string;
   [k: string]: unknown;
 };
+
+/** How many dates a schedule has, from when to when (YYYY-MM-DD). */
+export type Span = { aantal: number; van: string; tot: string };
+export type ScheduleSummary = { collectes: Span; dagen: Span; voorzang: Span; bediening: Span };
+
+/** One date in the coming weeks, from the schedules. */
+export type Upcoming = {
+  datum: string;
+  dag: string;
+  collectes: string[];
+  voorzangMorgen: string;
+  voorzangMiddag: string;
+  bedieningMorgen: string;
+  bedieningMiddag: string;
+  notities: string[];
+};
+
+/** GET /api/roosters: where the schedules come from (eigen = imported here) and what is coming. */
+export type Schedules = { bron: string; ingelezen: string; eigen: boolean; samenvatting: ScheduleSummary; komend: Upcoming[] };
+
+/** What an import of the church's workbook found. */
+export type ImportReport = { bron: string; samenvatting: ScheduleSummary; behouden: string[]; waarschuwingen: string[] };
+
+/** GET /api/roosters/dag: what the schedules say about one date and time. */
+export type ScheduleDay = { dag: string; voorzang: string; collectes: string[]; bediening: string };
 
 export type BoardTheme = { tekst: string; thema: string; punten: string[] };
 export type BoardCustom = { liturgie?: string[] | null; thema?: BoardTheme | null; slotzang?: string | null };
@@ -68,6 +97,8 @@ export type View = {
   lastFetched?: number;
   /** Why the last fetch failed ("" = fine). */
   fetchError?: string;
+  /** A quiet note about the last fetch: how the AI double check went, or that it is off. */
+  fetchNote?: string;
   /** The screens still show the slide as it was before the last change. */
   held?: boolean;
   /** While held: the new version of the board on screen. */
@@ -118,12 +149,18 @@ export type Layout = {
 
 export type Mode = "stop" | "voorbeeld" | "opnemen" | "live";
 
+/** What is wrong with the sound ("" = fine), most serious first. */
+export type AudioIssue = "" | "niet-gevonden" | "geen-invoer" | "stilte" | "niet-usb";
+
 export type StreamStatus = {
   mode: Mode;
   error: string;
   audioDb: number;
   recording: string;
   audioWarning: string;
+  audioIssue: AudioIssue;
+  /** The sound input the stream records from, e.g. "Microfoon (USB Audio CODEC)". */
+  audioDevice: string;
   /** Unix seconds the stream started (0 = not running). */
   since: number;
   boards: number;
@@ -157,9 +194,16 @@ export type YouTubeCheck = {
   streaming: boolean;
 };
 
+/** A sound input of the church PC. */
+export type SoundInput = { name: string; usb: boolean; default: boolean };
+
+/** audioSource for an input chosen by name. */
+export const DEVICE = "apparaat:";
+
 export type Settings = {
   cameraIp: string;
   cameraRtsp: string;
+  /** "" = the default of Windows, "apparaat:<name>", "test" = test tone, or a GStreamer line. */
   audioSource: string;
   videoEncoder: string;
   rtmpUrl: string;
@@ -182,6 +226,8 @@ export type Settings = {
   youtubeTest: boolean;
   autopilot: string;
   youtubeChannel: string;
+  /** The boards also show the text of the slotzang verses (off: only which psalm). */
+  slotzangTekst: boolean;
   [k: string]: unknown;
 };
 
@@ -242,6 +288,8 @@ export const later = () => post("/api/stream/later");
 /** Saves a service. The screens keep what they show, unless `show` (asks to confirm while live). */
 export const saveService = (s: Service, show?: boolean) => post("/api/service" + (show ? "?tonen=1" : ""), s);
 
+/** Typed parts ("ps 42:5, gebed, joh 3:16") → items. The program reads them itself (no key
+ *  needed); what it does not understand comes back with `problem` set. */
 export async function quick(text: string): Promise<Item[]> {
   const r = await post("/api/quick", { text }, { quiet: true });
   if (!r.ok) throw new Error(await errorText(r));
@@ -287,9 +335,27 @@ export function longDate(s: Service) {
 
 /** "Zo 25 okt" */
 export function shortDate(s: Service) {
-  const d = new Date(s.date + "T12:00:00");
-  if (isNaN(+d)) return s.date;
+  return shortDay(s.date);
+}
+
+/** "2026-10-25" → "Zo 25 okt" */
+export function shortDay(date: string) {
+  const d = new Date(date + "T12:00:00");
+  if (isNaN(+d)) return date;
   return cap(`${DAYS[d.getDay()].slice(0, 2)} ${d.getDate()} ${SHORT[d.getMonth()]}`);
+}
+
+/** "2026-10-25" → "25 okt 2026" */
+export function dayMonthYear(date: string) {
+  const d = new Date(date + "T12:00:00");
+  if (isNaN(+d)) return date;
+  return `${d.getDate()} ${SHORT[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+/** Today as YYYY-MM-DD, in local time. */
+export function today() {
+  const d = new Date();
+  return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
 }
 
 declare global {

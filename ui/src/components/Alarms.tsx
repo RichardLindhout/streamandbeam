@@ -1,6 +1,7 @@
-import type { Service, View } from "@/lib/api";
+import type { Service, StreamStatus, View } from "@/lib/api";
 import { go, post } from "@/lib/api";
 import type { Alarm } from "@/lib/problems";
+import { soundNotice } from "@/lib/problems";
 
 const band = "flex h-20 shrink-0 items-center gap-5 px-6";
 const bandButton = "h-[72px] shrink-0 rounded-xl px-7 text-[26px] font-semibold transition active:scale-[0.98]";
@@ -16,8 +17,11 @@ export function AlarmBand({ alarm, onAct }: { alarm: Alarm; onAct: (a: Alarm) =>
   );
 }
 
-/** What the operator chose for the boards, in one calm line; shares its place with the alarm. */
-export function Notice({ state, svc, live }: { state: View | null; svc?: Service; live: boolean }) {
+/** What the operator chose for the boards, or calm news about the sound, in one line; shares its
+ *  place with the alarm. */
+export function Notice({ state, svc, status, onSettings }: { state: View | null; svc?: Service; status: StreamStatus; onSettings: () => void }) {
+  const live = status.mode === "live";
+  const sound = soundNotice(status);
   if (state?.black)
     return (
       <div className={`${band} border-b-2 border-walnut/30 bg-[#e8dcc0]`}>
@@ -39,6 +43,14 @@ export function Notice({ state, svc, live }: { state: View | null; svc?: Service
       <div className={`${band} border-b-2 border-walnut/30 bg-[#e8dcc0]`}>
         <span className="min-w-0 flex-1 truncate text-[24px] font-semibold">Scherm toont nog de vorige versie</span>
         <button className={`${bandButton} bg-walnut text-white hover:bg-[#6b4a33]`} onClick={() => post("/api/tonen")}>Nu tonen</button>
+      </div>
+    );
+  if (sound)
+    return (
+      <div className={`${band} border-b-2 border-warn/40 bg-[#f6e6c2]`}>
+        <span className="size-4 shrink-0 rounded-full bg-warn" />
+        <span className="min-w-0 flex-1 truncate text-[24px] font-semibold" title={status.audioWarning}>{sound}</span>
+        <button className={`${bandButton} bg-walnut text-white hover:bg-[#6b4a33]`} onClick={onSettings}>Geluidsbron</button>
       </div>
     );
   // During the service it waits in the website popover; no news in the band then.

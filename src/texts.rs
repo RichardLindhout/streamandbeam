@@ -41,7 +41,12 @@ pub fn psalm(n: u32) -> Option<&'static Psalm> {
     PSALMS.get(&n)
 }
 
-/// The names of the gezangen (151-160), for Claude to map "Tien Geboden" etc.
+/// Whether `n` is one of the Enige Gezangen of the psalm book (151 and up), not a psalm.
+pub fn is_gezang(n: u32) -> bool {
+    n > 150 && PSALMS.contains_key(&n)
+}
+
+/// The names of the gezangen (151-162), for Claude to map "Tien Geboden" etc.
 pub fn gezangen() -> Vec<(u32, String)> {
     PSALMS.range(151..).map(|(n, p)| (*n, p.naam.clone())).collect()
 }

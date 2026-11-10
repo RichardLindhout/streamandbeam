@@ -5,6 +5,7 @@
 //! Needs an OAuth client of type "Desktop app" from Google Cloud Console with the YouTube
 //! Data API v3 enabled; its client id and secret go in the settings.
 
+use crate::books::psalm_ref_string;
 use crate::show::Service;
 use crate::texts::{read_json, write_json};
 use anyhow::{Context, Result, bail};
@@ -281,19 +282,72 @@ pub fn title_for(svc: &Service) -> String {
     parts.join(" - ")
 }
 
+/// The description, as the "YouTube stream info" the church copied from its Excel sheet: the
+/// predikant, "Liturgie:" with the psalms in order (voorzang first), the readings on one line,
+/// the text, and the theme with its points. Psalm verses are written with commas: the church
+/// writes "Ps. 27: 3-7" for verses 3 and 7, which viewers would read as a range.
 fn description_for(svc: &Service) -> String {
-    let mut lines: Vec<String> = svc
-        .items
-        .iter()
-        .filter(|i| !i.reference.is_empty())
-        .map(|i| format!("{}: {}", i.label, i.reference))
-        .collect();
-    if !svc.theme.is_empty() {
-        lines.push(format!("\nThema: {}", svc.theme));
-        lines.extend(svc.points.iter().enumerate().map(|(i, p)| format!("{}. {p}", i + 1)));
+    let mut first: Vec<String> = Vec::new();
+    if !svc.predikant.is_empty() {
+        first.push(format!("Voorganger: {}", svc.predikant));
     }
-    lines.push("\nHersteld Hervormde Gemeente Tholen — www.hhgtholen.nl".into());
-    lines.join("\n")
+    let sung: Vec<String> = svc.items.iter().filter_map(sung_line).collect();
+    if !sung.is_empty() {
+        first.push("Liturgie:".into());
+        first.extend(sung);
+    }
+    let mut read: Vec<String> = Vec::new();
+    let readings: Vec<String> = svc.items.iter().filter(|i| i.kind == "lezing").filter_map(|i| i.passage).filter(|p| p.book > 0).map(|p| p.spaced()).collect();
+    if !readings.is_empty() {
+        read.push(format!("Schriftlezing: {}", readings.join(" en ")));
+    }
+    // Catechism, a confession or a form read in the service: one line each.
+    for it in svc.items.iter().filter(|i| !i.reference.is_empty()) {
+        match it.kind.as_str() {
+            "catechismus" => read.push(format!("Heidelbergse Catechismus: {}", it.reference)),
+            "belijdenis" | "formulier" => read.push(it.reference.clone()),
+            _ => {}
+        }
+    }
+    let text = sermon_text(svc);
+    if !text.is_empty() {
+        read.push(format!("Tekst: {text}"));
+    }
+    let mut theme: Vec<String> = Vec::new();
+    if !svc.theme.is_empty() {
+        theme.push(format!("Thema: {}", svc.theme));
+        theme.extend(svc.points.iter().enumerate().map(|(i, p)| format!("{}. {p}", i + 1)));
+    }
+    let end = vec!["Hersteld Hervormde Gemeente Tholen — www.hhgtholen.nl".to_string()];
+    let blocks: Vec<String> = [first, read, theme, end].into_iter().filter(|b| !b.is_empty()).map(|b| b.join("\n")).collect();
+    // YouTube refuses a description with < or > in it (and then the broadcast is not made).
+    blocks.join("\n\n").replace(['<', '>'], "")
+}
+
+/// One line of "Liturgie:" in the description: "Psalm 27 : 3, 7", a song's title.
+fn sung_line(it: &crate::show::Item) -> Option<String> {
+    let line = match it.kind.as_str() {
+        "psalm" | "slotzang" if it.psalm > 0 => psalm_ref_string(it.psalm, &it.verses),
+        "nazang" if it.psalm > 0 => format!("Na de dienst: {}", psalm_ref_string(it.psalm, &it.verses)),
+        "nazang" if !it.short().is_empty() => format!("Na de dienst: {}", it.short()),
+        "lied" => it.label.clone(),
+        _ => return None,
+    };
+    (!line.trim().is_empty()).then_some(line)
+}
+
+/// The text of the sermon: "1 Samuël 13 : 11", "Heidelbergse Catechismus, vraag en antwoord 58".
+fn sermon_text(svc: &Service) -> String {
+    let t = &svc.text;
+    match t.kind.as_str() {
+        "catechismus" if !t.questions.is_empty() => {
+            format!("Heidelbergse Catechismus, vraag en antwoord {}", t.questions.iter().map(u32::to_string).collect::<Vec<_>>().join(", "))
+        }
+        "catechismus" if t.zondag > 0 => format!("Heidelbergse Catechismus, zondag {}", t.zondag),
+        "catechismus" => String::new(),
+        "lezing" => t.passage.filter(|p| p.book > 0).map(|p| p.spaced()).unwrap_or_default(),
+        _ => t.reference.clone(),
+    }
 }
 
 #[cfg(test)]
@@ -312,5 +366,42 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(title_for(&svc), "18 oktober 2026 - 16:00 middagdienst - Heidelbergse Catechismus v&a 57 - Ds. A. den Hartog");
+    }
+
+    #[test]
+    fn description_like_the_excel_stream_info() {
+        // The middagdienst of 1 November 2026 as on the website: "Ps. 27: 3-7" is verses 3 and 7.
+        let mut svc = crate::show::tests::middagdienst();
+        svc.predikant = "ds. A. den Hartog".into();
+        assert_eq!(
+            description_for(&svc),
+            "Voorganger: ds. A. den Hartog\n\
+             Liturgie:\n\
+             Psalm 90 : 1\n\
+             Psalm 147 : 1\n\
+             Psalm 32 : 6\n\
+             Psalm 27 : 3, 7\n\
+             Psalm 42 : 1, 5\n\
+             Psalm 43 : 4\n\
+             \n\
+             Schriftlezing: Habakuk 3 : 17-19 en 1 Petrus 1 : 3-9 en Openbaring 7 : 9-12\n\
+             Tekst: Heidelbergse Catechismus, vraag en antwoord 58\n\
+             \n\
+             Thema: Verrast door vreugde\n\
+             1. Nu al\n\
+             2. Straks volkomen\n\
+             \n\
+             Hersteld Hervormde Gemeente Tholen — www.hhgtholen.nl"
+        );
+        // The morning: a whole chapter, a verse as the text, no theme, no predikant known yet.
+        let morning = Service {
+            text: Item { kind: "lezing".into(), passage: Some(crate::books::BibleRef { book: 9, chapter: 13, from: 11, to: 11 }), ..Default::default() },
+            items: vec![Item { kind: "lezing".into(), passage: Some(crate::books::BibleRef { book: 9, chapter: 13, from: 1, to: 999 }), ..Default::default() }],
+            ..Default::default()
+        };
+        assert_eq!(
+            description_for(&morning),
+            "Schriftlezing: 1 Samuël 13\nTekst: 1 Samuël 13 : 11\n\nHersteld Hervormde Gemeente Tholen — www.hhgtholen.nl"
+        );
     }
 }
