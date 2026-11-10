@@ -270,12 +270,13 @@ impl Director {
         let mut last_scene = None;
         // Camera and preset last sent, so a newly entered camera IP also gets the position.
         let mut last_sent = (String::new(), 0);
-        // The slide on screen and since when, for the timed intros.
+        // The slide on screen and since when, for the timed intros. A tap on the theme or
+        // one of its points during the sermon starts the time again.
         let mut on_screen = (usize::MAX, String::new(), Instant::now());
         loop {
             let view = rx.borrow_and_update().clone();
             let settings = self.settings();
-            let key = view.slides.get(view.index).map(|s| s.header.clone()).unwrap_or_default();
+            let key = view.slides.get(view.index).map(|s| format!("{}|{:?}|{}", s.header, s.active, view.point_tap)).unwrap_or_default();
             if on_screen.0 != view.index || on_screen.1 != key {
                 on_screen = (view.index, key, Instant::now());
             }
@@ -605,9 +606,22 @@ fn scene_for(view: &View, shown: Duration, s: &Settings) -> (Scene, Position, Op
         "belijdenis" | "formulier" => (panel(&slide.sub, &slide.header, slide.lines.clone(), Body::Prose, "", false), Position::Preekstoel, None),
         "lied" if slide.lines.is_empty() => (bar("Lied", &slide.header), Position::Orgel, None),
         "lied" => (panel("Lied", &slide.header, slide.lines.clone(), Body::Lines, "", false), Position::Orgel, None),
-        "preek" if !slide.theme.is_empty() && shown < theme => {
-            let points = slide.points.iter().enumerate().map(|(i, p)| format!("{}. {p}", i + 1)).collect();
-            (panel("Thema", &slide.theme, points, Body::Lines, "", false), Position::Preekstoel, Some(theme))
+        // First the theme with its points, then only the predikant. A point the operator
+        // tapped comes below the predikant for as long ("2. Straks volkomen" under the theme);
+        // tapping the theme shows it whole again.
+        "preek" if shown < theme => {
+            let (title, points) = crate::show::sermon_theme(slide, view.boards.get(view.index));
+            match slide.active {
+                Some(p) => match points.get(p) {
+                    Some(point) => (bar(if title.is_empty() { "Thema" } else { title }, &format!("{}. {point}", p + 1)), Position::Preekstoel, Some(theme)),
+                    None => (Scene::Camera, Position::Preekstoel, None),
+                },
+                None if !title.is_empty() => {
+                    let points = points.iter().enumerate().map(|(i, p)| format!("{}. {p}", i + 1)).collect();
+                    (panel("Thema", title, points, Body::Lines, "", false), Position::Preekstoel, Some(theme))
+                }
+                None => (Scene::Camera, Position::Preekstoel, None),
+            }
         }
         // During the sermon viewers see the predikant.
         _ => (Scene::Camera, Position::Preekstoel, None),
@@ -720,5 +734,69 @@ mod tests {
         assert_eq!(scene_for(&v, Duration::ZERO, &s).0, Scene::Bar { label: "Zingen".into(), text: "Psalm 27 : 3, 7".into() });
         // After the prelude: the verse itself.
         assert!(matches!(scene_for(&v, Duration::from_secs(60), &s).0, Scene::Panel { title, .. } if title == "Psalm 27 : 3"));
+    }
+
+    /// The sermon on screen, with `active` the point the operator tapped.
+    fn sermon(active: Option<usize>) -> View {
+        let mut v = view(vec![svc("2026-11-01", "16:00", "")], "2026-11-01 16:00");
+        v.slides = vec![crate::show::Slide {
+            kind: "preek".into(),
+            header: "Tekst: Lukas 2:10".into(),
+            theme: "Verrast door vreugde".into(),
+            points: vec!["Nu al".into(), "Straks volkomen".into()],
+            active,
+            ..Default::default()
+        }];
+        v
+    }
+
+    #[test]
+    fn sermon_starts_with_the_whole_theme() {
+        let s = Settings { theme_seconds: 10, ..Default::default() };
+        let (scene, position, until) = scene_for(&sermon(None), Duration::from_secs(1), &s);
+        let Scene::Panel { label, title, paragraphs, .. } = scene else { panic!("{scene:?}") };
+        assert_eq!((label.as_str(), title.as_str()), ("Thema", "Verrast door vreugde"));
+        assert_eq!(paragraphs, ["1. Nu al", "2. Straks volkomen"]);
+        assert_eq!((position, until), (Position::Preekstoel, Some(Duration::from_secs(10))));
+        // Then only the predikant.
+        assert_eq!(scene_for(&sermon(None), Duration::from_secs(10), &s).0, Scene::Camera);
+    }
+
+    #[test]
+    fn tapped_point_shows_below_the_predikant_for_the_theme_time() {
+        let s = Settings { theme_seconds: 10, ..Default::default() };
+        let (scene, position, until) = scene_for(&sermon(Some(1)), Duration::from_secs(3), &s);
+        assert_eq!(scene, Scene::Bar { label: "Verrast door vreugde".into(), text: "2. Straks volkomen".into() });
+        assert_eq!((position, until), (Position::Preekstoel, Some(Duration::from_secs(10))));
+        let (scene, position, until) = scene_for(&sermon(Some(1)), Duration::from_secs(10), &s);
+        assert_eq!((scene, position, until), (Scene::Camera, Position::Preekstoel, None));
+        // Without a theme the card still says what it is.
+        let mut v = sermon(Some(0));
+        v.slides[0].theme.clear();
+        assert_eq!(scene_for(&v, Duration::ZERO, &s).0, Scene::Bar { label: "Thema".into(), text: "1. Nu al".into() });
+        // A point that is not there: the predikant, never the whole theme again.
+        assert_eq!(scene_for(&sermon(Some(5)), Duration::ZERO, &s).0, Scene::Camera);
+    }
+
+    #[test]
+    fn without_points_of_its_own_the_sermon_takes_those_of_the_theme_board() {
+        let s = Settings { theme_seconds: 10, ..Default::default() };
+        let mut v = sermon(Some(2));
+        v.slides[0].points.clear();
+        v.boards = vec![crate::show::Slide {
+            kind: "thema".into(),
+            theme: "Gods liefde".into(),
+            points: vec!["groot".into(), "vrij".into(), "eeuwig".into()],
+            active: Some(2),
+            ..Default::default()
+        }];
+        assert_eq!(scene_for(&v, Duration::ZERO, &s).0, Scene::Bar { label: "Gods liefde".into(), text: "3. eeuwig".into() });
+        v.slides[0].active = None;
+        let Scene::Panel { title, paragraphs, .. } = scene_for(&v, Duration::ZERO, &s).0 else { panic!() };
+        assert_eq!((title.as_str(), paragraphs.len()), ("Gods liefde", 3));
+        // The service's own points come first.
+        v.slides[0].points = vec!["Nu al".into()];
+        v.slides[0].active = Some(0);
+        assert_eq!(scene_for(&v, Duration::ZERO, &s).0, Scene::Bar { label: "Verrast door vreugde".into(), text: "1. Nu al".into() });
     }
 }

@@ -258,7 +258,8 @@ pub struct Slide {
     pub theme: String,
     pub points: Vec<String>,
     pub list: Vec<String>, // liturgy overview on the welcome slide
-    /// Which line of `list` is the part of the service going on now.
+    /// Which line of `list` is the part of the service going on now; on the sermon slide
+    /// and the theme board on screen: which of `points` the operator chose (see `View::point`).
     pub active: Option<usize>,
     pub footer: String,
 }
@@ -279,6 +280,12 @@ pub struct View {
     pub current: String,
     pub index: usize,
     pub black: bool,
+    /// During the sermon: the point of the theme the operator tapped (None = the whole
+    /// theme). Forgotten when the screens move to another slide.
+    pub point: Option<usize>,
+    /// Counts the taps on the theme and its points, so the stream shows the choice again
+    /// (for the theme time) also when it was already chosen.
+    pub point_tap: u64,
     /// The slides: what the stream follows and the operator steps through.
     pub slides: Vec<Slide>,
     /// What the boards in church show for each slide: the liturgy, the theme and the
@@ -559,6 +566,7 @@ impl Show {
         };
         st.current = svc.id.clone();
         st.index = 0;
+        st.point = None;
         st.hold = None;
         upsert(&mut st.services, svc);
         enrich_from_kerktijden(&mut st.services).await;
@@ -571,6 +579,7 @@ impl Show {
         if st.current == id {
             st.current = upcoming(&st.services);
             st.index = 0;
+            st.point = None;
             st.hold = None;
         }
         self.changed(&mut st);
@@ -672,6 +681,7 @@ impl Show {
         let mut st = self.state.lock().await;
         st.current = id;
         st.index = 0;
+        st.point = None;
         st.black = false;
         st.hold = None;
         self.changed(&mut st);
@@ -688,7 +698,12 @@ impl Show {
                 None if !kind.is_empty() => next_of_kind(&st, kind) as i64,
                 None => st.index as i64 + delta,
             };
-            st.index = target.clamp(0, st.slides.len().saturating_sub(1) as i64) as usize;
+            let target = target.clamp(0, st.slides.len().saturating_sub(1) as i64) as usize;
+            // A point of the theme belongs to the slide it was chosen on.
+            if target != st.index {
+                st.point = None;
+            }
+            st.index = target;
             st.black = false;
             // Moving on takes a screen that was put up by hand off again.
             st.board_layout.clear();
@@ -698,8 +713,28 @@ impl Show {
                 self.changed(&mut st);
                 return;
             }
+            mark_point(&mut st);
         }
         self.publish(&st);
+    }
+
+    /// During the sermon: one point of the theme on screen (None = the whole theme). The
+    /// boards mark it and the stream shows it for the theme time, then the predikant again;
+    /// choosing the same once more shows it once more.
+    pub async fn set_point(&self, point: Option<usize>) -> anyhow::Result<()> {
+        let mut st = self.state.lock().await;
+        let Some(slide) = st.slides.get(st.index).filter(|s| s.kind == "preek") else {
+            anyhow::bail!("De preek staat nu niet op het scherm");
+        };
+        if point.is_some_and(|p| p >= sermon_theme(slide, st.boards.get(st.index)).1.len()) {
+            anyhow::bail!("Dat punt staat niet in het thema");
+        }
+        st.point = point;
+        st.point_tap += 1;
+        st.black = false;
+        mark_point(&mut st);
+        self.publish(&st);
+        Ok(())
     }
 
     /// Puts the operator's own text on the boards right away (None = back to normal).
@@ -771,6 +806,8 @@ impl Show {
         st.slides = st.service().map(|s| build_slides(s, &songs)).unwrap_or_default();
         st.boards = st.service().map(|svc| board_slides(svc, &st.slides, st.slotzang_text)).unwrap_or_default();
         st.index = st.index.min(st.slides.len().saturating_sub(1));
+        // Before the hold, so a held slide only differs from the new one by its text.
+        mark_point(st);
         apply_hold(st);
         self.publish(st);
     }
@@ -982,6 +1019,42 @@ fn apply_hold(st: &mut View) {
     st.slides[i] = slide.clone();
     st.fresh_board = Some(std::mem::replace(&mut st.boards[i], board.clone()));
     st.held = true;
+}
+
+/// Marks the chosen point of the theme (`View::point`) on the sermon slide and the theme
+/// board on screen, also on a held copy, and forgets a point the slide on screen (the held
+/// one, if any) does not have.
+fn mark_point(st: &mut View) {
+    let i = st.index;
+    let (slide, board) = match &st.hold {
+        Some((at, slide, board)) if *at == i => (Some(slide), Some(board)),
+        _ => (st.slides.get(i), st.boards.get(i)),
+    };
+    let points = slide.filter(|s| s.kind == "preek").map_or(0, |s| sermon_theme(s, board).1.len());
+    if st.point.is_some_and(|p| p >= points) {
+        st.point = None;
+    }
+    let point = st.point;
+    let mark = |k: usize, s: &mut Slide| {
+        if matches!(s.kind.as_str(), "preek" | "thema") {
+            s.active = if k == i { point } else { None };
+        }
+    };
+    st.slides.iter_mut().enumerate().for_each(|(k, s)| mark(k, s));
+    st.boards.iter_mut().enumerate().for_each(|(k, s)| mark(k, s));
+    if let Some((at, slide, board)) = st.hold.as_mut() {
+        mark(*at, slide);
+        mark(*at, board);
+    }
+}
+
+/// The theme and its points during the sermon: the service's own, or when it has no points,
+/// what the operator wrote on the theme board (`board`, the board shown with the sermon slide).
+pub fn sermon_theme<'a>(slide: &'a Slide, board: Option<&'a Slide>) -> (&'a str, &'a [String]) {
+    match board.filter(|b| b.kind == "thema" && slide.points.is_empty() && !b.points.is_empty()) {
+        Some(b) => (if b.theme.is_empty() { &slide.theme } else { &b.theme }, &b.points),
+        None => (&slide.theme, &slide.points),
+    }
 }
 
 /// The part on screen (its id, never empty) and which of its slides.
@@ -2039,6 +2112,109 @@ pub(crate) mod tests {
         apply_fetched(&mut st, &own, &own, &r, false);
         apply_fetched(&mut st, &own, &checked, &r, false);
         assert!(!st.services[0].website_changed);
+    }
+
+    /// A service with a sermon (after "Zingen") on a theme with two points.
+    fn sermon_service() -> Service {
+        let mut svc = service();
+        svc.theme = "Verrast door vreugde".into();
+        svc.points = vec!["Nu al".into(), "Straks volkomen".into()];
+        svc.items.insert(4, item("i6", "preek", "Prediking"));
+        svc
+    }
+
+    #[tokio::test]
+    async fn tapping_a_point_of_the_theme_during_the_sermon() {
+        let show = show_with(sermon_service()).await;
+        assert!(show.set_point(Some(0)).await.is_err(), "only during the sermon");
+        let at = show.view().slides.iter().position(|s| s.kind == "preek").unwrap();
+        show.go(Some(at), 0, "").await;
+        assert_eq!(show.view().point, None);
+        show.set_point(Some(1)).await.unwrap();
+        let v = show.view();
+        assert_eq!(v.point, Some(1));
+        // The stream and the boards (the theme board) both know the point.
+        assert_eq!(v.slides[at].active, Some(1));
+        assert_eq!((v.boards[at].kind.as_str(), v.boards[at].active), ("thema", Some(1)));
+        assert!(show.set_point(Some(2)).await.is_err(), "there are two points");
+        assert_eq!(show.view().point, Some(1));
+        // The same point again counts as a new tap: the stream shows it once more.
+        let tap = v.point_tap;
+        show.set_point(Some(1)).await.unwrap();
+        assert_eq!(show.view().point_tap, tap + 1);
+        // The theme itself: the whole theme again.
+        show.set_point(None).await.unwrap();
+        let v = show.view();
+        assert_eq!((v.point, v.slides[at].active, v.boards[at].active), (None, None, None));
+        assert_eq!(v.point_tap, tap + 2);
+        // Moving on forgets the point; coming back starts with the whole theme.
+        show.set_point(Some(0)).await.unwrap();
+        show.go(None, 1, "").await;
+        let v = show.view();
+        assert_eq!((v.point, v.slides[at].active, v.boards[at].active), (None, None, None));
+        show.go(None, -1, "").await;
+        let v = show.view();
+        assert_eq!((v.index, v.point, v.slides[at].active), (at, None, None));
+        // Black boards (from the menu) do not forget it.
+        show.set_point(Some(0)).await.unwrap();
+        show.go(None, 0, "zwart").await;
+        assert_eq!(show.view().slides[at].active, Some(0));
+    }
+
+    #[tokio::test]
+    async fn the_points_of_the_theme_board_when_the_service_has_none() {
+        let mut svc = sermon_service();
+        svc.points.clear();
+        svc.board_custom.thema = Some(BoardTheme { tekst: "Luk.2:10".into(), thema: "Grote blijdschap".into(), punten: vec!["Voor u".into(), "Voor al het volk".into(), "Heden".into()] });
+        let show = show_with(svc).await;
+        let at = show.view().slides.iter().position(|s| s.kind == "preek").unwrap();
+        show.go(Some(at), 0, "").await;
+        show.set_point(Some(2)).await.unwrap();
+        let v = show.view();
+        assert_eq!((v.point, v.slides[at].active, v.boards[at].active), (Some(2), Some(2), Some(2)));
+        assert_eq!(sermon_theme(&v.slides[at], v.boards.get(at)), ("Grote blijdschap", &v.boards[at].points[..]));
+        assert!(show.set_point(Some(3)).await.is_err());
+        // With points of its own the service's count: the board's third point cannot be chosen.
+        let mut svc = v.service().unwrap().clone();
+        svc.points = vec!["Nu al".into(), "Straks volkomen".into()];
+        show.save_service(svc, true).await;
+        let v = show.view();
+        assert_eq!((v.point, v.slides[at].active), (None, None));
+        assert!(show.set_point(Some(2)).await.is_err());
+        show.set_point(Some(1)).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn the_point_stays_while_the_service_is_edited() {
+        let show = show_with(sermon_service()).await;
+        let at = show.view().slides.iter().position(|s| s.kind == "preek").unwrap();
+        show.go(Some(at), 0, "").await;
+        show.set_point(Some(1)).await.unwrap();
+        // A change elsewhere: the sermon and its point stay, nothing is held. The psalm before
+        // it has one verse less now, so the sermon moved up a slide, with its point.
+        let mut svc = show.view().service().unwrap().clone();
+        svc.items[1] = psalm("i2", "Voorzang", 84, &[3]);
+        show.save_service(svc, false).await;
+        let v = show.view();
+        assert_eq!((v.index, v.slides[v.index].kind.as_str()), (at - 1, "preek"));
+        let at = v.index;
+        assert_eq!((v.point, v.slides[at].active, v.boards[at].active), (Some(1), Some(1), Some(1)));
+        assert_eq!(v.slides[at + 1].active, None);
+        assert!(!v.held);
+        // The points themselves change: the screens keep the theme they show, with its point.
+        let mut svc = v.service().unwrap().clone();
+        svc.points = vec!["Eén punt".into()];
+        show.save_service(svc, false).await;
+        let v = show.view();
+        assert!(v.held);
+        assert_eq!((v.slides[at].points.len(), v.point, v.slides[at].active, v.boards[at].active), (2, Some(1), Some(1), Some(1)));
+        // Tapping goes on with the theme on screen; showing the change drops a point it lacks.
+        show.set_point(Some(0)).await.unwrap();
+        show.set_point(Some(1)).await.unwrap();
+        assert!(show.view().held);
+        show.show_changes().await;
+        let v = show.view();
+        assert_eq!((v.held, v.slides[at].points.len(), v.point, v.slides[at].active), (false, 1, None, None));
     }
 
     #[test]

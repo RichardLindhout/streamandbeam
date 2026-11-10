@@ -27,7 +27,11 @@ Open `http://<pc>:8080` op de PC, een laptop of een tablet.
 3. **Vrij aanpassen.** ✎ bij een onderdeel toont de dia's als gewone tekst. Wat je daar
    typt, komt op de TV's en in de stream. **Herstel origineel** zet het terug.
 4. **Tijdens de dienst:** **Volgende** (→, spatie of een presentatie-clicker). **Preek**,
-   **Gebed** en **Slotzang** springen direct; **Zwart** maakt de TV's zwart.
+   **Gebed** en **Slotzang** springen direct; **Zwart** maakt de TV's zwart. In het
+   **Overzicht** (naast **Bewerken**) tik je een onderdeel aan om erheen te gaan.
+5. **Punten van de preek.** Tijdens de preek staan het thema en de punten als grote knoppen in
+   het overzicht. Tik het punt aan waar de predikant is: het licht op op de TV's en staat even
+   onder de predikant op YouTube. Het thema zelf toont weer het hele thema.
 
 De TV's openen `http://<pc>:8080/beam` en volgen de bediening vanzelf. Geef de PC een vast
 IP-adres in de router. Op de borden staat het psalmbord (met het lied na de dienst apart
@@ -81,7 +85,7 @@ ook het beeld voor YouTube en draait de PTZOptics-camera naar de juiste positie:
 | Lezing, Catechismus | tekst met camera in de uitsparing ("Zondag 22" eronder) | preekstoel |
 | Collecte | doelen met QR-code | orgel |
 | Gebed | camera op de doopvont met "Gebed" (TV's zwart) | doopvont |
-| Prediking | eerst het thema met de punten, dan alleen de predikant | preekstoel |
+| Prediking | eerst het thema met de punten, dan alleen de predikant; een aangetikt punt staat even onder hem | preekstoel |
 
 **Automatisch live** (minuten vooraf) en **automatisch stoppen** (minuten na het eindscherm)
 staan in de instellingen.

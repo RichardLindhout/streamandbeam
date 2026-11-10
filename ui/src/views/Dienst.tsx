@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import type { Item, ListenStatus, Service, StreamStatus, View } from "@/lib/api";
-import { at, hhmm, later, serviceStart, setStreamMode, step } from "@/lib/api";
+import type { Item, ListenStatus, Service, Slide, StreamStatus, View } from "@/lib/api";
+import { at, go, hhmm, later, serviceStart, setPoint, setStreamMode, step } from "@/lib/api";
 import { SUNG, itemDetail, itemLabel } from "@/lib/kinds";
 import { chime } from "@/lib/chime";
 import { cn } from "@/lib/utils";
 import { Confirm } from "@/components/Confirm";
 import { BoardColumn } from "@/components/BoardColumn";
 import { OrderEdit } from "@/components/OrderEdit";
-import { Pencil, Play } from "lucide-react";
+import { ListChecks, Pencil } from "lucide-react";
 
 type Props = { state: View | null; svc?: Service; status: StreamStatus; lis: ListenStatus | null };
 
@@ -55,56 +55,126 @@ function subline(p: ReturnType<typeof position>, svc: Service | undefined, statu
   return p.mine.length > 1 && n >= 0 ? `dia ${n + 1} van ${p.mine.length}` : "";
 }
 
+const pointButton = "flex min-h-[72px] w-full items-center gap-4 rounded-xl border-2 px-5 py-2 text-left leading-tight transition active:scale-[0.99]";
+
+/** The theme and its points during the sermon: the service's own, or when it has no points,
+ *  those on the theme board (as Show::sermon_theme in the program). */
+function sermonTheme(slide: Slide, board?: Slide) {
+  const own = slide.points || [];
+  if (!own.length && board?.kind === "thema" && board.points?.length) return { theme: board.theme || slide.theme || "", points: board.points };
+  return { theme: slide.theme || "", points: own };
+}
+
+/** During the sermon: the theme and its points as big buttons. Tap the point the predikant is at:
+ *  the boards mark it and the stream shows it below the predikant for a moment. Tap the theme
+ *  for the whole theme again. The one on the boards is gold. */
+function Points({ slide, board }: { slide: Slide; board?: Slide }) {
+  const { theme, points } = sermonTheme(slide, board);
+  if (!points.length) return null;
+  const on = slide.active ?? null;
+  const look = (here: boolean) =>
+    here ? "border-primary bg-primary text-primary-foreground shadow-[0_8px_24px_-14px_rgb(90_62_43/0.7)]" : "border-input bg-card hover:bg-accent";
+  // Three points or more side by side in two columns when there is room, so all fit in view;
+  // there the gold alone says which is on the boards.
+  const two = points.length > 2;
+  const mark = (narrow: boolean) => (
+    <span className={cn("hymnal ml-auto shrink-0 pl-2 text-[18px] max-sm:hidden", narrow && "min-[1100px]:hidden")}>op het bord</span>
+  );
+  return (
+    <div role="group" aria-label="Punten van het thema" className={cn("mt-4 grid gap-2", two && "min-[1100px]:grid-cols-2")}>
+      <button type="button" aria-pressed={on === null} onClick={() => setPoint(null)} className={cn(pointButton, "col-span-full text-[26px]", look(on === null))}>
+        <span className="hymnal shrink-0 text-[20px]">thema</span>
+        <span className="min-w-0 font-semibold">{theme || "Heel het thema"}</span>
+        {on === null && mark(false)}
+      </button>
+      {points.map((text, i) => (
+        <button key={i} type="button" aria-pressed={on === i} onClick={() => setPoint(i)} className={cn(pointButton, "text-[30px]", look(on === i))}>
+          <span className="w-9 shrink-0 text-right font-bold tabular-nums">{i + 1}.</span>
+          <span className="min-w-0 font-semibold">{text}</span>
+          {on === i && mark(two)}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /** The order of the service: done parts grey, the current one large on parchment, the next marked.
- *  Only to read: tapping does nothing, and it scrolls by itself. */
-function Order({ svc, p, sub, hint }: { svc?: Service; p: ReturnType<typeof position>; sub: string; hint?: number }) {
+ *  It scrolls to the current part by itself and can be scrolled by hand. Tap another part to go
+ *  there (after a yes); during the sermon the theme's points are in the current part. */
+function Order({ svc, p, sub, hint, board }: { svc?: Service; p: ReturnType<typeof position>; sub: string; hint?: number; board?: Slide }) {
   const box = useRef<HTMLDivElement>(null);
+  const [ask, setAsk] = useState<number | null>(null);
   useEffect(() => {
     const b = box.current, el = b?.querySelector<HTMLElement>("[data-now]");
-    if (b && el) b.scrollTo({ top: Math.max(0, el.offsetTop - b.clientHeight / 3 + 8), behavior: "smooth" });
+    if (!b || !el) return;
+    // The current part a third down, or higher when it is tall (the sermon with its points),
+    // so all of it is in view; its top always is.
+    const third = el.offsetTop - b.clientHeight / 3 + 8;
+    const whole = el.offsetTop + el.offsetHeight + 40 - b.clientHeight;
+    b.scrollTo({ top: Math.max(0, Math.min(Math.max(third, whole), el.offsetTop - 16)), behavior: "smooth" });
   }, [p.index, p.cur, svc?.items?.length]);
 
   if (!svc) return <div className="grid flex-1 place-items-center text-[28px] text-muted-foreground">Geen dienst</div>;
+  const first = (i: number) => p.slides.findIndex((s) => s.item === i);
+  const sermon = p.slide?.kind === "preek" ? p.slide : undefined;
   return (
-    <div ref={box} className="relative min-h-0 flex-1 cursor-default overflow-hidden px-8 py-4 select-none [mask-image:linear-gradient(to_bottom,transparent,#000_28px,#000_calc(100%-36px),transparent)]">
+    <div ref={box} className="relative min-h-0 flex-1 cursor-default overflow-y-auto overscroll-contain px-8 py-4 select-none [scrollbar-width:none] max-sm:px-3 [mask-image:linear-gradient(to_bottom,transparent,#000_28px,#000_calc(100%-36px),transparent)] [&::-webkit-scrollbar]:hidden">
       <div className="grid gap-1 pb-[60vh]">
         {svc.items.map((it: Item, i: number) => {
           const label = itemLabel(it), detail = itemDetail(it);
-          const ring = hint === i && i !== p.cur && "animate-hint rounded-xl";
+          const ring = hint === i && i !== p.cur && "animate-hint";
           if (i === p.cur)
             return (
-              <div key={it.id || i} data-now className="my-2 rounded-2xl border-2 border-[#e2cf9f] border-l-[6px] border-l-primary bg-[#fdf8ec] px-6 py-4 shadow-[0_10px_30px_-18px_rgb(90_62_43/0.6)]">
+              <div key={it.id || i} data-now className="my-2 rounded-2xl border-2 border-[#e2cf9f] border-l-[6px] border-l-primary bg-[#fdf8ec] px-6 py-4 shadow-[0_10px_30px_-18px_rgb(90_62_43/0.6)] max-sm:px-3">
                 <div className="flex items-baseline gap-6">
                   <span className="shrink-0 text-[40px] leading-tight font-bold tracking-wide uppercase">▶&nbsp;&nbsp;{label}</span>
                   {detail && <span className="min-w-0 truncate text-[32px] leading-tight">{detail}</span>}
                 </div>
                 {sub && <div className="mt-1 pl-[52px] text-[28px] leading-tight tabular-nums text-[#5a4632]">{sub}</div>}
+                {sermon && <Points slide={sermon} board={board} />}
               </div>
             );
-          if (p.cur >= 0 && i < p.cur)
-            return (
-              <div key={it.id || i} className={cn("flex items-baseline gap-5 py-1 pl-2 text-[24px] text-done", ring)}>
-                <span className="w-7 shrink-0">✓</span>
-                <span className="shrink-0">{label}</span>
-                {detail && <span className="min-w-0 truncate">{detail}</span>}
-              </div>
-            );
-          if (i === p.nxt)
-            return (
-              <div key={it.id || i} className={cn("flex items-baseline gap-5 border-l-[3px] border-primary py-1.5 pl-5 text-[30px]", ring)}>
-                <span className="hymnal shrink-0 text-[20px] text-[#7a5a1c]">hierna</span>
-                <span className="shrink-0 font-semibold">{label}</span>
-                {detail && <span className="min-w-0 truncate">{detail}</span>}
-              </div>
-            );
-          return (
-            <div key={it.id || i} className={cn("flex items-baseline gap-5 py-1 pl-[2.6rem] text-[26px]", ring)}>
-              <span className="shrink-0">{label}</span>
-              {detail && <span className="min-w-0 truncate text-[#4a3826]">{detail}</span>}
-            </div>
+          // Every other part: tap to go there.
+          const row = (look: string, children: React.ReactNode) => (
+            <button
+              key={it.id || i}
+              type="button"
+              disabled={first(i) < 0}
+              onClick={() => setAsk(i)}
+              className={cn("flex w-full items-baseline rounded-xl text-left transition hover:bg-accent/60 disabled:hover:bg-transparent", look, ring)}
+            >
+              {children}
+            </button>
           );
+          if (p.cur >= 0 && i < p.cur)
+            return row("gap-5 py-1 pl-2 text-[24px] text-done", <>
+              <span className="w-7 shrink-0">✓</span>
+              <span className="shrink-0">{label}</span>
+              {detail && <span className="min-w-0 truncate">{detail}</span>}
+            </>);
+          if (i === p.nxt)
+            return row("gap-5 rounded-l-none border-l-[3px] border-primary py-1.5 pl-5 text-[30px]", <>
+              <span className="hymnal shrink-0 text-[20px] text-[#7a5a1c]">hierna</span>
+              <span className="shrink-0 font-semibold">{label}</span>
+              {detail && <span className="min-w-0 truncate">{detail}</span>}
+            </>);
+          return row("gap-5 py-1 pl-[2.6rem] text-[26px]", <>
+            <span className="shrink-0">{label}</span>
+            {detail && <span className="min-w-0 truncate text-[#4a3826]">{detail}</span>}
+          </>);
         })}
       </div>
+      <Confirm
+        open={ask !== null}
+        onOpenChange={(o) => !o && setAsk(null)}
+        title={`Naar ${itemLabel(svc.items[ask ?? -1])}?`}
+        text={itemDetail(svc.items[ask ?? -1]) || undefined}
+        yes="Ja"
+        onYes={() => {
+          const s = ask === null ? -1 : first(ask);
+          if (s >= 0) go({ index: s });
+        }}
+      />
     </div>
   );
 }
@@ -201,7 +271,7 @@ export function Dienst({ state, svc, status, lis }: Props) {
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex h-[72px] shrink-0 items-center gap-5 px-5 pt-1">
             <div role="radiogroup" aria-label="Lijst" className="flex shrink-0 rounded-2xl border-2 border-input bg-card p-1">
-              {([[false, "Bedienen", <Play key="b" />], [true, "Bewerken", <Pencil key="e" />]] as const).map(([on, label, icon]) => (
+              {([[false, "Overzicht", <ListChecks key="o" />], [true, "Bewerken", <Pencil key="e" />]] as const).map(([on, label, icon]) => (
                 <button
                   key={label}
                   role="radio"
@@ -224,7 +294,7 @@ export function Dienst({ state, svc, status, lis }: Props) {
               <OrderEdit svc={svc} cur={p.cur} />
             </div>
           ) : (
-            <Order svc={svc} p={p} sub={sub} hint={hint} />
+            <Order svc={svc} p={p} sub={sub} hint={hint} board={state?.boards?.[p.index]} />
           )}
         </div>
         <BoardColumn state={state} svc={svc} edit={edit} />

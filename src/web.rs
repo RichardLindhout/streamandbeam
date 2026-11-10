@@ -70,6 +70,7 @@ pub fn router(
         .route("/api/quick", post(quick))
         .route("/api/select", post(select))
         .route("/api/go", post(go))
+        .route("/api/point", post(point))
         .route("/events", get(events))
         .route("/api/stream", get(stream_status).post(stream_mode))
         .route("/api/stream/later", post(stream_later))
@@ -376,6 +377,21 @@ struct GoRequest {
 async fn go(State(app): State<App>, Json(req): Json<GoRequest>) -> StatusCode {
     app.show.go(req.index, req.delta, &req.kind).await;
     StatusCode::NO_CONTENT
+}
+
+#[derive(Deserialize)]
+struct PointRequest {
+    /// The point of the theme, 0 for the first; null or absent = the whole theme.
+    #[serde(default)]
+    point: Option<usize>,
+}
+
+/// During the sermon: a point of the theme (or the whole theme) on the boards and in the stream.
+async fn point(State(app): State<App>, Json(req): Json<PointRequest>) -> Response {
+    match app.show.set_point(req.point).await {
+        Ok(()) => StatusCode::NO_CONTENT.into_response(),
+        Err(e) => conflict(&format!("{e:#}")),
+    }
 }
 
 #[derive(Deserialize, Default)]
