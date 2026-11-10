@@ -29,6 +29,71 @@ pub struct Song {
     /// Where the words come from.
     #[serde(skip_serializing_if = "String::is_empty")]
     pub bron: String,
+    /// The song book it is in ("Liedboek", see BUNDELS) and its number there; "" and 0 when
+    /// it is in none. Then "LB 23" finds it too.
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub bundel: String,
+    #[serde(skip_serializing_if = "is_zero")]
+    pub nummer: u32,
+}
+
+fn is_zero(n: &u32) -> bool {
+    *n == 0
+}
+
+/// A song book. The program knows only its name and how it is written short: the words of
+/// these books are protected, so the church fills in what it sings, under its own licence,
+/// and they stay on its own computer (<data>/liederen.json).
+#[derive(Debug, Clone, Copy, Serialize)]
+pub struct Bundel {
+    pub naam: &'static str,
+    /// As on the boards: "LB 23".
+    pub kort: &'static str,
+    /// Other ways it is written, folded (see crate::parse::compact).
+    #[serde(skip)]
+    afkortingen: &'static [&'static str],
+}
+
+pub const BUNDELS: [Bundel; 8] = [
+    Bundel { naam: "Liedboek", kort: "LB", afkortingen: &["lb", "liedboek", "lvk"] },
+    Bundel { naam: "Weerklank", kort: "WK", afkortingen: &["wk", "weerklank"] },
+    Bundel { naam: "Op Toonhoogte", kort: "OTH", afkortingen: &["oth", "optoonhoogte"] },
+    Bundel { naam: "Opwekking", kort: "Opw", afkortingen: &["opw", "opwekking"] },
+    Bundel { naam: "Johannes de Heer", kort: "JdH", afkortingen: &["jdh", "johannesdeheer", "johdeheer"] },
+    Bundel { naam: "Hemelhoog", kort: "HH", afkortingen: &["hh", "hemelhoog"] },
+    Bundel { naam: "Psalmen voor Nu", kort: "PvN", afkortingen: &["pvn", "psalmenvoornu"] },
+    Bundel { naam: "Evangelische Liedbundel", kort: "ELB", afkortingen: &["elb", "evangelischeliedbundel"] },
+];
+
+/// The song book with this name or short name ("LB", "Liedboek", "Op Toonhoogte").
+pub fn bundel(name: &str) -> Option<&'static Bundel> {
+    let key = compact(name);
+    (!key.is_empty()).then_some(())?;
+    BUNDELS.iter().find(|b| compact(b.naam) == key || compact(b.kort) == key || b.afkortingen.contains(&key.as_str()))
+}
+
+static BOOK_REF: LazyLock<Regex> = LazyLock::new(|| {
+    let mut names: Vec<String> = BUNDELS.iter().flat_map(|b| [b.naam.to_string(), b.kort.to_string()]).collect();
+    names.extend(["Op Toonhoogte", "Joh. de Heer", "Johannes de Heer", "Lvk"].map(String::from));
+    names.sort_by_key(|n| std::cmp::Reverse(n.len()));
+    let alt = names.iter().map(|n| regex::escape(n).replace(' ', r"\s*")).collect::<Vec<_>>().join("|");
+    Regex::new(&format!(r"(?i)^({alt})\.?\s*(\d{{1,4}})\b\s*(?:(?::|,|\bvers\b|\bverzen\b|\bvs\b\.?)\s*(.*))?$")).unwrap()
+});
+
+/// Typed or on the website, "LB 23:1, 3", "Opw 733" or "Weerklank 412 vers 2": the song as the
+/// program writes it ("LB 23 : 1, 3"). None when it is not a song book with a number.
+pub fn book_ref(text: &str) -> Option<String> {
+    let m = BOOK_REF.captures(text.trim())?;
+    let b = bundel(&m[1])?;
+    let verses = m.get(3).map(|v| sung_verse_list(v.as_str())).unwrap_or_default();
+    if m.get(3).is_some_and(|v| !v.as_str().trim().is_empty()) && verses.is_empty() {
+        return None;
+    }
+    let mut out = format!("{} {}", b.kort, &m[2]);
+    if !verses.is_empty() {
+        out.push_str(&format!(" : {}", verses.iter().map(u32::to_string).collect::<Vec<_>>().join(", ")));
+    }
+    Some(out)
 }
 
 impl Song {
@@ -37,13 +102,34 @@ impl Song {
         self.verzen.iter().any(|v| v.iter().any(|l| !l.trim().is_empty()))
     }
 
-    fn names(&self) -> impl Iterator<Item = &String> {
-        std::iter::once(&self.titel).chain(self.aliassen.iter())
+    /// Its title, other names, and its place in its song book in every way that is written.
+    fn names(&self) -> Vec<String> {
+        let mut out: Vec<String> = std::iter::once(&self.titel).chain(self.aliassen.iter()).cloned().collect();
+        if let Some(b) = bundel(&self.bundel).filter(|_| self.nummer > 0) {
+            out.extend([b.naam, b.kort].into_iter().chain(b.afkortingen.iter().copied()).map(|n| format!("{n} {}", self.nummer)));
+        }
+        out
+    }
+
+    /// How it is called on the screens: "LB 23" for a song from a song book, else its title.
+    pub fn display(&self) -> String {
+        match bundel(&self.bundel).filter(|_| self.nummer > 0) {
+            Some(b) => format!("{} {}", b.kort, self.nummer),
+            None => self.titel.clone(),
+        }
     }
 
     /// Only the parts that are filled in: no empty names, lines or trailing empty verses.
     fn cleaned(mut self) -> Song {
         self.titel = self.titel.trim().to_string();
+        // The song book by its own name; a song without a title is called by its place in it.
+        self.bundel = bundel(&self.bundel).map(|b| b.naam.to_string()).unwrap_or_default();
+        if self.bundel.is_empty() {
+            self.nummer = 0;
+        }
+        if self.titel.is_empty() && self.nummer > 0 {
+            self.titel = self.display();
+        }
         self.aliassen = self.aliassen.iter().map(|a| a.trim().to_string()).filter(|a| !a.is_empty()).collect();
         self.verzen = self.verzen.into_iter().map(|v| v.into_iter().map(|l| l.trim().to_string()).filter(|l| !l.is_empty()).collect()).collect();
         while self.verzen.last().is_some_and(Vec::is_empty) {
@@ -168,7 +254,7 @@ impl Library {
         if key.is_empty() {
             return None;
         }
-        let by_name = |s: &&Song| s.names().any(|n| compact(n) == key);
+        let by_name = |s: &&Song| s.names().iter().any(|n| compact(n) == key);
         self.own.iter().find(by_name).or_else(|| builtin().iter().find(by_name))
     }
 
@@ -260,7 +346,7 @@ mod tests {
 
     #[test]
     fn own_songs_go_before_the_built_in_ones() {
-        let own = Song { titel: " Ere zij God ".into(), aliassen: vec!["Gloria".into(), " ".into()], verzen: vec![vec!["Ere zij God".into(), "".into()], vec![]], bron: String::new() };
+        let own = Song { titel: " Ere zij God ".into(), aliassen: vec!["Gloria".into(), " ".into()], verzen: vec![vec!["Ere zij God".into(), "".into()], vec![]], ..Default::default() };
         let new = Song { titel: "Hoe groot zijt Gij".into(), ..Default::default() };
         let lib = Library::with_own(vec![own, new, Song::default()]);
         assert_eq!(lib.own().len(), 2);
@@ -283,6 +369,48 @@ mod tests {
         assert_eq!(Library::load(&dir).own(), lib.own());
         let _ = std::fs::remove_dir_all(&dir);
         assert!(Library::load(&dir).own().is_empty());
+    }
+
+    #[test]
+    fn song_books_as_they_are_written() {
+        assert_eq!(book_ref("LB 23:1, 3").as_deref(), Some("LB 23 : 1, 3"));
+        assert_eq!(book_ref("lb23").as_deref(), Some("LB 23"));
+        assert_eq!(book_ref("Liedboek 23 vers 1-3").as_deref(), Some("LB 23 : 1, 3"));
+        assert_eq!(book_ref("Opw. 733").as_deref(), Some("Opw 733"));
+        assert_eq!(book_ref("Op Toonhoogte 12: 2").as_deref(), Some("OTH 12 : 2"));
+        assert_eq!(book_ref("Joh. de Heer 81").as_deref(), Some("JdH 81"));
+        assert_eq!(book_ref("Weerklank 412 vers 2 t/m 4").as_deref(), Some("WK 412 : 2, 3, 4"));
+        // Not a song book with a number.
+        for t in ["LB", "Liedboek", "Ps 42:5", "Lied 23", "Johannes 3:16", "LB 23: en dan"] {
+            assert_eq!(book_ref(t), None, "{t}");
+        }
+    }
+
+    #[test]
+    fn a_song_from_a_song_book_is_found_by_its_number() {
+        let lb = Song {
+            titel: "Heer, U bent mijn leven".into(),
+            bundel: "lb".into(),
+            nummer: 23,
+            verzen: vec![vec!["Heer, U bent mijn leven,".into()], vec!["Ik weet dat U daar bent,".into()]],
+            ..Default::default()
+        };
+        let untitled = Song { bundel: "Opwekking".into(), nummer: 733, ..Default::default() };
+        let lib = Library::with_own(vec![lb, untitled, Song { bundel: "Onbekend".into(), nummer: 5, titel: "Los".into(), ..Default::default() }]);
+        let s = lib.find("Liedboek 23").unwrap();
+        assert_eq!((s.bundel.as_str(), s.display().as_str()), ("Liedboek", "LB 23"));
+        assert_eq!(lib.find("lb23").unwrap().titel, "Heer, U bent mijn leven");
+        assert_eq!(lib.find("Heer, U bent mijn leven").unwrap().nummer, 23);
+        // Without a title it is called by its place in the book.
+        assert_eq!(lib.find("Opw 733").unwrap().titel, "Opw 733");
+        // An unknown book is no book.
+        let los = lib.find("Los").unwrap();
+        assert_eq!((los.bundel.as_str(), los.nummer, los.display().as_str()), ("", 0, "Los"));
+        // As the program writes a typed "LB 23:2".
+        let (s, v) = lib.resolve(&lied(&book_ref("LB 23:2").unwrap())).unwrap();
+        assert_eq!((s.titel.as_str(), v), ("Heer, U bent mijn leven", vec![2]));
+        // A number the church has not filled in.
+        assert!(lib.resolve(&lied("LB 24 : 1")).is_none());
     }
 
     #[test]

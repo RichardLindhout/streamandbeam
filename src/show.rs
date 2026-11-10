@@ -1005,6 +1005,9 @@ fn follow_collecte(svc: &mut Service, old: &Roosters, new: &Roosters) {
 }
 
 /// Puts the special day and who operates the stream, from the schedules, beside each service.
+/// With a song from a song book whose words are not in the program yet.
+const NO_SONG_TEXT: &str = "de tekst staat nog niet bij Liederen (menu, Liederen)";
+
 fn annotate(services: &mut [Service], roosters: &Roosters, songs: &Library) {
     for svc in services {
         svc.special_day = roosters.special_day(&svc.date, &svc.time);
@@ -1013,6 +1016,13 @@ fn annotate(services: &mut [Service], roosters: &Roosters, songs: &Library) {
             let found = songs.resolve(it).map(|(s, _)| s);
             it.song = found.map(|s| s.titel.clone()).unwrap_or_default();
             it.song_text = found.is_some_and(Song::has_words);
+            // A song from a song book without its words: said with the part, until they are there.
+            let book = it.kind == "lied" && crate::songs::book_ref(&it.label).is_some();
+            if book && !it.song_text && it.problem.is_empty() {
+                it.problem = NO_SONG_TEXT.into();
+            } else if it.song_text && it.problem == NO_SONG_TEXT {
+                it.problem.clear();
+            }
         }
     }
 }
@@ -1297,9 +1307,17 @@ fn build_slides(svc: &Service, songs: &Library, kerk: &Kerk) -> Vec<Slide> {
             && let Some((song, verses)) = songs.resolve(it)
             && song.has_words()
         {
-            let sub = if it.kind == "lied" { "Lied".to_string() } else { it.label.clone() };
+            // A song from a song book: "LB 23 : 1" with its title below it.
+            let name = song.display();
+            let sub = if name != song.titel {
+                song.titel.clone()
+            } else if it.kind == "lied" {
+                "Lied".to_string()
+            } else {
+                it.label.clone()
+            };
             for v in verses {
-                let header = if song.verzen.len() > 1 { format!("{} : {v}", song.titel) } else { song.titel.clone() };
+                let header = if song.verzen.len() > 1 { format!("{name} : {v}") } else { name.clone() };
                 let lines = song.verzen.get((v as usize).wrapping_sub(1)).filter(|l| !l.is_empty());
                 slides.push(Slide {
                     item: idx,
@@ -2034,6 +2052,36 @@ pub(crate) mod tests {
         let show = show_with(svc).await;
         let v = show.view();
         assert_eq!(v.service().unwrap().special_day, "Dankzegging Heilig Avondmaal");
+    }
+
+    #[test]
+    fn a_song_from_a_song_book_on_the_slides() {
+        let lb = Song {
+            titel: "Heer, U bent mijn leven".into(),
+            bundel: "Liedboek".into(),
+            nummer: 23,
+            verzen: vec![vec!["Heer, U bent mijn leven,".into()], vec!["Ik weet dat U daar bent,".into()]],
+            ..Default::default()
+        };
+        let songs = Library::with_own(vec![lb]);
+        let mut svc = service();
+        svc.items = vec![Item { kind: "lied".into(), label: "LB 23 : 2".into(), ..Default::default() }];
+        let slides = build_slides(&svc, &songs, &Kerk::default());
+        assert_eq!(slides.len(), 1);
+        assert_eq!((slides[0].header.as_str(), slides[0].sub.as_str()), ("LB 23 : 2", "Heer, U bent mijn leven"));
+        assert_eq!(slides[0].lines, ["Ik weet dat U daar bent,"]);
+    }
+
+    #[tokio::test]
+    async fn a_song_book_number_without_words_says_so_until_they_are_there() {
+        let mut svc = service();
+        svc.items.insert(1, Item { id: "i50".into(), kind: "lied".into(), label: "Opw 733".into(), ..Default::default() });
+        let show = show_with(svc).await;
+        let it = |show: &Show| show.view().service().unwrap().items.iter().find(|i| i.id == "i50").unwrap().clone();
+        assert!(it(&show).problem.contains("Liederen"));
+        let song = Song { bundel: "Opwekking".into(), nummer: 733, verzen: vec![vec!["Een regel".into()]], ..Default::default() };
+        show.set_songs(Library::with_own(vec![song])).await.unwrap();
+        assert_eq!((it(&show).problem.as_str(), it(&show).song_text), ("", true));
     }
 
     #[tokio::test]

@@ -537,6 +537,10 @@ impl Reader {
         if ctx == Ctx::Readings {
             return self.readings(rest);
         }
+        // A song from a song book by its number: "LB 23:1, 3", "Opw 733".
+        if let Some(song) = crate::songs::book_ref(rest) {
+            return vec![raw("lied", &song, text)];
+        }
         let folded = fold(&BRACKETS.replace_all(rest, " "));
         let toks = tokens(&folded);
         let mut items = self.recognise(rest, &toks, ctx);
@@ -1266,6 +1270,10 @@ mod tests {
         assert_eq!(kinds, want.map(|(a, b)| (a.to_string(), b.to_string())));
         let m = one("mededeling: Na de dienst koffie");
         assert_eq!((m.soort.as_str(), m.tekst.as_str()), ("mededeling", "Na de dienst koffie"));
+        // A song book by its number.
+        let l = one("LB 23:1-3");
+        assert_eq!((l.soort.as_str(), l.opschrift.as_str(), l.herkend), ("lied", "LB 23 : 1, 3", true));
+        assert_eq!(one("opwekking 733").opschrift, "Opw 733");
         let l = one("lied: Hoe groot zijt Gij");
         assert_eq!((l.soort.as_str(), l.opschrift.as_str()), ("lied", "Hoe groot zijt Gij"));
         // On the website a line among the psalms is a song.

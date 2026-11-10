@@ -11,10 +11,11 @@ import { SettingsDialog } from "@/components/Dialogs";
 import { Dienst } from "@/views/Dienst";
 import { Voorbereiden } from "@/views/Voorbereiden";
 import { Schermen } from "@/views/Schermen";
+import { Liederen } from "@/views/Liederen";
 
 function initialScreen(): Screen {
   const q = new URLSearchParams(location.search).get("scherm");
-  return q === "voorbereiden" || q === "schermen" ? q : "dienst";
+  return q === "voorbereiden" || q === "schermen" || q === "liederen" ? q : "dienst";
 }
 
 /** True while a dialog, sheet or menu is open, or the cursor is in a text field. */
@@ -79,6 +80,8 @@ export default function App() {
       ) : null}
       {screen === "dienst" ? (
         <Dienst state={state} svc={svc} status={status} lis={lis} />
+      ) : screen === "liederen" ? (
+        <Liederen status={status} onBack={() => setScreen("dienst")} />
       ) : screen === "schermen" ? (
         <Schermen state={state} status={status} onBack={() => setScreen("dienst")} />
       ) : (

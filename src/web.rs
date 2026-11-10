@@ -92,6 +92,9 @@ pub fn router(
         .route("/api/opnames/openen", post(open_recordings))
         .route("/api/thumb", get(thumb))
         .route("/api/youtube-check", get(youtube_check))
+        .route("/api/liederen", get(songs))
+        .route("/api/lied", post(save_song))
+        .route("/api/lied-weg", post(delete_song))
         .route("/api/scherm", post(save_layout))
         .route("/api/scherm-weg", post(delete_layout))
         .route("/api/scherm-tonen", post(show_layout))
@@ -880,4 +883,52 @@ async fn qr_png(State(app): State<App>) -> Response {
         return StatusCode::INTERNAL_SERVER_ERROR.into_response();
     }
     ([(header::CONTENT_TYPE, "image/png"), (header::CACHE_CONTROL, "no-cache")], png).into_response()
+}
+
+/// The songs: the church's own and the built-in ones, and the song books it can choose from.
+async fn songs(State(app): State<App>) -> impl IntoResponse {
+    Json(serde_json::json!({ "liederen": app.show.songs().all(), "bundels": crate::songs::BUNDELS }))
+}
+
+#[derive(Deserialize)]
+struct SaveSong {
+    /// The title the song had ("" for a new one), to replace it.
+    #[serde(default)]
+    oud: String,
+    lied: crate::songs::Song,
+}
+
+/// One of the church's own songs added or changed (a built-in one changed becomes its own).
+/// While live it asks first: a song on screen changes at once.
+async fn save_song(State(app): State<App>, Query(c): Query<Confirmed>, Json(req): Json<SaveSong>) -> Response {
+    if let Some(r) = needs_confirmation(&app, c.yes(), "Dit lied wijzigen? Staat het nu op het scherm, dan verandert het meteen.") {
+        return r;
+    }
+    let mut own = app.show.songs().own().to_vec();
+    let same = |a: &str, b: &str| crate::parse::compact(a) == crate::parse::compact(b);
+    let title = req.lied.titel.clone();
+    own.retain(|s| !(!req.oud.is_empty() && same(&s.titel, &req.oud)) && !(!title.is_empty() && same(&s.titel, &title)));
+    own.push(req.lied);
+    match app.show.set_songs(crate::songs::Library::with_own(own)).await {
+        Ok(()) => Json(serde_json::json!({ "liederen": app.show.songs().all() })).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, format!("Opslaan mislukt: {e:#}")).into_response(),
+    }
+}
+
+#[derive(Deserialize)]
+struct DeleteSong {
+    titel: String,
+}
+
+/// One of the church's own songs taken away (a built-in one is back as it was).
+async fn delete_song(State(app): State<App>, Query(c): Query<Confirmed>, Json(req): Json<DeleteSong>) -> Response {
+    if let Some(r) = needs_confirmation(&app, c.yes(), "Dit lied verwijderen?") {
+        return r;
+    }
+    let mut own = app.show.songs().own().to_vec();
+    own.retain(|s| crate::parse::compact(&s.titel) != crate::parse::compact(&req.titel));
+    match app.show.set_songs(crate::songs::Library::with_own(own)).await {
+        Ok(()) => Json(serde_json::json!({ "liederen": app.show.songs().all() })).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, format!("Verwijderen mislukt: {e:#}")).into_response(),
+    }
 }

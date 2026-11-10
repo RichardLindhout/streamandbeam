@@ -215,6 +215,12 @@ export type SoundInput = { name: string; usb: boolean; default: boolean };
 /** audioSource for an input chosen by name. */
 export const DEVICE = "apparaat:";
 
+/** A song that is not in the psalm book (see songs.rs). */
+export type Song = { titel: string; aliassen: string[]; verzen: string[][]; bron?: string; bundel?: string; nummer?: number };
+/** A song as the list shows it: the church's own (`eigen`), built in, and whether its words are there. */
+export type ListedSong = Song & { eigen: boolean; ingebouwd: boolean; tekst: boolean };
+export type Bundel = { naam: string; kort: string };
+
 /** Who the church is (see kerk.rs). */
 export type Kerk = {
   naam: string;

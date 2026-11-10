@@ -50,6 +50,18 @@ uit Excel bijwerken**, of `streamandbeam importeer-excel Streamupdate.xlsm` (sch
 het programma zelf: er staan namen van vrijwilligers in. In psalmen en
 gezangen is een streepje "en": Ps. 27: 3-7 is vers 3 en 7.
 
+## Liederen
+
+Liederen die niet in het psalmboek staan, staan onder **⋯ → Liederen**: met hun bundel en
+nummer (Liedboek, Weerklank, Opwekking, Op Toonhoogte, Johannes de Heer, Hemelhoog,
+Psalmen voor Nu, Evangelische Liedbundel) en de tekst, met een lege regel tussen de verzen.
+In de liturgie typ je dan bijvoorbeeld `LB 23:1, 3` of `opw 733`, net als `ps 42:5`. Staat
+de tekst er nog niet, dan zegt de dienst dat bij het onderdeel.
+
+De teksten van deze bundels zijn beschermd: het programma kent alleen de namen. Een kerk
+zet de teksten erin onder haar eigen licentie (bijvoorbeeld Licentie Kerkmuziek of CCLI);
+ze staan alleen op de eigen computer, in `data/liederen.json`.
+
 ## Een andere kerk
 
 Wat het programma over de kerk weet, staat in **Instellingen → Onze kerk**: de naam (op de
